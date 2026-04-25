@@ -1,0 +1,74 @@
+<!-- frontend/index.html - исправьте пути -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal AI Teacher - Персональный ИИ учитель</title>
+    <link rel="stylesheet" href="/style.css">  <!-- убрали /static/ -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 Universal AI Teacher</h1>
+            <p>Персональный ИИ учитель для подготовки к любым экзаменам</p>
+        </header>
+
+        <main>
+            <!-- Шаг 1: Регистрация -->
+            <div id="step1" class="step">
+                <h2>Начните обучение</h2>
+                <div class="form-group">
+                    <input type="text" id="userName" placeholder="Ваше имя" required>
+                    <input type="email" id="userEmail" placeholder="Email" required>
+                    <input type="text" id="examName" placeholder="Что изучаем? (например: математика для гаокао)" required>
+                    <button onclick="startLearning()" class="btn-primary">Начать</button>
+                </div>
+                <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
+            </div>
+
+            <!-- Шаг 2: Тестирование -->
+            <div id="step2" class="step" style="display:none">
+                <h2>📝 Начальное тестирование</h2>
+                <div id="testQuestions"></div>
+                <button onclick="submitTest()" class="btn-primary">Отправить ответы</button>
+            </div>
+
+            <!-- Шаг 3: Результаты теста и время -->
+            <div id="step3" class="step" style="display:none">
+                <h2>📊 Результаты тестирования</h2>
+                <div id="testResults"></div>
+                <div class="form-group">
+                    <label>Сколько дней у вас есть на подготовку?</label>
+                    <input type="number" id="daysAvailable" placeholder="Количество дней">
+                    <button onclick="setTimeAndPlan()" class="btn-primary">Создать план</button>
+                </div>
+            </div>
+
+            <!-- Шаг 4: План обучения -->
+            <div id="step4" class="step" style="display:none">
+                <h2>📚 Ваш план обучения</h2>
+                <div id="studyPlan"></div>
+                <button id="startLearningBtn" class="btn-primary">Начать обучение</button>
+            </div>
+
+            <!-- Шаг 5: Режим обучения -->
+            <div id="step5" class="step" style="display:none">
+                <div class="learning-header">
+                    <h2>📖 Обучение</h2>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <div id="progressStats"></div>
+                </div>
+                <div id="lessonContent"></div>
+                <div id="testContent" style="display:none"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/script.js"></script>  <!-- убрали /static/ -->
+</body>
+</html>

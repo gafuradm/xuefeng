@@ -1,0 +1,22 @@
+# fly.toml
+app = "universal-ai-teacher"
+primary_region = "fra"
+
+[build]
+  dockerfile = "backend/Dockerfile"
+
+[env]
+  DEEPSEEK_API_KEY = "sk-8e6de56fcf674f47acc0a5fc4a729995"
+  DATABASE_URL = "postgresql://postgres:postgres@db:5432/ai_teacher"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

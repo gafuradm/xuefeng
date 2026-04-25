@@ -1,0 +1,30 @@
+# docker-compose.yml (для локальной разработки)
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_teacher
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/ai_teacher
+      DEEPSEEK_API_KEY: sk-8e6de56fcf674f47acc0a5fc4a729995
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+      - ./frontend:/app/static
+
+volumes:
+  postgres_data:
