@@ -9,7 +9,14 @@ from sqlalchemy.orm import Session
 from .models import User, Session as SessionModel, TestResult, Lesson, ProgressHistory
 from .deepseek_client import deepseek_client
 from .config import settings
-from .subject_topics import get_modules_for_subject  # ИЗМЕНЕНО: вместо math_topics
+from .subject_topics import (
+    get_modules_for_subject, get_default_tasks,
+    get_gaokao_modules, GAOKAO_TOPICS,
+    get_ege_modules, EGE_TOPICS,
+    get_sat_modules, SAT_TOPICS,
+    get_uzbek_modules, UZBEK_TOPICS,
+    get_india_modules, INDIA_TOPICS
+)
 
 # Импортируем RAG
 try:
@@ -24,6 +31,11 @@ class AITeacherService:
         self.rag_available = RAG_AVAILABLE
         self.exam_manager = None
         self.vector_store = None
+        self.gaokao_manager = None
+        self.ege_manager = None
+        self.sat_manager = None
+        self.uzbek_manager = None
+        self.india_manager = None
         
         print(f"RAG_AVAILABLE: {RAG_AVAILABLE}")
         if RAG_AVAILABLE:
@@ -32,16 +44,15 @@ class AITeacherService:
                 self.vector_store = VectorStore(os.path.join(base_dir, settings.VECTOR_STORE_PATH))
                 self.exam_manager = ExamManager(self.vector_store)
                 
-                # Загрузка индекса для семантического поиска (только для математики)
+                # ---------------------------- ЕНТ ---------------------------------
                 index_path = os.path.join(base_dir, "data", "ent", "index_ent.hnsw")
                 vectors_path = os.path.join(base_dir, "data", "ent", "vectors.npy")
                 metadata_path = os.path.join(base_dir, "data", "ent", "metadata_ent.pkl")
-                
                 if os.path.exists(index_path) and os.path.exists(vectors_path) and os.path.exists(metadata_path):
                     self.exam_manager.init_ent(index_path, vectors_path, metadata_path)
-                    print(f"✅ ЕНТ (семантический поиск) загружен, задач: {len(self.exam_manager.active_exams['ent']['metadata'])}")
+                    print(f"✅ ЕНТ загружен, задач: {len(self.exam_manager.active_exams['ent']['metadata'])}")
                 else:
-                    print("⚠️ HNSW индекс не найден, используем текстовый поиск")
+                    print("⚠️ HNSW индекс ЕНТ не найден")
                     old_metadata = os.path.join(base_dir, settings.ENT_METADATA_PATH)
                     if os.path.exists(old_metadata):
                         with open(old_metadata, 'rb') as f:
@@ -53,6 +64,67 @@ class AITeacherService:
                             'dim': 384
                         }
                         print(f"✅ ЕНТ (текстовый поиск) загружен, задач: {len(metadata)}")
+                
+                # ---------------------------- GAOKAO ---------------------------------
+                gaokao_index = os.path.join(base_dir, "data", "vector_stores", "gaokao", "index.hnsw")
+                gaokao_vectors = os.path.join(base_dir, "data", "vector_stores", "gaokao", "vectors.npy")
+                gaokao_metadata = os.path.join(base_dir, "data", "vector_stores", "gaokao", "metadata.pkl")
+                if os.path.exists(gaokao_index) and os.path.exists(gaokao_vectors) and os.path.exists(gaokao_metadata):
+                    self.gaokao_manager = ExamManager(self.vector_store)
+                    self.gaokao_manager.init_ent(gaokao_index, gaokao_vectors, gaokao_metadata)
+                    print(f"✅ GAOKAO загружен, задач: {len(self.gaokao_manager.active_exams['ent']['metadata'])}")
+                else:
+                    print("⚠️ Файлы GAOKAO не найдены")
+                    self.gaokao_manager = None
+                
+                # ---------------------------- ЕГЭ ---------------------------------
+                ege_index = os.path.join(base_dir, "data", "vector_stores", "ege", "index.hnsw")
+                ege_vectors = os.path.join(base_dir, "data", "vector_stores", "ege", "vectors.npy")
+                ege_metadata = os.path.join(base_dir, "data", "vector_stores", "ege", "metadata.pkl")
+                if os.path.exists(ege_index) and os.path.exists(ege_vectors) and os.path.exists(ege_metadata):
+                    self.ege_manager = ExamManager(self.vector_store)
+                    self.ege_manager.init_ent(ege_index, ege_vectors, ege_metadata)
+                    print(f"✅ ЕГЭ загружен, задач: {len(self.ege_manager.active_exams['ent']['metadata'])}")
+                else:
+                    print("⚠️ Файлы ЕГЭ не найдены")
+                    self.ege_manager = None
+                
+                # ---------------------------- SAT ---------------------------------
+                sat_index = os.path.join(base_dir, "data", "vector_stores", "sat", "index.hnsw")
+                sat_vectors = os.path.join(base_dir, "data", "vector_stores", "sat", "vectors.npy")
+                sat_metadata = os.path.join(base_dir, "data", "vector_stores", "sat", "metadata.pkl")
+                if os.path.exists(sat_index) and os.path.exists(sat_vectors) and os.path.exists(sat_metadata):
+                    self.sat_manager = ExamManager(self.vector_store)
+                    self.sat_manager.init_ent(sat_index, sat_vectors, sat_metadata)
+                    print(f"✅ SAT загружен, задач: {len(self.sat_manager.active_exams['ent']['metadata'])}")
+                else:
+                    print("⚠️ Файлы SAT не найдены")
+                    self.sat_manager = None
+                
+                # ---------------------------- УЗБЕКИСТАН ---------------------------------
+                uzbek_index = os.path.join(base_dir, "data", "vector_stores", "uzbek", "index.hnsw")
+                uzbek_vectors = os.path.join(base_dir, "data", "vector_stores", "uzbek", "vectors.npy")
+                uzbek_metadata = os.path.join(base_dir, "data", "vector_stores", "uzbek", "metadata.pkl")
+                if os.path.exists(uzbek_index) and os.path.exists(uzbek_vectors) and os.path.exists(uzbek_metadata):
+                    self.uzbek_manager = ExamManager(self.vector_store)
+                    self.uzbek_manager.init_ent(uzbek_index, uzbek_vectors, uzbek_metadata)
+                    print(f"✅ Узбекистан загружен, задач: {len(self.uzbek_manager.active_exams['ent']['metadata'])}")
+                else:
+                    print("⚠️ Файлы Узбекистана не найдены")
+                    self.uzbek_manager = None
+                
+                # ---------------------------- ИНДИЯ ---------------------------------
+                india_index = os.path.join(base_dir, "data", "vector_stores", "india", "index.hnsw")
+                india_vectors = os.path.join(base_dir, "data", "vector_stores", "india", "vectors.npy")
+                india_metadata = os.path.join(base_dir, "data", "vector_stores", "india", "metadata.pkl")
+                if os.path.exists(india_index) and os.path.exists(india_vectors) and os.path.exists(india_metadata):
+                    self.india_manager = ExamManager(self.vector_store)
+                    self.india_manager.init_ent(india_index, india_vectors, india_metadata)
+                    print(f"✅ Индия загружен, задач: {len(self.india_manager.active_exams['ent']['metadata'])}")
+                else:
+                    print("⚠️ Файлы Индии не найдены")
+                    self.india_manager = None
+                    
             except Exception as e:
                 print(f"⚠️ Ошибка инициализации RAG: {e}")
                 import traceback
@@ -68,9 +140,136 @@ class AITeacherService:
         db.refresh(user)
         return user
 
-    # НОВОЕ: определение предмета по названию экзамена
+    # ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
+    def _is_ege(self, exam_name: str) -> bool:
+        exam_lower = exam_name.lower()
+        return 'егэ' in exam_lower or 'ege' in exam_lower
+
+    def _is_gaokao(self, exam_name: str) -> bool:
+        exam_lower = exam_name.lower()
+        return 'gaokao' in exam_lower or 'гаокао' in exam_lower
+
+    def _is_sat(self, exam_name: str) -> bool:
+        exam_lower = exam_name.lower()
+        return 'sat' in exam_lower
+
+    def _is_uzbek(self, exam_name: str) -> bool:
+        exam_lower = exam_name.lower()
+        return 'uzbek' in exam_lower or 'узбек' in exam_lower or 'dtm' in exam_lower
+
+    def _is_india(self, exam_name: str) -> bool:
+        exam_lower = exam_name.lower()
+        return 'india' in exam_lower or 'jee' in exam_lower or 'neet' in exam_lower
+
+    def _get_exam_type(self, exam_name: str) -> str:
+        exam_lower = exam_name.lower()
+        if 'ент' in exam_lower or 'ent' in exam_lower:
+            return 'ent'
+        elif self._is_gaokao(exam_name):
+            return 'gaokao'
+        elif self._is_ege(exam_name):
+            return 'ege'
+        elif self._is_sat(exam_name):
+            return 'sat'
+        elif self._is_uzbek(exam_name):
+            return 'uzbek'
+        elif self._is_india(exam_name):
+            return 'india'
+        return 'ent'
+
     def _get_subject(self, exam_name: str) -> str:
         exam_lower = exam_name.lower()
+        
+        # GAOKAO
+        if self._is_gaokao(exam_name):
+            if "math" in exam_lower or "数学" in exam_lower:
+                return "математика"
+            elif "physics" in exam_lower or "物理" in exam_lower:
+                return "физика"
+            elif "chemistry" in exam_lower or "化学" in exam_lower:
+                return "химия"
+            elif "biology" in exam_lower or "生物" in exam_lower:
+                return "биология"
+            elif "history" in exam_lower or "历史" in exam_lower:
+                return "история"
+            elif "geography" in exam_lower or "地理" in exam_lower:
+                return "география"
+            elif "politics" in exam_lower or "政治" in exam_lower:
+                return "политика"
+            elif "chinese" in exam_lower or "语文" in exam_lower:
+                return "китайский язык"
+            elif "english" in exam_lower:
+                return "английский язык"
+            else:
+                return "математика"
+        
+        # ЕГЭ
+        if self._is_ege(exam_name):
+            if "русский" in exam_lower:
+                return "русский язык"
+            elif "математик" in exam_lower:
+                return "математика"
+            elif "физик" in exam_lower:
+                return "физика"
+            elif "хими" in exam_lower:
+                return "химия"
+            elif "биологи" in exam_lower:
+                return "биология"
+            elif "история" in exam_lower:
+                return "история"
+            elif "обществ" in exam_lower:
+                return "обществознание"
+            elif "географ" in exam_lower:
+                return "география"
+            elif "информатик" in exam_lower:
+                return "информатика"
+            elif "литератур" in exam_lower:
+                return "литература"
+            else:
+                return "математика"
+        
+        # SAT
+        if self._is_sat(exam_name):
+            if "math" in exam_lower:
+                return "математика"
+            elif "reading" in exam_lower or "writing" in exam_lower or "essay" in exam_lower:
+                return "чтение и письмо"
+            else:
+                return "математика"
+        
+        # Узбекистан
+        if self._is_uzbek(exam_name):
+            if "matematika" in exam_lower or "математик" in exam_lower:
+                return "математика"
+            elif "fizika" in exam_lower or "физик" in exam_lower:
+                return "физика"
+            elif "kimyo" in exam_lower or "хими" in exam_lower:
+                return "химия"
+            elif "biologiya" in exam_lower or "биологи" in exam_lower:
+                return "биология"
+            elif "tarix" in exam_lower or "история" in exam_lower:
+                return "история узбекистана"
+            elif "ona tili" in exam_lower or "узбекский язык" in exam_lower:
+                return "узбекский язык и литература"
+            elif "adabiyot" in exam_lower:
+                return "узбекский язык и литература"
+            else:
+                return "математика"
+        
+        # Индия
+        if self._is_india(exam_name):
+            if "math" in exam_lower:
+                return "математика"
+            elif "physics" in exam_lower:
+                return "физика"
+            elif "chemistry" in exam_lower:
+                return "химия"
+            elif "biology" in exam_lower or "neet" in exam_lower:
+                return "биология"
+            else:
+                return "математика"
+        
+        # ЕНТ (по умолчанию)
         if "математик" in exam_lower or "math" in exam_lower:
             return "математика"
         elif "физик" in exam_lower:
@@ -92,15 +291,9 @@ class AITeacherService:
         elif "географи" in exam_lower:
             return "география"
         else:
-            return "математика"  # по умолчанию
+            return "математика"
 
-    def _get_exam_type(self, exam_name: str) -> str:
-        exam_lower = exam_name.lower()
-        if 'ент' in exam_lower or 'ent' in exam_lower:
-            return 'ent'
-        return 'ent'  # по умолчанию
-    
-# ============== МЕТОД create_session ==============
+    # ==================== СОЗДАНИЕ СЕССИИ ====================
     async def create_session(self, db: Session, user_id: int, exam_name: str) -> SessionModel:
         exam_type = self._get_exam_type(exam_name)
         exam_details = await deepseek_client.generate_exam_analysis(exam_name)
@@ -119,12 +312,26 @@ class AITeacherService:
         db.commit()
         db.refresh(session)
         
-        # Определяем предмет для генерации теста
         subject = self._get_subject(exam_name)
+        is_gaokao = self._is_gaokao(exam_name)
+        is_ege = self._is_ege(exam_name)
+        is_sat = self._is_sat(exam_name)
+        is_uzbek = self._is_uzbek(exam_name)
+        is_india = self._is_india(exam_name)
         
-        # Генерация теста: для математики используем RAG (если доступен), иначе DeepSeek с учётом предмета
-        if self.rag_available and subject == "математика":
-            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15)
+        # Генерация теста с использованием соответствующего RAG менеджера
+        if is_gaokao and self.gaokao_manager is not None:
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.gaokao_manager)
+        elif is_ege and self.ege_manager is not None:
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.ege_manager)
+        elif is_sat and self.sat_manager is not None:
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.sat_manager)
+        elif is_uzbek and self.uzbek_manager is not None:
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.uzbek_manager)
+        elif is_india and self.india_manager is not None:
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.india_manager)
+        elif self.rag_available and subject == "математика" and exam_type == "ent":
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.exam_manager)
         else:
             questions = await deepseek_client.generate_initial_test(exam_details, 15, subject)
         
@@ -138,13 +345,12 @@ class AITeacherService:
         db.add(test_result)
         db.commit()
         return session
-    
-    # ============== МЕТОД _generate_test_with_rag ==============
-    async def _generate_test_with_rag(self, exam_details: Dict, exam_type: str, num_questions: int = 15) -> List[Dict]:
-        """
-        Генерация теста с использованием RAG (только для математики).
-        Для других предметов этот метод не вызывается.
-        """
+
+    # ==================== ГЕНЕРАЦИЯ ТЕСТА С RAG ====================
+    async def _generate_test_with_rag(self, exam_details: Dict, exam_type: str, num_questions: int = 15, manager=None) -> List[Dict]:
+        if manager is None:
+            return await deepseek_client.generate_initial_test(exam_details, num_questions, "general")
+        
         questions = []
         topics = exam_details.get('topics', [])
         questions_per_topic = max(1, num_questions // len(topics))
@@ -152,10 +358,10 @@ class AITeacherService:
         for topic_info in topics:
             topic_name = topic_info.get('name', '')
             similar = []
-            if self.exam_manager and exam_type in self.exam_manager.active_exams:
+            if manager and 'ent' in manager.active_exams:
                 try:
-                    similar = self.exam_manager.search_problems(
-                        exam_type, 
+                    similar = manager.search_problems(
+                        'ent', 
                         topic_name, 
                         k=questions_per_topic * 2
                     )
@@ -166,7 +372,6 @@ class AITeacherService:
             import random
             random.shuffle(similar)
             
-            # Добавляем найденные задачи из RAG
             for s in similar[:questions_per_topic]:
                 if len(questions) < num_questions:
                     question_text = s.get('text', s.get('question', ''))
@@ -180,7 +385,6 @@ class AITeacherService:
                         'source': 'rag'
                     })
             
-            # Если не хватает – генерируем через DeepSeek с примерами
             needed = questions_per_topic - len([q for q in questions if q['topic'] == topic_name])
             if needed > 0:
                 examples = similar[:3] if similar else []
@@ -198,27 +402,49 @@ class AITeacherService:
                             'source': 'generated_from_rag'
                         })
         
-        # Если всё равно не хватает – DeepSeek с нуля (fallback)
         if len(questions) < num_questions:
             print(f"  Не хватает вопросов, генерируем через DeepSeek")
             default_questions = await deepseek_client.generate_initial_test(
                 exam_details, 
                 num_questions - len(questions),
-                "математика"  # явно указываем предмет
+                "general"
             )
             for q in default_questions:
                 q['source'] = 'deepseek_fallback'
             questions.extend(default_questions)
         
         return questions[:num_questions]
-    
-    async def generate_lesson_with_rag(self, topic: str, target_level: int, current_level: int, exam_type: str = 'ent', subject: str = 'математика') -> Dict:
-        # ИЗМЕНЕНО: RAG используем только для математики
+
+    # ==================== ГЕНЕРАЦИЯ УРОКА С RAG ====================
+    async def generate_lesson_with_rag(self, topic: str, target_level: int, current_level: int, exam_type: str = 'ent', subject: str = 'математика', is_gaokao: bool = False, is_ege: bool = False, is_sat: bool = False, is_uzbek: bool = False, is_india: bool = False) -> Dict:
         examples = []
-        if subject == "математика" and self.exam_manager and exam_type in self.exam_manager.active_exams:
+        
+        if is_india and self.india_manager and 'ent' in self.india_manager.active_exams:
+            examples = self.india_manager.get_similar_for_generation('ent', topic, num_examples=5)
+            print(f"  RAG (India): найдено {len(examples)} примеров для урока по теме {topic}")
+        elif is_uzbek and self.uzbek_manager and 'ent' in self.uzbek_manager.active_exams:
+            examples = self.uzbek_manager.get_similar_for_generation('ent', topic, num_examples=5)
+            print(f"  RAG (Узбекистан): найдено {len(examples)} примеров для урока по теме {topic}")
+        elif is_sat and self.sat_manager and 'ent' in self.sat_manager.active_exams:
+            examples = self.sat_manager.get_similar_for_generation('ent', topic, num_examples=5)
+            print(f"  RAG (SAT): найдено {len(examples)} примеров для урока по теме {topic}")
+        elif is_gaokao and self.gaokao_manager and 'ent' in self.gaokao_manager.active_exams:
+            examples = self.gaokao_manager.get_similar_for_generation('ent', topic, num_examples=5)
+            print(f"  RAG (GAOKAO): найдено {len(examples)} примеров для урока по теме {topic}")
+        elif is_ege and self.ege_manager and 'ent' in self.ege_manager.active_exams:
+            examples = self.ege_manager.get_similar_for_generation('ent', topic, num_examples=5)
+            print(f"  RAG (ЕГЭ): найдено {len(examples)} примеров для урока по теме {topic}")
+        elif not is_gaokao and not is_ege and not is_sat and not is_uzbek and not is_india and subject == "математика" and self.exam_manager and exam_type in self.exam_manager.active_exams:
             examples = self.exam_manager.get_similar_for_generation(exam_type, topic, num_examples=5)
             print(f"  RAG: найдено {len(examples)} примеров для урока по теме {topic}")
-        lesson = await deepseek_client.generate_lesson_with_examples(topic, target_level, current_level, examples)
+        
+        lesson = await deepseek_client.generate_lesson_with_examples(topic, target_level, current_level, examples, subject)
+        
+        if not lesson.get("tasks"):
+            default_tasks = get_default_tasks(subject, num_tasks=5)
+            lesson["tasks"] = default_tasks
+            print(f"  Добавлены типовые задачи для {subject}")
+        
         return lesson
 
     async def _repair_task_if_needed(self, task_id: str, text: str) -> str:
@@ -240,13 +466,16 @@ class AITeacherService:
             traceback.print_exc()
             return text
 
-    async def generate_progress_test_with_rag(self, weak_topics: List[str], exam_details: Dict, exam_type: str = 'ent', num_questions: int = 10) -> List[Dict]:
+    async def generate_progress_test_with_rag(self, weak_topics: List[str], exam_details: Dict, exam_type: str = 'ent', num_questions: int = 10, manager=None) -> List[Dict]:
+        if manager is None:
+            manager = self.exam_manager
+        
         questions = []
         questions_per_topic = max(1, num_questions // len(weak_topics))
         for topic in weak_topics[:5]:
             similar = []
-            if self.exam_manager and exam_type in self.exam_manager.active_exams:
-                similar = self.exam_manager.search_problems(exam_type, topic, k=questions_per_topic)
+            if manager and 'ent' in manager.active_exams:
+                similar = manager.search_problems('ent', topic, k=questions_per_topic)
                 print(f"  RAG: найдено {len(similar)} задач по теме {topic}")
             for s in similar[:questions_per_topic]:
                 if len(questions) < num_questions:
@@ -283,36 +512,123 @@ class AITeacherService:
         db.commit()
         return evaluation
 
-    # ИЗМЕНЕНО: теперь используем subject_topics и передаём предмет
-    def _build_plan_from_weak_topics(self, weak_topics: List[str], subject: str) -> Dict:
-        """
-        Строит план обучения только из модулей, содержащих слабые темы.
-        Если слабых тем нет или их очень мало, добавляет базовые модули.
-        """
-        all_modules = get_modules_for_subject(subject)
-        
-        # Преобразуем weak_topics в множество для быстрого поиска
+    # ==================== ПОСТРОЕНИЕ ПЛАНА ====================
+    def _build_plan_from_weak_topics(self, weak_topics: List[str], exam_name: str, subject: str) -> Dict:
         weak_set = set(weak_topics)
         
-        # Отбираем модули, у которых хотя бы одна тема есть в weak_set
+        # GAOKAO
+        if self._is_gaokao(exam_name):
+            modules = get_gaokao_modules(subject)
+            selected_modules = []
+            for module in modules:
+                topics_set = set(module.get("topics", []))
+                if topics_set.intersection(weak_set):
+                    selected_modules.append(module)
+            if not selected_modules:
+                selected_modules = modules[:min(3, len(modules))]
+            selected_modules.sort(
+                key=lambda m: len(set(m.get("topics", [])).intersection(weak_set)),
+                reverse=True
+            )
+            return {
+                "modules": selected_modules,
+                "total_modules": len(selected_modules),
+                "strategy": f"Адаптивный план по GAOKAO {subject}. Изучаются только темы, в которых вы допустили ошибки."
+            }
+        
+        # ЕГЭ
+        if self._is_ege(exam_name):
+            modules = get_ege_modules(subject)
+            selected_modules = []
+            for module in modules:
+                topics_set = set(module.get("topics", []))
+                if topics_set.intersection(weak_set):
+                    selected_modules.append(module)
+            if not selected_modules:
+                selected_modules = modules[:min(3, len(modules))]
+            selected_modules.sort(
+                key=lambda m: len(set(m.get("topics", [])).intersection(weak_set)),
+                reverse=True
+            )
+            return {
+                "modules": selected_modules,
+                "total_modules": len(selected_modules),
+                "strategy": f"Адаптивный план по ЕГЭ {subject}. Изучаются только темы, в которых вы допустили ошибки."
+            }
+        
+        # SAT
+        if self._is_sat(exam_name):
+            modules = get_sat_modules(subject)
+            selected_modules = []
+            for module in modules:
+                topics_set = set(module.get("topics", []))
+                if topics_set.intersection(weak_set):
+                    selected_modules.append(module)
+            if not selected_modules:
+                selected_modules = modules[:min(3, len(modules))]
+            selected_modules.sort(
+                key=lambda m: len(set(m.get("topics", [])).intersection(weak_set)),
+                reverse=True
+            )
+            return {
+                "modules": selected_modules,
+                "total_modules": len(selected_modules),
+                "strategy": f"Адаптивный план по SAT {subject}. Изучаются только темы, в которых вы допустили ошибки."
+            }
+        
+        # Узбекистан
+        if self._is_uzbek(exam_name):
+            modules = get_uzbek_modules(subject)
+            selected_modules = []
+            for module in modules:
+                topics_set = set(module.get("topics", []))
+                if topics_set.intersection(weak_set):
+                    selected_modules.append(module)
+            if not selected_modules:
+                selected_modules = modules[:min(3, len(modules))]
+            selected_modules.sort(
+                key=lambda m: len(set(m.get("topics", [])).intersection(weak_set)),
+                reverse=True
+            )
+            return {
+                "modules": selected_modules,
+                "total_modules": len(selected_modules),
+                "strategy": f"Адаптивный план по {subject} (Узбекистан). Изучаются только темы, в которых вы допустили ошибки."
+            }
+        
+        # Индия
+        if self._is_india(exam_name):
+            modules = get_india_modules(subject)
+            selected_modules = []
+            for module in modules:
+                topics_set = set(module.get("topics", []))
+                if topics_set.intersection(weak_set):
+                    selected_modules.append(module)
+            if not selected_modules:
+                selected_modules = modules[:min(3, len(modules))]
+            selected_modules.sort(
+                key=lambda m: len(set(m.get("topics", [])).intersection(weak_set)),
+                reverse=True
+            )
+            return {
+                "modules": selected_modules,
+                "total_modules": len(selected_modules),
+                "strategy": f"Адаптивный план по {subject} (Индия). Изучаются только темы, в которых вы допустили ошибки."
+            }
+        
+        # ЕНТ (по умолчанию)
+        all_modules = get_modules_for_subject(subject)
         selected_modules = []
         for module in all_modules:
-            # Проверяем, есть ли пересечение тем модуля со слабыми темами
             topics_set = set(module.get("topics", []))
             if topics_set.intersection(weak_set):
                 selected_modules.append(module)
-        
-        # Если после фильтрации не осталось модулей (слабых тем нет или они не совпали),
-        # добавляем первые 3 базовых модуля (например, алгебра 5-6, 7, 8 классы)
         if not selected_modules:
-            selected_modules = all_modules[:3]
-        
-        # Сортируем модули по количеству совпадающих слабых тем (убывание)
+            selected_modules = all_modules[:min(3, len(all_modules))]
         selected_modules.sort(
             key=lambda m: len(set(m.get("topics", [])).intersection(weak_set)),
             reverse=True
         )
-        
         return {
             "modules": selected_modules,
             "total_modules": len(selected_modules),
@@ -325,8 +641,12 @@ class AITeacherService:
             raise ValueError("Session not found")
         
         subject = self._get_subject(session.exam_name)
+        is_gaokao = self._is_gaokao(session.exam_name)
+        is_ege = self._is_ege(session.exam_name)
+        is_sat = self._is_sat(session.exam_name)
+        is_uzbek = self._is_uzbek(session.exam_name)
+        is_india = self._is_india(session.exam_name)
         
-        # Получаем weak_topics из последнего теста (начального)
         last_test = db.query(TestResult).filter(
             TestResult.session_id == session_id
         ).order_by(TestResult.id.desc()).first()
@@ -335,10 +655,8 @@ class AITeacherService:
         if last_test and last_test.evaluation:
             weak_topics = last_test.evaluation.get("weak_topics", [])
         
-        # Строим адаптивный план
-        study_plan = self._build_plan_from_weak_topics(weak_topics, subject)
+        study_plan = self._build_plan_from_weak_topics(weak_topics, session.exam_name, subject)
         
-        # Удаляем старые уроки
         db.query(Lesson).filter(Lesson.session_id == session.id).delete()
         db.commit()
         
@@ -346,17 +664,21 @@ class AITeacherService:
         session.time_available_days = days
         session.status = "planning"
         
-        # Создаём первый урок (первая тема первого модуля)
         modules = study_plan.get("modules", [])
         if modules:
             first_module = modules[0]
-            first_topic = first_module["topics"][0] if first_module["topics"] else "Математика"
+            first_topic = first_module["topics"][0] if first_module["topics"] else "Начало"
             lesson_content = await self.generate_lesson_with_rag(
                 first_topic,
                 session.target_profile.get(first_topic, 80),
                 session.current_profile.get(first_topic, 0),
                 'ent',
-                subject
+                subject,
+                is_gaokao,
+                is_ege,
+                is_sat,
+                is_uzbek,
+                is_india
             )
             lesson = Lesson(
                 session_id=session.id,
@@ -376,7 +698,6 @@ class AITeacherService:
         if not session:
             raise ValueError("Session not found")
         
-        # Проверяем, есть ли незавершённый урок
         lesson = db.query(Lesson).filter(Lesson.session_id == session_id, Lesson.completed == False).order_by(Lesson.id).first()
         if lesson:
             try:
@@ -391,7 +712,6 @@ class AITeacherService:
                 "completed": lesson.completed
             }
         
-        # Если нет незавершённых, ищем следующую тему
         study_plan = session.study_plan
         modules = study_plan.get("modules", [])
         all_topics_in_order = []
@@ -415,13 +735,23 @@ class AITeacherService:
             db.commit()
             return {"status": "completed", "message": "Поздравляем! Вы успешно завершили курс!"}
         
-        subject = self._get_subject(session.exam_name)  # НОВОЕ
+        subject = self._get_subject(session.exam_name)
+        is_gaokao = self._is_gaokao(session.exam_name)
+        is_ege = self._is_ege(session.exam_name)
+        is_sat = self._is_sat(session.exam_name)
+        is_uzbek = self._is_uzbek(session.exam_name)
+        is_india = self._is_india(session.exam_name)
         lesson_content = await self.generate_lesson_with_rag(
             next_topic,
             session.target_profile.get(next_topic, 80),
             session.current_profile.get(next_topic, 0),
             'ent',
-            subject
+            subject,
+            is_gaokao,
+            is_ege,
+            is_sat,
+            is_uzbek,
+            is_india
         )
         new_lesson = Lesson(
             session_id=session.id,
@@ -440,8 +770,8 @@ class AITeacherService:
             "completed": False
         }
     
+    # ==================== ПРОВЕРКА ОТВЕТОВ ====================
     async def check_lesson_answers(self, lesson: Lesson, user_answers: Dict[str, str]) -> Dict[str, Any]:
-        """Проверяет ответы и возвращает подсказки для неправильных."""
         try:
             lesson_content = json.loads(lesson.content) if lesson.content else {}
         except:
@@ -467,6 +797,22 @@ class AITeacherService:
         lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.session_id == session_id).first()
         if not lesson:
             raise ValueError("Lesson not found")
+        
+        try:
+            lesson_content = json.loads(lesson.content) if lesson.content else {}
+        except:
+            lesson_content = {}
+        tasks = lesson_content.get("tasks", [])
+        if not tasks:
+            lesson.completed = True
+            lesson.completed_at = datetime.utcnow()
+            db.commit()
+            return {
+                "status": "success",
+                "score": 100,
+                "new_level": 0,
+                "message": "Урок успешно завершён (без задач)"
+            }
         
         check = await self.check_lesson_answers(lesson, user_answers)
         if not check["all_correct"]:
@@ -509,10 +855,27 @@ class AITeacherService:
         if not weak_topics:
             weak_topics = list(session.target_profile.keys())[:5]
         exam_type = self._get_exam_type(session.exam_name)
-        if self.rag_available and exam_type in self.exam_manager.active_exams:
-            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, num_questions=15)
+        is_gaokao = self._is_gaokao(session.exam_name)
+        is_ege = self._is_ege(session.exam_name)
+        is_sat = self._is_sat(session.exam_name)
+        is_uzbek = self._is_uzbek(session.exam_name)
+        is_india = self._is_india(session.exam_name)
+        
+        if is_gaokao and self.gaokao_manager is not None:
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.gaokao_manager)
+        elif is_ege and self.ege_manager is not None:
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.ege_manager)
+        elif is_sat and self.sat_manager is not None:
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.sat_manager)
+        elif is_uzbek and self.uzbek_manager is not None:
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.uzbek_manager)
+        elif is_india and self.india_manager is not None:
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.india_manager)
+        elif self.rag_available and exam_type in self.exam_manager.active_exams:
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.exam_manager)
         else:
             questions = await deepseek_client.generate_progress_test(weak_topics, session.exam_details, num_questions=15)
+        
         test_result = TestResult(
             session_id=session.id,
             test_type="progress",
@@ -524,7 +887,7 @@ class AITeacherService:
         db.commit()
         return questions
 
-    # НОВОЕ: метод для чата с ботом (уже был, оставляем)
+    # ==================== ЧАТ-БОТ ====================
     async def chat_with_bot(self, db: Session, session_id: int, lesson_id: int, question: str) -> str:
         session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
         lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
@@ -533,14 +896,14 @@ class AITeacherService:
         topic = lesson.topic
         weak_topics = [t for t, score in session.current_profile.items() if score < 50]
         prompt = f"""
-Ты – ИИ-помощник по математике. Ученик изучает тему "{topic}".
+Ты – ИИ-помощник по {session.exam_name}. Ученик изучает тему "{topic}".
 Его слабые темы (по входному тесту): {', '.join(weak_topics) if weak_topics else 'не определены'}.
 Вопрос ученика: {question}
 
 Дай понятный, подробный ответ, объясни шаги решения, если нужно. Используй формулы в LaTeX (например, \\(x^2\\)).
 """
         response = await deepseek_client.chat_completion([
-            {"role": "system", "content": "Ты полезный помощник по математике. Отвечай дружелюбно и понятно."},
+            {"role": "system", "content": "Ты полезный помощник по учебным предметам. Отвечай дружелюбно и понятно."},
             {"role": "user", "content": prompt}
         ], max_tokens=1000)
         return response

@@ -271,3 +271,13 @@ async def test_search(query: str = "тригонометрия", k: int = 3):
         }
     except Exception as e:
         return {"error": str(e)}
+    
+@app.post("/api/exams/custom")
+async def add_custom_exam(exam_data: dict, db: Session = Depends(get_db)):
+    """Сохраняет пользовательский экзамен (JSON с темами)"""
+    from .subject_topics import save_custom_exam
+    exam_name = exam_data.get("name")
+    if not exam_name:
+        raise HTTPException(400, "Не указано название экзамена")
+    save_custom_exam(exam_name, exam_data)
+    return {"status": "ok", "message": f"Экзамен '{exam_name}' сохранён"}
