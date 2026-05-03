@@ -1,0 +1,451 @@
+Fizika fanidan namunaviy test topshiriqlari
+FIZIKA
+1. [1,3 ball]
+Avtomobilning boshlang‘ich tezligi 10 m/s, tezlanishi −2 m/s 2 ga teng.
+U qancha (m) masofa bosib o‘tib to‘xtashini aniqlang.
+A)25
+B)100
+C)20
+D)50
+2. [1,3 ball]
+Silliq gorizontal sirtda turgan 5 kg massali jismga 20 N va 55 N kuchlar ta’sir qilmoqda.
+2
+Jismning minimal tezlanishini (m/s ) toping.
+A)4
+B)7
+C)11
+D)15
+3. [1,3 ball]
+7200 m balandlikda 216 km/h doimiy tezlik bilan uchayotgan samolyotning potensial energiyasi kinetik
+energiyasidan necha marta katta?
+A)30
+B)20
+C)10
+D)40
+4. [2,2 ball]
+Grafikda to‘g‘ri chiziqli harakatlanayotgan jism tezligining o‘zgarishi tasvirlangan.
+v x,m/s
+40
+30 B
+C
+20 A
+10
+0 t,s
+10 20 30 40 50 60 70
+Grafikning BC qismida jism bosib o‘tgan masofani (m) toping.
+A)475
+B)337,5
+C)425,5
+D)400
+1
+Fizika fanidan namunaviy test topshiriqlari
+5. [2,2 ball]
+Tormoz bergan avtomobil asfaltda 25 m iz qoldirib to‘xtagan.
+Agar g‘ildiraklar bilan asfalt orasidagi ishqalanish koeffitsiyenti 0,45 bo‘lsa, avtomobilning dastlabki
+tezligini (m/s) toping.
+A)18
+B)17
+C)16
+D)15
+6. [2,2 ball]
+1,2 m uzunlikdagi chilvirga bog‘langan 0,9 kg massali shar vertikal tekislikda aylantirilmoqda.
+Pastki nuqtada sharning tezligi 4 m/s bo‘lsa, shu paytda chilvirning tarangligini (N) toping.
+A)3
+B)9
+C)21
+D)19
+7. [2,2 ball]
+g/2 g/2
+F A m
+1 F B 2m
+2
+Rasmda tasvirlangan vaznsiz bloklarga m va 2m massali sharchalar osilgan. A sharcha g/2 tezlanish
+bilan vertikal yuqoriga, B sharcha esa g/2 tezlanish bilan vertikal pastga harakatlantirilmoqda.
+F 1/F 2 nisbatni toping.
+A)1
+B)1/3
+C)3
+D)3/2
+2
+Fizika fanidan namunaviy test topshiriqlari
+8. [2,2 ball]
+3 2
+Bino bir nechta granit ustunlarga ega bo‘lib, har bir ustunning hajmi 9 m ga, asosining yuzi 1,4 m ga
+3
+teng. Granitning zichligi 2800 kg/m .
+Bitta ustun o‘z og‘irligi ta’sirida poydevorga qancha bosim (kPa) berishini aniqlang.
+A)160
+B)200
+C)180
+D)220
+9. [2,2 ball]
+Suvning sirtidan 5 m balandda quvvatli so‘ruvchi nasos o‘rnatilgan. Nasos suv sirti bilan quvur orqali
+birlashtirilgan.
+Nasos ishlagan paytda suvning bu quvurdagi maksimal tezligini (m/s) aniqlang.
+A)8
+B)6
+C)10
+D)9
+10. [2,2 ball]
+Suv sirtidagi to‘lqinning 1- va 3-do‘ngliklari orasidagi masofa 20 cm, uning tarqalish tezligi 0,1 m/s ga
+teng.
+To‘lqinning tebranish davrini (s) toping.
+A)1,2
+B)0,2
+C)0,5
+D)1
+11. [1,3 ball]
+Ideal gazning bosimi 2,5·10 5 Pa, zichligi 12 kg/m 3 ga teng.
+Gaz molekulalarining o‘rtacha kvadratik tezligini (m/s) toping.
+A)160
+B)250
+C)300
+D)200
+3
+Fizika fanidan namunaviy test topshiriqlari
+12. [1,3 ball]
+0,4 kg massali alyuminiy berilgan.
+Uning issiqlik sig‘imini (J/K) aniqlang.
+A)900
+B)360
+C)640
+D)420
+13. [2,2 ball]
+Yopiq idishdagi ozon (O 3) 727 ◦ C haroratda turibdi. Qanchadir vaqtdan so‘ng barcha ozon kislorodga
+(O 2) aylandi va idishdagi harorat 600 ◦ C ga pasaydi.
+Bunday o‘zgarishlardan so‘ng idishdagi bosim necha foiz kamayganligini aniqlang.
+A)60
+B)50
+C)30
+D)40
+14. [2,2 ball]
+2
+Asosining yuzi 1 dm bo‘lgan vertikal joylashgan silindrdagi 20 kg massali porshen ostida geliy gazi bor.
+Geliy gazi izobarik qizdirilganda porshen 30 cm ko‘tarildi.
+Gaz kengayishda qancha ish (J) bajarganini aniqlang.
+A)540
+B)360
+C)480
+D)240
+15. [2,2 ball]
+◦ 3
+19 C haroratli 5 m havoda 34,5 g suv bug‘i bor.
+t, ◦C ρ o, g/m 3
+15 12,8
+16 13,6
+17 14,5
+18 15,4
+19 16,3
+20 17,3
+Bu havo to‘yinishi uchun unga qancha (g) massali suv bug‘latish kerakligini aniqlang.
+A)43
+B)47
+C)41
+D)45
+4
+Fizika fanidan namunaviy test topshiriqlari
+16. [1,3 ball]
+Zaryadli jismga ta’sir etuvchi 2 ta kuchning natijaviysi 32 mN ga teng va gorizontal yo‘nalgan.
+Agar og‘irlik kuchi 24 mN bo‘lsa, elektr maydon ta’sirining modulini (mN) aniqlang.
+A)56
+B)12
+C)64
+D)40
+17. [1,3 ball]
+V
++ −
+A
+Reostatning surgichi chapga surilsa, ampermetrning ko‘rsatishi qanday o‘zgarishini aniqlang.
+A)o‘zgarmaydi
+B)kamayadi
+C)ortadi
+D)nolga teng bo‘ladi
+18. [1,3 ball]
+200 m to‘lqin uzunligida ishlayotgan radiostansiyani eshitish uchun 6 MHz chastotaga sozlangan
+radiopriyomnik sxemasidagi sig‘imni qanday o‘zgartirish kerak?
+A)4 marta kamaytirish kerak
+B)16 marta oshirish kerak
+C)16 marta kamaytirish kerak
+D)4 marta oshirish kerak
+19. [2,2 ball]
+Sig‘imi C bo‘lgan yassi havo kondensatoriga dielektrik singdiruvchanligi ε bo‘lgan modda kiritildi. Bu
+kondensatorda C x sig‘imli kondensatorni ketma-ket ulaganda batareyaning umumiy sig‘imi C/2 ga teng
+bo‘ldi.
+C x sig‘imni aniqlang.
+εC
+A)
+2ε−1
+2εC
+B)
+ε−2
+εC
+C)
+ε−1
+2εC
+D)
+ε−1
+5
+Fizika fanidan namunaviy test topshiriqlari
+20. [2,2 ball]
+Zaryadlari 3·10 −8 C ga teng bo‘lgan ikkita nuqtaviy zaryad havoda bir-biridan 50 cm masofada turibdi.
+Ularni 10 cm gacha yaqinlashtirildi.
+Bu jarayonda bajarilgan ishni (μJ) toping.
+A)32,4
+B)8
+C)4
+D)64,8
+21. [2,2 ball]
+Kimyoviy tok manbaining EYuKi 6 V, ichki qarshiligi 1/4 Ω ga teng. Manba zanjirga 2 A tok
+berayotgan bo‘lsa, uning qutblaridagi kuchlanishni (V) toping.
+A)6,5
+B)7
+C)5,5
+D)5
+22. [2,2 ball]
+Alyuminiydan yasalgan simning 0 ◦ C dagi qarshiligi 3,5 Ω ga teng.
+Uning qarshiligi 200 ◦ C da qanchaga (Ω) ortishini aniqlang. α=0,0028 K−1
+A)1,87
+B)1,96
+C)2,12
+D)3,14
+23. [2,2 ball]
+O‘lchamlari 2 cm va 3 cm bo‘lgan to‘g‘ri to‘rtburchak shklidagi ramka induksiyasi 10 T bo‘lgan magnit
+maydonda turibdi.
+Ramkadan 2 A tok o‘tganda, unga ta’sir qiladigan maksimal kuch momentini (mN·m) toping.
+A)96
+B)12
+C)48
+D)24
+6
+Fizika fanidan namunaviy test topshiriqlari
+24. [2,2 ball]
+Elektron magnit maydonda y o‘qi bo‘ylab harakatlanmoqda.
+Lorens kuchi x o‘qiga qarshi yo‘nalgan bo‘lsa, magnit maydon yo‘nalishini aniqlang.
+A)x o‘qi bo‘ylab
+B)z o‘qi bo‘ylab
+C)y o‘qiga qarshi
+D)z o‘qiga qarshi
+25. [2,2 ball]
+8 Ω aktiv, 9 Ω sig‘im va 3 Ω induktiv qarshiliklarni ketma-ket holda ulab tuzilgan zanjir uchlariga
+effektiv qiymati 140 V bo‘lgan o‘zgaruvchan kuchlanish berilgan.
+Zanjirdagi foydali quvvatni (W) toping.
+A)1568
+B)1960
+C)1764
+D)588
+26. [1,3 ball]
+To‘lqin uzunligi λ bo‘lgan nur optik zichligi 4/3 bo‘lgan suyuqlikka tushib, sinmoqda.
+Bunda nurning chastotasi qanday o‘zgarishini aniqlang.
+A)25 % ortadi
+B)25 % kamayadi
+C)o‘zgarmaydi
+D)33 % ortadi
+27. [2,2 ball]
+Linza o‘zidan 40 cm masofada joylashgan buyumning 2 marta kichiklashgan, mavhum tasvirini hosil
+qildi.
+Shu linzaning optik kuchini (dptr) aniqlang.
+A)2,5
+B)−2,5
+C)−7,5
+D)7,5
+7
+Fizika fanidan namunaviy test topshiriqlari
+28. [2,2 ball]
+Harakatdagi jismning massasi m = (5/3)m 0 ga teng. m 0 − jismning tinchlikdagi massasi.
+Jismning tezligini toping.
+A)0,4c
+B)0,5c
+C)0,6c
+D)0,8c
+29. [1,3 ball]
+209Po
+yadrosining tarkibini aniqlang.
+84
+A)84 ta elektron, 209 ta neytron
+B)84 ta elektron, 125 ta neytron
+C)125 ta neytron, 84 ta proton
+D)209 ta nuklon, 84 ta neytron
+30. [2,2 ball]
+Fotoeffektning qizil chegarasi ν bo‘lgan metall sirtiga 5ν chastotali, qizil chegarasi 2ν bo‘lgan metall
+sirtiga esa 4ν chastotali fotonlar tushmoqda.
+E
+Uchib chiqqan fotoelektronlarning maksimal kinetik energiyalari mos ravishda E 1 va E 2 bo‘lsa, E 1
+2
+ifodaning qiymatini toping.
+A)5/4
+B)2
+C)5/2
+D)1/2
+31. [2,2 ball]
+Vodorod atomidagi elektron 4-kvant holatidan 2-kvant holatiga o‘tdi.
+Nurlangan fotonning energiyasini (eV) toping.
+A)2,55
+B)4,15
+C)6,82
+D)12,38
+8
+Fizika fanidan namunaviy test topshiriqlari
+32. [2,2 ball]
+Arqonning uzunligini o‘lchagan o‘quvchi natijani l=(17,2±0,005) m deb ifodaladi.
+O‘lchovning nisbiy xatoligini (%) toping.
+A)0,06
+B)0,05
+C)0,04
+D)0,03
+Topshiriqlar (33-35) va javob variant (A-F) larini o‘zaro to‘g‘ri
+A)11,5P
+0
+V
+0
+moslashtiring.
+Grafikda bir atomli ideal gazning 1→2→3→1 o‘tishi tasvirlangan.
+B)8,5P
+0
+V
+0
+C)12P
+0
+V
+0
+V
+1
+D)6P
+0
+V
+0
+5V
+0
+E)10P
+0
+V
+0
+F)2P
+0
+V
+0
+V 0 3
+2
+P
+0
+4P
+0
+P
+33. [2,2 ball]
+Gazning bajargan ishini toping.
+34. [2,2 ball]
+1→2 o‘tishda gaz qancha issiqlik chiqargan?
+35. [2,2 ball]
+3→1 o‘tishda gazga qancha issiqlik miqdori berilgan?
+36. 175 m balandlikdan boshlang‘ich tezlik bilan erkin tashlangan jism 2-sekundda 25 m yo‘l o‘tdi.
+[1,5 ball]
+a) Jismning boshlang‘ich tezligini (m/s) toping.
+Javob: a)
+[1,7 ball]
+b) Jism dastlabki 4 s da qancha (m) masofa bosib o‘tishini aniqlang.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+9
+Fizika fanidan namunaviy test topshiriqlari
+37. Yer sirtida turgan matematik mayatnik ipining uzunligi 0,5 m ga teng. Bu mayatnik massasi va radiusi
+Yernikidan 2 marta katta bo‘lgan Y sayyoraga ko‘chirildi.
+[1,5 ball]
+a) Y sayyora sirti yaqinida erkin tushish tezlanishini (N/kg) aniqlang.
+Javob: a)
+[1,7 ball]
+2
+b) Y sayyorada mayatnik yuqoriga 5 m/s tezlanish bilan harakatlanayotgandagi tebranish
+davrining Yer sirtida tekis ko‘tarilayotgandagi tebranish davriga nisbatini toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+38. Vaznsiz qo‘zg‘almas blok orqali o‘tkazilgan ingichka ipning uchlariga og‘irliklari P va 20 N bo‘lgan yuklar
+osilgan. Yuklar tinch holatdan boshlab harakatga kelganidan 2,5 s vaqt o‘tgach 20 N og‘irlikdagi yuk
+6,25 m masofaga pastga tushdi.
+[1,5 ball]
+2
+a) Yuklarning tezlanishini (m/s ) toping.
+Javob: a)
+[1,7 ball]
+b) Harakat vaqtida blok o‘qiga ta’sir etuvchi kuchni (N) aniqlang.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+39. Hajmi400lbo‘lganyopiqidishda27 ◦ Charoratlito‘yinmaganhavobor. Idishga2gmassalisuvbug‘latilsa,
+idishdagi suv bug‘lari to‘yingan holatga o‘tadi. Suv bug‘ining to‘yingan holatdagi parsial bosimi 3,6 kPa
+ga teng.
+[1,5 ball]
+3
+a) Dastlabki havoning absolyut namligini (g/m ) toping.
+Javob: a)
+[1,7 ball]
+b) Dastlabki havoning nisbiy namligini (%) toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+10
+Fizika fanidan namunaviy test topshiriqlari
+40. Birato√mliidealgazga6kJissiqlikmiqdoriberildi. Bujarayonda gazning hajmivaabsolyuttemperaturasi
+V = k T qonuniyat bo‘yicha bog‘langan. Bu yerda k − o‘zgarmas kattalik.
+[1,5 ball]
+a) Bu jarayonda gazning bajargan ishini (J) toping.
+Javob: a)
+[1,7 ball]
+b) Bu jarayonda gazning ichki energiyasi qanchaga (kJ) ortishini toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+41. 1200 kg massali elektromobil akkumulyatorining EYuKi 400 V ga teng. Elektromobil tezligini 30 m/s dan
+5 m/s gacha kamaytirdi.
+[1,5 ball]
+a) Bu jarayonda elektromobil akkumulyatorida qancha energiya (kJ) to‘planishini aniqlang.
+Javob: a)
+[1,7 ball]
+b) Bu jarayonda elektromobil akkumulyatorida qancha (kC) zaryad to‘planishini aniqlang.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+42.
+R
+K ∼ u
+a b
+L
+A
+Sxemada R=60 Ω, L=0,2 H va u=160sin400t [V].
+[1,5 ball]
+a) Kalit a vaziyatda bo‘lganida ampermetrning ko‘rsatishini (A) toping.
+Javob: a)
+[1,7 ball]
+b) Kalit b vaziyatda bo‘lganida ampermetrning ko‘rsatishini (A) aniqlang.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+11
+Fizika fanidan namunaviy test topshiriqlari
+43.
+b
+a
+Linza yordamida a buyumning 5/4 marta kattalashgan b tasviri hosil qilindi. Buyum va tasvir orasidagi
+masofa 2 cm ga teng.
+[1,5 ball]
+a) Linzaning optik kuchini (dptr) toping.
+Javob: a)
+[1,7 ball]
+b) Agar buyum linzaga 3 cm yaqinlashtirilsa, linzaning kattalashtirishi nechaga teng
+bo‘lishini aniqlang.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+m
+44. Zarra 0,5c tezlik bilan harakatlanayotgandagi massasi √ ga teng.
+3
+[1,5 ball]
+a) Zarraning tinchlikdagi massasini toping.
+Javob: a)
+[1,7 ball]
+b) Zarraning 0,6c tezlik bilan harakatlanayotgandagi kinetik energiyasini toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+45. G‘alayonlangan vodorod atomining ionlashish energiyasi 3,4 eV ga teng.
+[1,5 ball]
+a) Atom foton yutib impuls momentini (cid:2) ga oshirgan bo‘lsa, uning ionlashish energiyasi (eV)
+nechaga teng bo‘lishini aniqlang.
+Javob: a)
+[1,7 ball]
+b) Dastlabki atom foton nurlatib impuls momentini (cid:2) ga kamaytirgan bo‘lsa, uning ionlashish
+energiyasi (eV) nechaga teng bo‘lishini aniqlang.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+12

@@ -49,7 +49,7 @@ class AITeacherService:
                 vectors_path = os.path.join(base_dir, "data", "ent", "vectors.npy")
                 metadata_path = os.path.join(base_dir, "data", "ent", "metadata_ent.pkl")
                 if os.path.exists(index_path) and os.path.exists(vectors_path) and os.path.exists(metadata_path):
-                    self.exam_manager.init_ent(index_path, vectors_path, metadata_path)
+                    self.exam_manager.init_ent(index_path, vectors_path, metadata_path, exam_key='ent')
                     print(f"✅ ЕНТ загружен, задач: {len(self.exam_manager.active_exams['ent']['metadata'])}")
                 else:
                     print("⚠️ HNSW индекс ЕНТ не найден")
@@ -71,8 +71,8 @@ class AITeacherService:
                 gaokao_metadata = os.path.join(base_dir, "data", "vector_stores", "gaokao", "metadata.pkl")
                 if os.path.exists(gaokao_index) and os.path.exists(gaokao_vectors) and os.path.exists(gaokao_metadata):
                     self.gaokao_manager = ExamManager(self.vector_store)
-                    self.gaokao_manager.init_ent(gaokao_index, gaokao_vectors, gaokao_metadata)
-                    print(f"✅ GAOKAO загружен, задач: {len(self.gaokao_manager.active_exams['ent']['metadata'])}")
+                    self.gaokao_manager.init_ent(gaokao_index, gaokao_vectors, gaokao_metadata, exam_key='gaokao')
+                    print(f"✅ GAOKAO загружен, задач: {len(self.gaokao_manager.active_exams['gaokao']['metadata'])}")
                 else:
                     print("⚠️ Файлы GAOKAO не найдены")
                     self.gaokao_manager = None
@@ -83,8 +83,8 @@ class AITeacherService:
                 ege_metadata = os.path.join(base_dir, "data", "vector_stores", "ege", "metadata.pkl")
                 if os.path.exists(ege_index) and os.path.exists(ege_vectors) and os.path.exists(ege_metadata):
                     self.ege_manager = ExamManager(self.vector_store)
-                    self.ege_manager.init_ent(ege_index, ege_vectors, ege_metadata)
-                    print(f"✅ ЕГЭ загружен, задач: {len(self.ege_manager.active_exams['ent']['metadata'])}")
+                    self.ege_manager.init_ent(ege_index, ege_vectors, ege_metadata, exam_key='ege')
+                    print(f"✅ ЕГЭ загружен, задач: {len(self.ege_manager.active_exams['ege']['metadata'])}")
                 else:
                     print("⚠️ Файлы ЕГЭ не найдены")
                     self.ege_manager = None
@@ -95,8 +95,8 @@ class AITeacherService:
                 sat_metadata = os.path.join(base_dir, "data", "vector_stores", "sat", "metadata.pkl")
                 if os.path.exists(sat_index) and os.path.exists(sat_vectors) and os.path.exists(sat_metadata):
                     self.sat_manager = ExamManager(self.vector_store)
-                    self.sat_manager.init_ent(sat_index, sat_vectors, sat_metadata)
-                    print(f"✅ SAT загружен, задач: {len(self.sat_manager.active_exams['ent']['metadata'])}")
+                    self.sat_manager.init_ent(sat_index, sat_vectors, sat_metadata, exam_key='sat')
+                    print(f"✅ SAT загружен, задач: {len(self.sat_manager.active_exams['sat']['metadata'])}")
                 else:
                     print("⚠️ Файлы SAT не найдены")
                     self.sat_manager = None
@@ -107,8 +107,8 @@ class AITeacherService:
                 uzbek_metadata = os.path.join(base_dir, "data", "vector_stores", "uzbek", "metadata.pkl")
                 if os.path.exists(uzbek_index) and os.path.exists(uzbek_vectors) and os.path.exists(uzbek_metadata):
                     self.uzbek_manager = ExamManager(self.vector_store)
-                    self.uzbek_manager.init_ent(uzbek_index, uzbek_vectors, uzbek_metadata)
-                    print(f"✅ Узбекистан загружен, задач: {len(self.uzbek_manager.active_exams['ent']['metadata'])}")
+                    self.uzbek_manager.init_ent(uzbek_index, uzbek_vectors, uzbek_metadata, exam_key='uzbek')
+                    print(f"✅ Узбекистан загружен, задач: {len(self.uzbek_manager.active_exams['uzbek']['metadata'])}")
                 else:
                     print("⚠️ Файлы Узбекистана не найдены")
                     self.uzbek_manager = None
@@ -119,8 +119,8 @@ class AITeacherService:
                 india_metadata = os.path.join(base_dir, "data", "vector_stores", "india", "metadata.pkl")
                 if os.path.exists(india_index) and os.path.exists(india_vectors) and os.path.exists(india_metadata):
                     self.india_manager = ExamManager(self.vector_store)
-                    self.india_manager.init_ent(india_index, india_vectors, india_metadata)
-                    print(f"✅ Индия загружен, задач: {len(self.india_manager.active_exams['ent']['metadata'])}")
+                    self.india_manager.init_ent(india_index, india_vectors, india_metadata, exam_key='india')
+                    print(f"✅ Индия загружен, задач: {len(self.india_manager.active_exams['india']['metadata'])}")
                 else:
                     print("⚠️ Файлы Индии не найдены")
                     self.india_manager = None
@@ -321,17 +321,17 @@ class AITeacherService:
         
         # Генерация теста с использованием соответствующего RAG менеджера
         if is_gaokao and self.gaokao_manager is not None:
-            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.gaokao_manager)
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.gaokao_manager, store_key='gaokao')
         elif is_ege and self.ege_manager is not None:
-            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.ege_manager)
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.ege_manager, store_key='ege')
         elif is_sat and self.sat_manager is not None:
-            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.sat_manager)
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.sat_manager, store_key='sat')
         elif is_uzbek and self.uzbek_manager is not None:
-            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.uzbek_manager)
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.uzbek_manager, store_key='uzbek')
         elif is_india and self.india_manager is not None:
-            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.india_manager)
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.india_manager, store_key='india')
         elif self.rag_available and subject == "математика" and exam_type == "ent":
-            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.exam_manager)
+            questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.exam_manager, store_key='ent')
         else:
             questions = await deepseek_client.generate_initial_test(exam_details, 15, subject)
         
@@ -347,7 +347,7 @@ class AITeacherService:
         return session
 
     # ==================== ГЕНЕРАЦИЯ ТЕСТА С RAG ====================
-    async def _generate_test_with_rag(self, exam_details: Dict, exam_type: str, num_questions: int = 15, manager=None) -> List[Dict]:
+    async def _generate_test_with_rag(self, exam_details: Dict, exam_type: str, num_questions: int = 15, manager=None, store_key='ent') -> List[Dict]:
         if manager is None:
             return await deepseek_client.generate_initial_test(exam_details, num_questions, "general")
         
@@ -358,10 +358,10 @@ class AITeacherService:
         for topic_info in topics:
             topic_name = topic_info.get('name', '')
             similar = []
-            if manager and 'ent' in manager.active_exams:
+            if manager and store_key in manager.active_exams:
                 try:
                     similar = manager.search_problems(
-                        'ent', 
+                        store_key, 
                         topic_name, 
                         k=questions_per_topic * 2
                     )
@@ -419,20 +419,20 @@ class AITeacherService:
     async def generate_lesson_with_rag(self, topic: str, target_level: int, current_level: int, exam_type: str = 'ent', subject: str = 'математика', is_gaokao: bool = False, is_ege: bool = False, is_sat: bool = False, is_uzbek: bool = False, is_india: bool = False) -> Dict:
         examples = []
         
-        if is_india and self.india_manager and 'ent' in self.india_manager.active_exams:
-            examples = self.india_manager.get_similar_for_generation('ent', topic, num_examples=5)
+        if is_india and self.india_manager and 'india' in self.india_manager.active_exams:
+            examples = self.india_manager.get_similar_for_generation('india', topic, num_examples=5)
             print(f"  RAG (India): найдено {len(examples)} примеров для урока по теме {topic}")
-        elif is_uzbek and self.uzbek_manager and 'ent' in self.uzbek_manager.active_exams:
-            examples = self.uzbek_manager.get_similar_for_generation('ent', topic, num_examples=5)
+        elif is_uzbek and self.uzbek_manager and 'uzbek' in self.uzbek_manager.active_exams:
+            examples = self.uzbek_manager.get_similar_for_generation('uzbek', topic, num_examples=5)
             print(f"  RAG (Узбекистан): найдено {len(examples)} примеров для урока по теме {topic}")
-        elif is_sat and self.sat_manager and 'ent' in self.sat_manager.active_exams:
-            examples = self.sat_manager.get_similar_for_generation('ent', topic, num_examples=5)
+        elif is_sat and self.sat_manager and 'sat' in self.sat_manager.active_exams:
+            examples = self.sat_manager.get_similar_for_generation('sat', topic, num_examples=5)
             print(f"  RAG (SAT): найдено {len(examples)} примеров для урока по теме {topic}")
-        elif is_gaokao and self.gaokao_manager and 'ent' in self.gaokao_manager.active_exams:
-            examples = self.gaokao_manager.get_similar_for_generation('ent', topic, num_examples=5)
+        elif is_gaokao and self.gaokao_manager and 'gaokao' in self.gaokao_manager.active_exams:
+            examples = self.gaokao_manager.get_similar_for_generation('gaokao', topic, num_examples=5)
             print(f"  RAG (GAOKAO): найдено {len(examples)} примеров для урока по теме {topic}")
-        elif is_ege and self.ege_manager and 'ent' in self.ege_manager.active_exams:
-            examples = self.ege_manager.get_similar_for_generation('ent', topic, num_examples=5)
+        elif is_ege and self.ege_manager and 'ege' in self.ege_manager.active_exams:
+            examples = self.ege_manager.get_similar_for_generation('ege', topic, num_examples=5)
             print(f"  RAG (ЕГЭ): найдено {len(examples)} примеров для урока по теме {topic}")
         elif not is_gaokao and not is_ege and not is_sat and not is_uzbek and not is_india and subject == "математика" and self.exam_manager and exam_type in self.exam_manager.active_exams:
             examples = self.exam_manager.get_similar_for_generation(exam_type, topic, num_examples=5)
@@ -466,7 +466,7 @@ class AITeacherService:
             traceback.print_exc()
             return text
 
-    async def generate_progress_test_with_rag(self, weak_topics: List[str], exam_details: Dict, exam_type: str = 'ent', num_questions: int = 10, manager=None) -> List[Dict]:
+    async def generate_progress_test_with_rag(self, weak_topics: List[str], exam_details: Dict, exam_type: str = 'ent', num_questions: int = 10, manager=None, store_key='ent') -> List[Dict]:
         if manager is None:
             manager = self.exam_manager
         
@@ -474,8 +474,8 @@ class AITeacherService:
         questions_per_topic = max(1, num_questions // len(weak_topics))
         for topic in weak_topics[:5]:
             similar = []
-            if manager and 'ent' in manager.active_exams:
-                similar = manager.search_problems('ent', topic, k=questions_per_topic)
+            if manager and store_key in manager.active_exams:
+                similar = manager.search_problems(store_key, topic, k=questions_per_topic)
                 print(f"  RAG: найдено {len(similar)} задач по теме {topic}")
             for s in similar[:questions_per_topic]:
                 if len(questions) < num_questions:
@@ -862,17 +862,17 @@ class AITeacherService:
         is_india = self._is_india(session.exam_name)
         
         if is_gaokao and self.gaokao_manager is not None:
-            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.gaokao_manager)
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.gaokao_manager, 'gaokao')
         elif is_ege and self.ege_manager is not None:
-            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.ege_manager)
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.ege_manager, 'ege')
         elif is_sat and self.sat_manager is not None:
-            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.sat_manager)
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.sat_manager, 'sat')
         elif is_uzbek and self.uzbek_manager is not None:
-            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.uzbek_manager)
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.uzbek_manager, 'uzbek')
         elif is_india and self.india_manager is not None:
-            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.india_manager)
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.india_manager, 'india')
         elif self.rag_available and exam_type in self.exam_manager.active_exams:
-            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.exam_manager)
+            questions = await self.generate_progress_test_with_rag(weak_topics, session.exam_details, exam_type, 15, self.exam_manager, 'ent')
         else:
             questions = await deepseek_client.generate_progress_test(weak_topics, session.exam_details, num_questions=15)
         
@@ -886,6 +886,37 @@ class AITeacherService:
         db.add(test_result)
         db.commit()
         return questions
+
+    # ==================== ПОЛЬЗОВАТЕЛЬСКИЕ ТЕСТЫ ====================
+    async def _custom_train(self, prompt: str) -> str:
+        """Обучает ИИ на основе пользовательского теста"""
+        response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "Ты – ИИ учитель, который запоминает структуру тестов и может генерировать похожие вопросы."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=500)
+        return response.strip()
+
+    async def _generate_similar_from_custom(self, examples_text: str, num_questions: int = 5) -> str:
+        """Генерирует похожие вопросы на основе примеров"""
+        prompt = f"""
+Ты – генератор тестов. Пользователь предоставил примеры своих вопросов:
+
+{examples_text}
+
+На основе этих примеров, сгенерируй {num_questions} НОВЫХ вопросов в ТОМ ЖЕ СТИЛЕ и ТОЙ ЖЕ СЛОЖНОСТИ.
+Каждый вопрос должен быть оригинальным, но похожим по структуре, формулировкам и сложности.
+Для каждого вопроса укажи текст, правильный ответ и пояснение.
+
+Верни ТОЛЬКО JSON массив:
+[
+  {{"question": "текст вопроса", "correct_answer": "ответ", "explanation": "пояснение"}}
+]
+"""
+        response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "Ты генератор тестов. Отвечай только JSON массивом."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=3000)
+        return response
 
     # ==================== ЧАТ-БОТ ====================
     async def chat_with_bot(self, db: Session, session_id: int, lesson_id: int, question: str) -> str:

@@ -1,6 +1,7 @@
+# backend/app/schemas.py
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 class UserCreate(BaseModel):
     email: str
@@ -32,7 +33,6 @@ class SessionResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-# Убираем session_id из тела запроса, так как он передаётся через URL
 class TestSubmit(BaseModel):
     answers: Dict[str, str]
 
@@ -42,3 +42,29 @@ class TimeSet(BaseModel):
 class LessonAnswer(BaseModel):
     lesson_id: int
     user_answers: Dict[str, str]
+
+# ========== НОВЫЕ СХЕМЫ ДЛЯ ПОЛЬЗОВАТЕЛЬСКИХ ТЕСТОВ ==========
+class QuestionItem(BaseModel):
+    text: str
+    correct_answer: str
+    explanation: Optional[str] = None
+
+class CustomTestCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    questions: List[QuestionItem]
+
+class CustomTestResponse(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    description: Optional[str]
+    questions: List[QuestionItem]
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class CustomTestSubmit(BaseModel):
+    test_id: int
+    answers: Dict[str, str]

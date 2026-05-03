@@ -8,6 +8,8 @@ import os
 import json
 
 from .database import engine, get_db
+from .models import Base, User, CustomTest
+from .deepseek_client import deepseek_client
 from .models import Base
 from .schemas import *
 from .services import AITeacherService
@@ -281,3 +283,183 @@ async def add_custom_exam(exam_data: dict, db: Session = Depends(get_db)):
         raise HTTPException(400, "Не указано название экзамена")
     save_custom_exam(exam_name, exam_data)
     return {"status": "ok", "message": f"Экзамен '{exam_name}' сохранён"}
+
+# ========== ПОЛЬЗОВАТЕЛЬСКИЕ ТЕСТЫ (Custom Tests) ==========
+
+@app.post("/api/custom_tests")
+async def create_custom_test(
+    test_data: CustomTestCreate,
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Создать новый пользовательский тест"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "Пользователь не найден")
+    
+    new_test = CustomTest(
+        user_id=user_id,
+        name=test_data.name,
+        description=test_data.description,
+        questions=[q.dict() for q in test_data.questions]
+    )
+    db.add(new_test)
+    db.commit()
+    db.refresh(new_test)
+    return new_test
+
+@app.get("/api/custom_tests")
+async def get_user_tests(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Получить все тесты пользователя"""
+    tests = db.query(CustomTest).filter(CustomTest.user_id == user_id).all()
+    return tests
+
+@app.get("/api/custom_tests/{test_id}")
+async def get_custom_test(
+    test_id: int,
+    db: Session = Depends(get_db)
+):
+    """Получить тест по ID"""
+    test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
+    if not test:
+        raise HTTPException(404, "Тест не найден")
+    return test
+
+@app.delete("/api/custom_tests/{test_id}")
+async def delete_custom_test(
+    test_id: int,
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Удалить тест (только владелец)"""
+    test = db.query(CustomTest).filter(CustomTest.id == test_id, CustomTest.user_id == user_id).first()
+    if not test:
+        raise HTTPException(404, "Тест не найден или не принадлежит вам")
+    db.delete(test)
+    db.commit()
+    return {"status": "ok", "message": "Тест удалён"}
+
+@app.post("/api/custom_tests/{test_id}/train")
+async def train_ai_on_custom_test(
+    test_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Обучить ИИ на основе пользовательского теста.
+    DeepSeek сохранит структуру теста и сможет генерировать похожие вопросы.
+    """
+    test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
+    if not test:
+        raise HTTPException(404, "Тест не найден")
+    
+    # Формируем промпт для обучения ИИ
+    prompt = f"""
+Ты – ИИ учитель. Пользователь создал тест с названием "{test.name}" и хочет, чтобы ты запомнил его структуру и стиль вопросов.
+
+Вот тест:
+ОПИСАНИЕ: {test.description or 'нет описания'}
+
+ВОПРОСЫ:
+"""
+    for i, q in enumerate(test.questions, 1):
+        prompt += f"\n{i}. {q['text']}\n   Правильный ответ: {q['correct_answer']}\n   Пояснение: {q.get('explanation', 'нет')}\n"
+    
+    prompt += """
+Пожалуйста, проанализируй этот тест и запомни его формат, сложность, стиль формулировок. В будущих запросах, когда я попрошу сгенерировать похожие вопросы, используй этот тест как референс.
+Ответь коротко: "Тест запомнен. Готов генерировать похожие задачи."
+"""
+    
+    response = await ai_service._custom_train(prompt)
+    return {"status": "trained", "message": response, "test_id": test_id}
+
+@app.post("/api/custom_tests/{test_id}/submit")
+async def submit_custom_test(
+    test_id: int,
+    submission: CustomTestSubmit,
+    db: Session = Depends(get_db)
+):
+    """Пройти тест и получить оценку"""
+    test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
+    if not test:
+        raise HTTPException(404, "Тест не найден")
+    
+    results = []
+    score = 0
+    total = len(test.questions)
+    
+    for i, q in enumerate(test.questions):
+        user_answer = submission.answers.get(str(i), "").strip().lower()
+        correct = q["correct_answer"].strip().lower()
+        is_correct = (user_answer == correct)
+        if is_correct:
+            score += 1
+        results.append({
+            "question": q["text"],
+            "user_answer": submission.answers.get(str(i), ""),
+            "correct_answer": correct,
+            "is_correct": is_correct,
+            "explanation": q.get("explanation", "")
+        })
+    
+    percentage = (score / total) * 100
+    grade = "Отлично!" if percentage >= 80 else "Хорошо" if percentage >= 60 else "Нужно повторить"
+    
+    # Сохраняем историю прохождения (можно создать таблицу)
+    return {
+        "test_name": test.name,
+        "total": total,
+        "correct": score,
+        "score": percentage,
+        "grade": grade,
+        "results": results
+    }
+
+@app.post("/api/custom_tests/{test_id}/generate_similar")
+async def generate_similar_questions(
+    test_id: int,
+    num_questions: int = 5,
+    db: Session = Depends(get_db)
+):
+    """
+    Генерирует новые вопросы, похожие на стиль и сложность пользовательского теста.
+    """
+    test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
+    if not test:
+        raise HTTPException(404, "Тест не найден")
+    
+    # Берём первые 3 вопроса как примеры
+    examples = test.questions[:3]
+    examples_text = "\n".join([f"{i+1}. {q['text']} -> {q['correct_answer']}" for i, q in enumerate(examples)])
+    
+    prompt = f"""
+Ты – генератор тестов. Пользователь предоставил примеры своих вопросов:
+
+{examples_text}
+
+На основе этих примеров, сгенерируй {num_questions} НОВЫХ вопросов в ТОМ ЖЕ СТИЛЕ и ТОЙ ЖЕ СЛОЖНОСТИ.
+Каждый вопрос должен быть оригинальным, но похожим по структуре, формулировкам и сложности.
+Для каждого вопроса укажи текст, правильный ответ и пояснение.
+
+Верни ТОЛЬКО JSON массив:
+[
+  {{"question": "текст вопроса", "correct_answer": "ответ", "explanation": "пояснение"}}
+]
+"""
+    response = await deepseek_client.chat_completion([
+        {"role": "system", "content": "Ты генератор тестов. Отвечай только JSON массивом."},
+        {"role": "user", "content": prompt}
+    ], max_tokens=3000)
+    
+    try:
+        import re
+        json_match = re.search(r'\[.*\]', response, re.DOTALL)
+        if json_match:
+            questions = json.loads(json_match.group())
+            return {"questions": questions, "count": len(questions)}
+        else:
+            return {"error": "Не удалось распарсить ответ", "raw": response}
+    except Exception as e:
+        return {"error": str(e)}

@@ -13,6 +13,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     sessions = relationship('Session', back_populates='user', cascade="all, delete-orphan")
+    custom_tests = relationship('CustomTest', back_populates='user', cascade="all, delete-orphan")  # НОВОЕ
 
 class Session(Base):
     __tablename__ = 'sessions'
@@ -39,7 +40,7 @@ class TestResult(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey('sessions.id', ondelete='CASCADE'))
-    test_type = Column(String)  # initial, progress, final
+    test_type = Column(String)  # initial, progress, module_test, custom
     questions = Column(JSON, default=[])
     answers = Column(JSON, default={})
     evaluation = Column(JSON, default={})
@@ -72,3 +73,17 @@ class ProgressHistory(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     
     session = relationship('Session', back_populates='progress_history')
+
+# ========== НОВАЯ МОДЕЛЬ: ПОЛЬЗОВАТЕЛЬСКИЕ ТЕСТЫ ==========
+class CustomTest(Base):
+    __tablename__ = 'custom_tests'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    questions = Column(JSON, nullable=False)  # [{"text": "...", "correct_answer": "...", "explanation": "..."}]
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship('User', back_populates='custom_tests')

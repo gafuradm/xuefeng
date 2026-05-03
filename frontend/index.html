@@ -1,4 +1,4 @@
-<!-- frontend/index.html - исправьте пути -->
+<!-- frontend/index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -22,6 +22,7 @@
         <header>
             <h1>🎓 Universal AI Teacher</h1>
             <p>Персональный ИИ учитель для подготовки к любым экзаменам</p>
+            <button id="showTestCreatorBtn" class="btn-secondary" style="position: absolute; top: 20px; right: 20px;" onclick="showTestCreator()">✏️ Свой тест</button>
         </header>
 
         <main>
@@ -73,6 +74,48 @@
                 </div>
                 <div id="lessonContent"></div>
                 <div id="testContent" style="display:none"></div>
+            </div>
+
+            <!-- Шаг 6: Создание пользовательского теста -->
+            <div id="step6" class="step" style="display:none">
+                <h2>📝 Создать свой тест</h2>
+                <div class="form-group">
+                    <label>Название теста:</label>
+                    <input type="text" id="customTestName" placeholder="например: Моя контрольная по тригонометрии">
+                </div>
+                <div class="form-group">
+                    <label>Описание (необязательно):</label>
+                    <textarea id="customTestDesc" rows="2" placeholder="Краткое описание теста"></textarea>
+                </div>
+                <div id="questionsList"></div>
+                <button onclick="addQuestionField()" class="btn-secondary">➕ Добавить вопрос</button>
+                <button onclick="saveCustomTest()" class="btn-primary">💾 Сохранить тест</button>
+                <button onclick="trainCustomTest()" class="btn-primary">🤖 Обучить ИИ</button>
+                <button onclick="showCustomTestsList()" class="btn-secondary">📋 Мои тесты</button>
+                <button onclick="backToMainMenu()" class="btn-secondary">← Главное меню</button>
+            </div>
+
+            <!-- Шаг 7: Список пользовательских тестов -->
+            <div id="step7" class="step" style="display:none">
+                <h2>📋 Мои тесты</h2>
+                <div id="customTestsList"></div>
+                <button onclick="showTestCreator()" class="btn-secondary">➕ Создать новый</button>
+                <button onclick="backToMainMenu()" class="btn-secondary">← Главное меню</button>
+            </div>
+
+            <!-- Шаг 8: Прохождение пользовательского теста -->
+            <div id="step8" class="step" style="display:none">
+                <h2 id="takingTestName"></h2>
+                <div id="takingTestQuestions"></div>
+                <button onclick="submitCustomTest()" class="btn-primary">Отправить ответы</button>
+                <button onclick="showCustomTestsList()" class="btn-secondary">← К списку тестов</button>
+            </div>
+
+            <!-- Шаг 9: Результаты пользовательского теста -->
+            <div id="step9" class="step" style="display:none">
+                <h2>📊 Результаты теста</h2>
+                <div id="customTestResults"></div>
+                <button onclick="showCustomTestsList()" class="btn-secondary">← К списку тестов</button>
             </div>
         </main>
     </div>

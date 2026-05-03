@@ -1,0 +1,383 @@
+Q.2
+Q.4
+SECTION 2 (Maximum Marks: 12)
+This section contains THREE (03) questions.
+Each question has FOUR options (A), (B), (C) and (D). ONE OR MORE THAN ONE of these four option(s) is(are) correct answer(s).
+For each question, choose the option(s) corresponding to (all) the correct answer(s).
+Answer to each question will be evaluated according to the following marking scheme:
+Full Marks	: +4 ONLY if (all) the correct option(s) is(are) chosen;
+Partial Marks	: +3 If all the four options are correct but ONLY three options are chosen;
+Partial Marks	: +2 If three or more options are correct but ONLY two options are chosen, both of which are correct;
+Partial Marks	: +1 If two or more options are correct but ONLY one option is chosen and it is a correct option;
+Zero Marks	:	0 If none of the options is chosen (i.e. the question is unanswered);
+Negative Marks :  −2 In all other cases.
+For example, in a question, if (A), (B) and (D) are the ONLY three options corresponding to correct answers, then
+choosing ONLY (A), (B) and (D) will get +4 marks; choosing ONLY (A) and (B) will get +2 marks; choosing ONLY (A) and (D) will get +2 marks; choosing ONLY (B) and (D) will get +2 marks; choosing ONLY (A) will get +1 mark;
+choosing ONLY (B) will get +1 mark; choosing ONLY (D) will get +1 mark;
+choosing no option (i.e. the question is unanswered) will get 0 marks; and choosing any other combination of options will get −2 marks.
+Q.14
+Q.15
+END OF THE QUESTION PAPER
+Q.1
+Q.2
+Q.3
+Q.4
+SECTION 2 (Maximum Marks: 12)
+This section contains THREE (03) questions.
+Each question has FOUR options (A), (B), (C) and (D). ONE OR MORE THAN ONE of these four option(s) is(are) correct answer(s).
+For each question, choose the option(s) corresponding to (all) the correct answer(s).
+Answer to each question will be evaluated according to the following marking scheme:
+Full Marks	: +4 ONLY if (all) the correct option(s) is(are) chosen;
+Partial Marks	: +3 If all the four options are correct but ONLY three options are chosen;
+Partial Marks	: +2 If three or more options are correct but ONLY two options are chosen, both of which are correct;
+Partial Marks	: +1 If two or more options are correct but ONLY one option is chosen and it is a correct option;
+Zero Marks	:	0 If none of the options is chosen (i.e. the question is unanswered);
+Negative Marks :  −2 In all other cases.
+For example, in a question, if (A), (B) and (D) are the ONLY three options corresponding to correct answers, then
+choosing ONLY (A), (B) and (D) will get +4 marks; choosing ONLY (A) and (B) will get +2 marks; choosing ONLY (A) and (D) will get +2 marks; choosing ONLY (B) and (D) will get +2 marks; choosing ONLY (A) will get +1 mark;
+choosing ONLY (B) will get +1 mark; choosing ONLY (D) will get +1 mark;
+choosing no option (i.e. the question is unanswered) will get 0 marks; and choosing any other combination of options will get −2 marks.
+Q.5
+Q.6
+Q.7
+Q.8
+Q.9
+Q.10
+Q.11
+Q.12
+Q.13
+Q.14
+Q.15  A circuit with an electrical load having impedance 𝑍 is connected with an AC source as shown in the diagram. The source voltage varies in time as 𝑉(𝑡) = 300 sin(400𝑡) V, where 𝑡 is time in s. List-I shows various options for the load. The possible currents 𝑖(𝑡) in the circuit as a function of time are given in List-II.
+Choose the option that describes the correct match between the entries in List-I to those in List-II.
+List-I	List-II
+(1)
+(P)
+(2)
+(Q)
+(R)	(3)
+(S)	(4)
+(5)
+Q.16
+END OF THE QUESTION PAPER
+Q.1
+Q.2
+Q.3
+Q.4
+SECTION 2 (Maximum Marks: 12)
+This section contains THREE (03) questions.
+Each question has FOUR options (A), (B), (C) and (D). ONE OR MORE THAN ONE of these four option(s) is(are) correct answer(s).
+For each question, choose the option(s) corresponding to (all) the correct answer(s).
+Answer to each question will be evaluated according to the following marking scheme:
+Full Marks	: +4 ONLY if (all) the correct option(s) is(are) chosen;
+Partial Marks	: +3 If all the four options are correct but ONLY three options are chosen;
+Partial Marks	: +2 If three or more options are correct but ONLY two options are chosen, both of which are correct;
+Partial Marks	: +1 If two or more options are correct but ONLY one option is chosen and it is a correct option;
+Zero Marks	:	0 If none of the options is chosen (i.e. the question is unanswered);
+Negative Marks :  −2 In all other cases.
+For example, in a question, if (A), (B) and (D) are the ONLY three options corresponding to correct answers, then
+choosing ONLY (A), (B) and (D) will get +4 marks; choosing ONLY (A) and (B) will get +2 marks; choosing ONLY (A) and (D) will get +2 marks; choosing ONLY (B) and (D) will get +2 marks; choosing ONLY (A) will get +1 mark;
+choosing ONLY (B) will get +1 mark; choosing ONLY (D) will get +1 mark;
+choosing no option (i.e. the question is unanswered) will get 0 marks; and choosing any other combination of options will get −2 marks.
+Q.5
+Q.6
+Q.7
+Q.8
+Q.9
+Q.10
+Q.11
+Q.12
+Q.13
+Q.14
+Q.15
+Q.16
+END OF THE QUESTION PAPER
+Q.1 | Let ℝ denote the set of all real numbers. Let 𝑎𝑖, 𝑏𝑖 ∈ ℝ for 𝑖 ∈ {1, 2, 3}.
+Define the functions 𝑓: ℝ → ℝ, 𝑔: ℝ → ℝ, and ℎ: ℝ → ℝ by
+
+𝑓(𝑥) = 𝑎1 + 10𝑥 + 𝑎2𝑥2 + 𝑎3𝑥3 + 𝑥4,
+𝑔(𝑥) = 𝑏1 + 3𝑥 + 𝑏2𝑥2 + 𝑏3𝑥3 + 𝑥4, ℎ(𝑥) = 𝑓(𝑥 + 1) − 𝑔(𝑥 + 2).
+
+If 𝑓(𝑥) ≠ 𝑔(𝑥) for every 𝑥 ∈ ℝ, then the coefficient of 𝑥3 in ℎ(𝑥) is | Let ℝ denote the set of all real numbers. Let 𝑎𝑖, 𝑏𝑖 ∈ ℝ for 𝑖 ∈ {1, 2, 3}.
+Define the functions 𝑓: ℝ → ℝ, 𝑔: ℝ → ℝ, and ℎ: ℝ → ℝ by
+
+𝑓(𝑥) = 𝑎1 + 10𝑥 + 𝑎2𝑥2 + 𝑎3𝑥3 + 𝑥4,
+𝑔(𝑥) = 𝑏1 + 3𝑥 + 𝑏2𝑥2 + 𝑏3𝑥3 + 𝑥4, ℎ(𝑥) = 𝑓(𝑥 + 1) − 𝑔(𝑥 + 2).
+
+If 𝑓(𝑥) ≠ 𝑔(𝑥) for every 𝑥 ∈ ℝ, then the coefficient of 𝑥3 in ℎ(𝑥) is
+(A) | 8
+(B) | 2
+(C) | −4
+(D) | −6
+(A) | 13
+
+36 | (B) | 1
+
+3 | (C) | 19
+
+60 | (D) | 1
+
+4
+Q.3 | Let ℝ denote the set of all real numbers. Define the function 𝑓: ℝ → ℝ by
+
+2 − 2𝑥2 − 𝑥2 sin 1	if 𝑥 ≠ 0,
+𝑓(𝑥) = {	𝑥
+2	if 𝑥 = 0 .
+
+
+Then which one of the following statements is TRUE? | Let ℝ denote the set of all real numbers. Define the function 𝑓: ℝ → ℝ by
+
+2 − 2𝑥2 − 𝑥2 sin 1	if 𝑥 ≠ 0,
+𝑓(𝑥) = {	𝑥
+2	if 𝑥 = 0 .
+
+
+Then which one of the following statements is TRUE?
+(A) | The function 𝑓 is NOT differentiable at 𝑥 = 0
+(B) | There is a positive real number 𝛿, such that 𝑓 is a decreasing function on the interval (0, 𝛿)
+(C) | For any positive real number 𝛿, the function 𝑓 is NOT an increasing function on the interval
+(−𝛿, 0)
+(D) | 𝑥 = 0 is a point of local minima of 𝑓
+(A) | 32 | (B) | 8 | (C) | 16 | (D) | 24
+Q.5 | Let 𝐿1 be the line of intersection of the planes given by the equations
+
+2𝑥 + 3𝑦 + 𝑧 = 4 and 𝑥 + 2𝑦 + 𝑧 = 5 .
+
+Let 𝐿2 be the line passing through the point 𝑃(2, −1, 3) and parallel to 𝐿1. Let 𝑀 denote the plane given by the equation
+
+2𝑥 + 𝑦 − 2𝑧 = 6 .
+
+Suppose that the line 𝐿2 meets the plane 𝑀 at the point 𝑄. Let 𝑅 be the foot of the perpendicular drawn from 𝑃 to the plane 𝑀 .
+
+Then which of the following statements is (are) TRUE? | Let 𝐿1 be the line of intersection of the planes given by the equations
+
+2𝑥 + 3𝑦 + 𝑧 = 4 and 𝑥 + 2𝑦 + 𝑧 = 5 .
+
+Let 𝐿2 be the line passing through the point 𝑃(2, −1, 3) and parallel to 𝐿1. Let 𝑀 denote the plane given by the equation
+
+2𝑥 + 𝑦 − 2𝑧 = 6 .
+
+Suppose that the line 𝐿2 meets the plane 𝑀 at the point 𝑄. Let 𝑅 be the foot of the perpendicular drawn from 𝑃 to the plane 𝑀 .
+
+Then which of the following statements is (are) TRUE?
+(A) | The length of the line segment 𝑃𝑄 is 9√3
+(B) | The length of the line segment 𝑄𝑅 is 15
+(C) | The area of Δ𝑃𝑄𝑅 is 3 √234
+2
+(D) | The acute angle between the line segments 𝑃𝑄 and 𝑃𝑅 is cos−1 ( 1  )
+2√3
+Q.6 | Let ℕ denote the set of all natural numbers, and ℤ denote the set of all integers. Consider the functions 𝑓: ℕ → ℤ and 𝑔: ℤ → ℕ defined by
+
+(𝑛 + 1)/2	if 𝑛 is odd ,
+𝑓(𝑛) = {
+(4 − 𝑛)/2	if 𝑛 is even ,
+and
+
+3 + 2𝑛  if 𝑛 ≥ 0 ,
+𝑔(𝑛) = {
+−2𝑛	if 𝑛 < 0 .
+Define (𝑔 ∘ 𝑓)(𝑛) = 𝑔(𝑓(𝑛)) for all 𝑛 ∈ ℕ, and (𝑓 ∘ 𝑔)(𝑛) = 𝑓(𝑔(𝑛)) for all 𝑛 ∈ ℤ. Then which of the following statements is (are) TRUE? | Let ℕ denote the set of all natural numbers, and ℤ denote the set of all integers. Consider the functions 𝑓: ℕ → ℤ and 𝑔: ℤ → ℕ defined by
+
+(𝑛 + 1)/2	if 𝑛 is odd ,
+𝑓(𝑛) = {
+(4 − 𝑛)/2	if 𝑛 is even ,
+and
+
+3 + 2𝑛  if 𝑛 ≥ 0 ,
+𝑔(𝑛) = {
+−2𝑛	if 𝑛 < 0 .
+Define (𝑔 ∘ 𝑓)(𝑛) = 𝑔(𝑓(𝑛)) for all 𝑛 ∈ ℕ, and (𝑓 ∘ 𝑔)(𝑛) = 𝑓(𝑔(𝑛)) for all 𝑛 ∈ ℤ. Then which of the following statements is (are) TRUE?
+(A) | 𝑔 ∘ 𝑓 is NOT one-one and 𝑔 ∘ 𝑓 is NOT onto
+(B) | 𝑓 ∘ 𝑔 is NOT one-one but 𝑓 ∘ 𝑔 is onto
+(C) | 𝑔 is one-one and 𝑔 is onto
+(D) | 𝑓 is NOT one-one but 𝑓 is onto
+Q.7 | Let ℝ denote the set of all real numbers. Let 𝑧1 = 1 + 2𝑖 and 𝑧2 = 3𝑖 be two complex numbers, where 𝑖 = √−1 . Let
+𝑆 = {(𝑥, 𝑦) ∈ ℝ × ℝ ∶ |𝑥 + 𝑖𝑦 − 𝑧1| = 2|𝑥 + 𝑖𝑦 − 𝑧2| }.
+
+Then which of the following statements is (are) TRUE? | Let ℝ denote the set of all real numbers. Let 𝑧1 = 1 + 2𝑖 and 𝑧2 = 3𝑖 be two complex numbers, where 𝑖 = √−1 . Let
+𝑆 = {(𝑥, 𝑦) ∈ ℝ × ℝ ∶ |𝑥 + 𝑖𝑦 − 𝑧1| = 2|𝑥 + 𝑖𝑦 − 𝑧2| }.
+
+Then which of the following statements is (are) TRUE? | Let ℝ denote the set of all real numbers. Let 𝑧1 = 1 + 2𝑖 and 𝑧2 = 3𝑖 be two complex numbers, where 𝑖 = √−1 . Let
+𝑆 = {(𝑥, 𝑦) ∈ ℝ × ℝ ∶ |𝑥 + 𝑖𝑦 − 𝑧1| = 2|𝑥 + 𝑖𝑦 − 𝑧2| }.
+
+Then which of the following statements is (are) TRUE? | Let ℝ denote the set of all real numbers. Let 𝑧1 = 1 + 2𝑖 and 𝑧2 = 3𝑖 be two complex numbers, where 𝑖 = √−1 . Let
+𝑆 = {(𝑥, 𝑦) ∈ ℝ × ℝ ∶ |𝑥 + 𝑖𝑦 − 𝑧1| = 2|𝑥 + 𝑖𝑦 − 𝑧2| }.
+
+Then which of the following statements is (are) TRUE?
+(A) | 𝑆 is a circle with centre | (− 1 , | 10)
+3
+(B) | 𝑆 is a circle with centre | 1 , 8)
+(C) | 𝑆 is a circle with radius | √2
+(C) | 𝑆 is a circle with radius | 3
+(D) | 𝑆 is a circle with radius | 2√2
+(D) | 𝑆 is a circle with radius | 3
+Q.8 | Let the set of all relations 𝑅 on the set {𝑎, 𝑏, 𝑐, 𝑑, 𝑒, 𝑓}, such that 𝑅 is reflexive and symmetric, and
+𝑅 contains exactly 10 elements, be denoted by 𝒮.
+Then the number of elements in 𝒮 is 	.
+Q.9 | For any two points 𝑀 and 𝑁 in the 𝑋𝑌-plane, let 𝑀⃗⃗⃗⃗𝑁⃗⃗→ denote the vector from 𝑀 to 𝑁, and 0⃗→ denote the zero vector. Let 𝑃, 𝑄 and 𝑅 be three distinct points in the 𝑋𝑌-plane. Let 𝑆 be a point inside the triangle Δ𝑃𝑄𝑅 such that
+
+𝑆⃗⃗𝑃⃗⃗→ + 5 𝑆⃗⃗⃗𝑄⃗⃗→ + 6 𝑆⃗⃗⃗𝑅⃗⃗→ = 0⃗→.
+
+Let 𝐸 and 𝐹 be the mid-points of the sides 𝑃𝑅 and 𝑄𝑅, respectively. Then the value of
+
+length of the line segment 𝐸𝐹 length of the line segment 𝐸𝑆
+is 	.
+Q.10 | Let 𝑆 be the set of all seven-digit numbers that can be formed using the digits 0, 1 and 2. For example, 2210222 is in 𝑆, but 0210222 is NOT in 𝑆.
+Then the number of elements 𝑥 in 𝑆 such that at least one of the digits 0 and 1 appears exactly twice in 𝑥, is equal to 	.
+Q.11 | Let 𝛼 and 𝛽 be the real numbers such that
+
+𝑥
+1	𝛼	1
+lim	3 (  ∫	2 𝑑𝑡 + 𝛽𝑥 cos 𝑥 ) = 2 .
+𝑥→0 𝑥	2	1 − 𝑡
+0
+
+
+
+Then the value of 𝛼 + 𝛽 is 	.
+Q.12 | Let ℝ denote the set of all real numbers. Let 𝑓: ℝ → ℝ be a function such that 𝑓(𝑥) > 0 for all
+𝑥 ∈ ℝ , and 𝑓(𝑥 + 𝑦) = 𝑓(𝑥)𝑓(𝑦) for all 𝑥, 𝑦 ∈ ℝ.
+
+Let the real numbers 𝑎1, 𝑎2, … , 𝑎50 be in an arithmetic progression. If 𝑓(𝑎31) = 64𝑓(𝑎25), and
+
+50
+∑ 𝑓(𝑎𝑖) = 3(225 + 1) ,
+𝑖=1
+then the value of
+30
+∑ 𝑓(𝑎𝑖)
+𝑖=6
+is 	.
+Q.13 | For all 𝑥 > 0, let 𝑦1(𝑥), 𝑦2(𝑥), and 𝑦3(𝑥) be the functions satisfying
+
+𝑑𝑦1 − (sin 𝑥)2 𝑦  = 0,  𝑦 (1) = 5 ,
+𝑑𝑥	1	1
+𝑑𝑦2 − (cos 𝑥)2 𝑦  = 0, 𝑦 (1) = 1 ,
+𝑑𝑥	2	2	3
+
+	
+𝑑𝑦3 − 2−𝑥3) 𝑦 = 0,	𝑦 (1) = 3 , (	3		3
+𝑑𝑥	𝑥3	5𝑒
+
+respectively. Then
+𝑦1(𝑥)𝑦2(𝑥)𝑦3(𝑥) + 2𝑥 lim	3𝑥
+𝑥→0+	𝑒	sin 𝑥
+
+is equal to 	.
+Value | 4 | 5 | 8 | 9 | 6 | 12 | 11
+Frequency | 5 | 𝑓1 | 𝑓2 | 2 | 1 | 1 | 3
+(A) | (P) ⟶ (5) | (Q) ⟶ (3) | (R) ⟶ (2) | (S) ⟶ (4)
+(B) | (P) ⟶ (5) | (Q) ⟶ (2) | (R) ⟶ (3) | (S) ⟶ (1)
+(C) | (P) ⟶ (5) | (Q) ⟶ (3) | (R) ⟶ (2) | (S) ⟶ (1)
+(D) | (P) ⟶ (3) | (Q) ⟶ (2) | (R) ⟶ (5) | (S) ⟶ (4)
+(A) | (P) ⟶ (1) | (Q) ⟶ (3) | (R) ⟶ (2) | (S) ⟶ (5)
+(B) | (P) ⟶ (2) | (Q) ⟶ (1) | (R) ⟶ (4) | (S) ⟶ (3)
+(C) | (P) ⟶ (5) | (Q) ⟶ (1) | (R) ⟶ (4) | (S) ⟶ (3)
+(D) | (P) ⟶ (2) | (Q) ⟶ (3) | (R) ⟶ (1) | (S) ⟶ (5)
+Q.16	Let 𝑤⃗→ = 𝚤̂ + 𝚥̂ − 2𝑘̂, and 𝑢⃗→ and 𝑣→ be two vectors, such that 𝑢⃗→ × 𝑣→ = 𝑤⃗→ and 𝑣→ × 𝑤⃗→ = 𝑢⃗→. Let
+𝛼, 𝛽, 𝛾, and 𝑡 be real numbers such that
+𝑢⃗→ = 𝛼𝚤̂ + 𝛽𝚥̂ + 𝛾𝑘̂ , − 𝑡 𝛼 + 𝛽 + 𝛾 = 0,  𝛼 − 𝑡 𝛽 + 𝛾 = 0,  and 𝛼 + 𝛽 − 𝑡 𝛾 = 0. Match each entry in List-I to the correct entry in List-II and choose the correct option. | Q.16	Let 𝑤⃗→ = 𝚤̂ + 𝚥̂ − 2𝑘̂, and 𝑢⃗→ and 𝑣→ be two vectors, such that 𝑢⃗→ × 𝑣→ = 𝑤⃗→ and 𝑣→ × 𝑤⃗→ = 𝑢⃗→. Let
+𝛼, 𝛽, 𝛾, and 𝑡 be real numbers such that
+𝑢⃗→ = 𝛼𝚤̂ + 𝛽𝚥̂ + 𝛾𝑘̂ , − 𝑡 𝛼 + 𝛽 + 𝛾 = 0,  𝛼 − 𝑡 𝛽 + 𝛾 = 0,  and 𝛼 + 𝛽 − 𝑡 𝛾 = 0. Match each entry in List-I to the correct entry in List-II and choose the correct option.
+List-I | List-II
+(P) |𝑣→|2 is equal to | (1) 0
+(Q) If 𝛼 = √3 , then 𝛾2 is equal to | (2) 1
+(R) If 𝛼 = √3 , then (𝛽 + 𝛾)2 is equal to | (3) 2
+(S) If 𝛼 = √2 , then 𝑡 + 3 is equal to | (4) 3
+(5) 5
+(A) | (P) ⟶ (2) | (Q) ⟶ (1) | (R) ⟶ (4) | (S) ⟶ (5)
+(B) | (P) ⟶ (2) | (Q) ⟶ (4) | (R) ⟶ (3) | (S) ⟶ (5)
+(C) | (P) ⟶ (2) | (Q) ⟶ (1) | (R) ⟶ (4) | (S) ⟶ (3)
+(D) | (P) ⟶ (5) | (Q) ⟶ (4) | (R) ⟶ (1) | (S) ⟶ (3)
+(A) | 2	𝑔	𝑘
+√  (	+	)
+3 𝑅 − 𝑟	𝑚 | (B) | 2𝑔	𝑘
+√	+
+3(𝑅 − 𝑟)	𝑚
+(C) | 1	𝑔	𝑘
+√  (	+	)
+6 𝑅 − 𝑟	𝑚 | (D) | 1	𝑔	𝑘
+√  (	+	)
+4 𝑅 − 𝑟	𝑚
+(A) | 𝜋 | (B) | tan−1 (1)
+2 | (C) | 𝜋
+
+3 | (D) | 𝜋
+
+6
+(A) | (B)
+(C) | (D)
+(A) | 0.12 cm
+(B) | 0.11 cm
+(C) | 0.13 cm
+(D) | 0.14 cm
+(A) | If 𝑣0 = 1.5𝐾𝐿, the loop will stop before it enters completely inside the region of magnetic field.
+(B) | When the complete loop is inside the region of magnetic field, the net force acting on the loop is zero.
+(C) | If 𝑣  = 𝐾𝐿, the loop comes to rest at 𝑡 = (1 ) ln  5).
+		
+0	10	𝐾	(
+2
+(D) | If 𝑣0 = 3𝐾𝐿, the complete loop enters inside the region of magnetic field at time
+𝑡 = (1 ) ln 3).
+	
+(
+𝐾	2
+(A) | 3.2 × 10−5 | (B) | 32.0 × 10−6 | (C) | 3.0 × 10−5 | (D) | 3 × 10−5
+(A) | When the wave reflects from 𝑃 for the first time, the reflected wave is represented by
+𝑦 = 𝛼1y0 cos(𝜔𝑡 + 𝑘𝑥 + 𝜋) cm, where 𝛼1 is a positive constant.
+(B) | When the wave transmits through 𝑃 for the first time, the transmitted wave is represented by
+𝑦 = 𝛼2y0 cos(𝜔𝑡 − 𝑘𝑥) cm, where 𝛼2 is a positive constant.
+(C) | When the wave reflects from 𝑄 for the first time, the reflected wave is represented by
+𝑦 = 𝛼3y0 cos(𝜔𝑡 − 𝑘𝑥 + 𝜋) cm, where 𝛼3 is a positive constant.
+(D) | When the wave transmits through 𝑄 for the first time, the transmitted wave is represented by
+𝑦 = 𝛼4y0 cos(𝜔𝑡 − 4𝑘𝑥) cm, where 𝛼4 is a positive constant.
+(A) | P→3, Q→1, R→2, S→4
+(B) | P→4, Q→5, R→3, S→1
+(C) | P→2, Q→1, R→4, S→5
+(D) | P→2, Q→1, R→3, S→5
+(A) | P→3, Q→5, R→2, S→1
+(B) | P→1, Q→5, R→2, S→3
+(C) | P→3, Q→4, R→2, S→1
+(D) | P→1, Q→4, R→2, S→5
+(A) | P→4, Q→3, R→1, S→2
+(B) | P→5, Q→2, R→1, S→4
+(C) | P→5, Q→1, R→2, S→4
+(D) | P→3, Q→2, R→1, S→5
+(A) | N2 and N2O
+(B) | NH3 and NO2
+(C) | NO and N2O
+(D) | N2 and NH3
+(A) | [Co(CN)6]3 < [Co(NH3)6]3+ < [Co(NH3)5(H2O)]3+ < [Co(NH3)5(Cl)]2+
+(B) | [Co(NH3)5(Cl)]2+ < [Co(NH3)5(H2O)]3+ < [Co(NH3)6]3+ < [Co(CN)6]3
+(C) | [Co(CN)6]3 < [Co(NH3)5(Cl)]2+ < [Co(NH3)5(H2O)]3+ < [Co(NH3)6]3+
+(D) | [Co(NH3)6]3+ < [Co(CN)6]3 < [Co(NH3)5(Cl)]2+ < [Co(NH3)5(H2O)]3+
+(A) | I2 | (B) | 
+IO3 | (C) | 
+IO4 | (D) | 
+IO2
+(A) | H | (B) | H
+(C) | H | (D) | H
+(A) | Bond order of Ne2 is zero.
+(B) | The highest occupied molecular orbital (HOMO) of F2 is σ-type.
+(C) | Bond energy of O+ is smaller than the bond energy of O2.
+2
+(D) | Bond length of Li2 is larger than the bond length of B2.
+(A) | La3+, Ce4+
+(B) | Yb2+, Lu3+
+(C) | La2+, Ce3+
+(D) | Yb3+, Lu2+
+(A) | CX bond length in P, Q and R follows the order Q > R > P.
+(B) | CX bond enthalpy in P, Q and R follows the order R > P > Q.
+(C) | Relative reactivity toward SN2 reaction in P, Q and R follows the order P > R > Q.
+(D) | pKa value of the conjugate acids of the leaving groups in P, Q and R follows the order R > Q > P.
+(A) | P  3; Q  4; R  2; S  1
+(B) | P  4; Q  2; R  3; S  1
+(C) | P  3; Q  4; R  1; S  5
+(D) | P  5; Q  3; R  2; S  4
+(A) | P  2; Q  4; R  1; S  3
+(B) | P  2; Q  3; R  4; S  1
+(C) | P  5; Q  3; R  4; S  2
+(D) | P  5; Q  4; R  2; S  1
+(A) | P  1; Q  5; R  4; S  2
+(B) | P  2; Q  5; R  1; S  3
+(C) | P  5; Q  2; R  1; S  4
+(D) | P  2; Q  1; R  5; S  3

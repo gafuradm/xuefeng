@@ -1,0 +1,218 @@
+Q.1
+Q.2
+Q.3
+Q.4
+SECTION 2 (Maximum Marks: 16)
+This section contains FOUR (04) questions.
+Each question has FOUR options (A), (B), (C) and (D). ONE OR MORE THAN ONE of these four option(s) is(are) correct answer(s).
+For each question, choose the option(s) corresponding to (all) the correct answer(s).
+Answer to each question will be evaluated according to the following marking scheme:
+Full Marks	: +4 ONLY if (all) the correct option(s) is(are) chosen;
+Partial Marks	: +3 If all the four options are correct but ONLY three options are chosen;
+Partial Marks	: +2 If three or more options are correct but ONLY two options are chosen, both of which are correct;
+Partial Marks	: +1 If two or more options are correct but ONLY one option is chosen and it is a correct option;
+Zero Marks	:	0 If none of the options is chosen (i.e. the question is unanswered);
+Negative Marks :  −2 In all other cases.
+For example, in a question, if (A), (B) and (D) are the ONLY three options corresponding to correct answers, then
+choosing ONLY (A), (B) and (D) will get +4 marks; choosing ONLY (A) and (B) will get +2 marks; choosing ONLY (A) and (D) will get +2 marks; choosing ONLY (B) and (D) will get +2 marks; choosing ONLY (A) will get +1 mark;
+choosing ONLY (B) will get +1 mark; choosing ONLY (D) will get +1 mark;
+choosing no option (i.e. the question is unanswered) will get 0 marks; and choosing any other combination of options will get −2 marks.
+Q.5
+Q.6
+Q.7
+Q.8
+Q.9
+Q.10
+Q.11
+Q.12
+Q.13
+Q.14
+Q.15
+Q.16
+END OF THE QUESTION PAPER
+Q.1
+Q.2
+Q.3
+Q.4
+SECTION 2 (Maximum Marks: 16)
+This section contains FOUR (04) questions.
+Each question has FOUR options (A), (B), (C) and (D). ONE OR MORE THAN ONE of these four option(s) is(are) correct answer(s).
+For each question, choose the option(s) corresponding to (all) the correct answer(s).
+Answer to each question will be evaluated according to the following marking scheme:
+Full Marks	: +4 ONLY if (all) the correct option(s) is(are) chosen;
+Partial Marks	: +3 If all the four options are correct but ONLY three options are chosen;
+Partial Marks	: +2 If three or more options are correct but ONLY two options are chosen, both of which are correct;
+Partial Marks	: +1 If two or more options are correct but ONLY one option is chosen and it is a correct option;
+Zero Marks	:	0 If none of the options is chosen (i.e. the question is unanswered);
+Negative Marks :  −2 In all other cases.
+For example, in a question, if (A), (B) and (D) are the ONLY three options corresponding to correct answers, then
+choosing ONLY (A), (B) and (D) will get +4 marks; choosing ONLY (A) and (B) will get +2 marks; choosing ONLY (A) and (D) will get +2 marks; choosing ONLY (B) and (D) will get +2 marks; choosing ONLY (A) will get +1 mark;
+choosing ONLY (B) will get +1 mark; choosing ONLY (D) will get +1 mark;
+choosing no option (i.e. the question is unanswered) will get 0 marks; and choosing any other combination of options will get −2 marks.
+Q.5
+Q.6
+Q.7
+Q.8
+Q.9
+Q.10
+Q.11
+Q.12
+Q.13
+Q.14
+Q.15
+Q.16
+END OF THE QUESTION PAPER
+Q.1
+Q.2
+Q.3
+Q.4
+SECTION 2 (Maximum Marks: 16)
+This section contains FOUR (04) questions.
+Each question has FOUR options (A), (B), (C) and (D). ONE OR MORE THAN ONE of these four option(s) is(are) correct answer(s).
+For each question, choose the option(s) corresponding to (all) the correct answer(s).
+Answer to each question will be evaluated according to the following marking scheme:
+Full Marks	: +4 ONLY if (all) the correct option(s) is(are) chosen;
+Partial Marks	: +3 If all the four options are correct but ONLY three options are chosen;
+Partial Marks	: +2 If three or more options are correct but ONLY two options are chosen, both of which are correct;
+Partial Marks	: +1 If two or more options are correct but ONLY one option is chosen and it is a correct option;
+Zero Marks	:	0 If none of the options is chosen (i.e. the question is unanswered);
+Negative Marks :  −2 In all other cases.
+For example, in a question, if (A), (B) and (D) are the ONLY three options corresponding to correct answers, then
+choosing ONLY (A), (B) and (D) will get +4 marks; choosing ONLY (A) and (B) will get +2 marks; choosing ONLY (A) and (D) will get +2 marks; choosing ONLY (B) and (D) will get +2 marks; choosing ONLY (A) will get +1 mark;
+choosing ONLY (B) will get +1 mark; choosing ONLY (D) will get +1 mark;
+choosing no option (i.e. the question is unanswered) will get 0 marks; and choosing any other combination of options will get −2 marks.
+Q.5
+Q.6
+Q.7
+Q.8
+Q.9
+Q.10
+Q.11
+Q.12
+Q.13
+Q.14
+Q.15
+Q.16
+END OF THE QUESTION PAPER
+(A) | For 𝛼 | = 2 , | lim
+𝑥→𝑥0 | | | 𝑔(𝑥)+ 𝑒
+𝑥−𝑥0 | 𝑥0 | | = 0
+(B) | For 𝛼 | = 2 , | lim
+𝑥→𝑥0 | | | 𝑔(𝑥)+ 𝑒
+𝑥−𝑥0 | 𝑥0 | | = 1
+(C) | For 𝛼 | = 3 , | lim
+𝑥→𝑥0 | | | 𝑔(𝑥)+ 𝑒
+𝑥−𝑥0 | 𝑥0 | | = 0
+(D) | For 𝛼 | = 3 , | lim | 𝑔(𝑥)+ 𝑒
+𝑥→𝑥0	𝑥−𝑥0 | lim | 𝑔(𝑥)+ 𝑒
+𝑥→𝑥0	𝑥−𝑥0 | lim | 𝑔(𝑥)+ 𝑒
+𝑥→𝑥0	𝑥−𝑥0 | 𝑥0 | | = 2
+3
+(A) | 17
+− log𝑒 4
+16 | (B) | 33
+− log𝑒 4
+8
+(C) | 57
+− log𝑒 4
+8 | (D) | 17
+− log𝑒 4
+2
+(A) | 1 | (B) | 2 | (C) | 3 | (D) | 5
+(A) | −6√2 | (B) | −3√2 | (C) | −9√2 | (D) | −12√2
+(A) | The determinant of 𝑄 − 2𝐼 is zero
+(B) | The determinant of 𝑄 − 6𝐼 is 12
+(C) | The determinant of 𝑄 − 3𝐼 is 15
+(D) | 𝑦𝑧 = 2
+(A) | (4, √3 ) ∈ 𝑆
+(B) | (5, √2 ) ∈ 𝑆
+(C) | Area of ℛ is 14 − 2 √3
+3
+(D) | Area of ℛ is 14 − √3
+3
+(A) | The equation of the line joining 𝑃 and 𝑄 is 2𝑥 + 3𝑦 = 3 (1 + √3 )
+(B) | The equation of the line joining 𝑃 and 𝑄 is 2𝑥 + 𝑦 = 3 (1 + √3 )
+(C) | If 𝑁2 = (𝑥2, 0), then 3 |𝑁2𝑄| = 2 |𝑁2𝑆|
+(D) | If 𝑁1 = (𝑥1, 0), then 9 |𝑁1𝑃| = 4 |𝑁1𝑅|
+(A) | The point 𝑥 = 0 is a point of local maxima of 𝑓
+(B) | The point 𝑥 = 0 is a point of local minima of 𝑓
+(C) | Number of points of local maxima of 𝑓 in the interval [𝜋, 6𝜋] is 3
+(D) | Number of points of local minima of 𝑓 in the interval [2𝜋, 4𝜋] is 1
+(A) | [𝑀0𝐿0𝑇0𝐼0𝐾0] | (B) | [𝑀0𝐿0𝑇0𝐼0𝐾−1]
+(C) | [𝑀1𝐿2𝑇−2𝐼−1𝐾−1] | (D) | [𝑀1𝐿2𝑇−4𝐼−1𝐾−1]
+(A) | 𝑄
+30𝜖0 | (B) | 𝑄
+15𝜖0 | (C) | 𝑄
+60𝜖0 | (D) | 𝑄
+120𝜖0
+(A) | 2 | (B) | √2 | (C) | 5
+√
+2 | (D) | 2
+√
+5
+(A) | 3𝛾
+−
+2𝑚2 | (B) | 2𝛾
+−
+𝑚2 | (C) | 2𝛾
+−
+𝑚1 | (D) | 3𝛾
+−
+2𝑚1
+(A) | Before the grounding, the electrostatic potential of the sphere is 450 V.
+(B) | Charge flowing from the sphere to the ground because of grounding is 5 × 10−9 C.
+(C) | After the grounding is removed, the charge on the sphere is −5 × 10−9 C.
+(D) | The final electrostatic potential of the sphere is 300 V.
+(A) | 1
+4𝑓 + (1 −	) 𝑡
+𝑛0 | (B) | 1
+2𝑓 + (1 −	) 𝑡
+𝑛0
+(C) | 4𝑓 + (𝑛0 − 1)𝑡 | (D) | 2𝑓 + (𝑛0 − 1)𝑡
+(A) | In region 4 of the configuration I, the magnitude of the electric field is zero.
+(B) | In region 3 of the configuration II, the magnitude of the electric field is σ0.
+𝜖0
+(C) | Potential difference between the first and the last sheets of the configuration I is 5 V.
+(D) | Potential difference between the first and the last sheets of the configuration II is zero.
+(A) | Work extracted from the Carnot engine in one cycle is 60 J.
+(B) | Temperature of the cold reservoir of the Carnot engine is 600 K.
+(C) | Temperature of the cold reservoir of the heat pump is 270 K.
+(D) | Heat supplied to the hot reservoir of the heat pump in one cycle is 540 J.
+(A) | NOS | (B) | SCN | (C) | SNO | (D) | NCS
+(A) | 	
+IO, ClO2 and BrO3
+(B) | 		
+IO3 , ClO2 and BrO3
+(C) | 
+IO, ClO and BrO2
+(D) | 		
+IO3 , ClO4 and BrO2
+(A) | P | (B) | Q
+(C) | R | (D) | S
+(A) | NaCN
+HO H2O
+HO	Cl		
+H3O
+(B) | CHO
+
+(CHOH)4	Br2, H2O CH2OH
+(C) | Br  (i) KOH, EtOH
+(ii) KMnO4, H2SO4, 
+(D) | OH	H2CrO4
+O
+(A) | The potential energy between two point charges approaches zero more rapidly than the potential energy between a point dipole and a point charge as the distance between them approaches infinity.
+(B) | The average potential energy of two rotating polar molecules that are separated by a distance r has 1/r3 dependence.
+(C) | The dipole-induced dipole average interaction energy is independent of temperature.
+(D) | Nonpolar molecules attract one another even though neither has a permanent dipole moment.
+(A) | H3PO4
+(B) | H3PO3
+(C) | H4P2O7
+(D) | H3PO2
+(A) | Both X and Y are oxygen containing compounds.
+(B) | Y on heating with CHCl3/KOH forms isocyanide.
+(C) | Z reacts with Hinsberg’s reagent.
+(D) | Z is an aromatic primary amine.
+(A) | P is optically active.
+(B) | S gives Bayer’s test.
+(C) | Q gives effervescence with aq. NaHCO3.
+(D) | R is an alkyne.

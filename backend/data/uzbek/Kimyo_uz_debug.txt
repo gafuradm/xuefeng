@@ -1,0 +1,509 @@
+Kimyo fanidan namunaviy test topshiriqlari
+KIMYO
+1. [1,3 ball]
+H2SO4 (suyul.)
+Na2SO3 FeS Mg
+Reaksiyalar natijasida hosil bo‘lgan gazlarning (n.sh.) nisbiy molekulyar massa yig‘indisini toping.
+A)162
+B)98
+C)116
+D)100
+2. [2,2 ball]
+Grafik asosida X ning nisbiy atom massasini toping. (Ar(Y)= 16)
+m(X), g
+2
+m(XY3 ), g
+0 5
+A)32
+B)48
+C)8
+D)24
+3. [2,2 ball]
+◦
+220 kPa bosimda, 167 C haroratda 44 g gaz 16,62 litr hajmni egallaydi.
+Noma’lum gazning metanga nisbatan zichligini hisoblang.
+A)1,65
+B)2,325
+C)2,75
+D)1,375
+1
+Kimyo fanidan namunaviy test topshiriqlari
+4. [1,3 ball]
+Davriy jadvalning III-VIII (He dan tashqari) asosiy guruhcha elementlari qaysi elementlar oilasiga
+mansub?
+A)p
+B)f
+C)s
+D)d
+5. [2,2 ball]
+4-davr yonaki guruhcha elementlarining umumiy elektron formulasi quyidagicha:
+1s 22s 22p 63s 23p 63da4sb
+Berilganlardan to‘g‘ri ma’lumotlarni toping.
+1) 8≤ a+b ≤ 12 bo‘lsa, element yonaki guruhchada joylashgan; 2) agar a+b < 8 bo‘lsa, a+b dan hosil
+bo‘lgan son elementning yonaki gurucha raqamini belgilaydi; 3) a = 10 bo‘lsa, b elementning tartib
+raqamini belgilaydi; 4) 8≤ a+b ≤ 10 bo‘lsa, element VIII guruhning yonaki guruhchasida joylashgan;
+5) agar a+b = 8 bo‘lsa, element metallmas bo‘ladi; 6) a = 10 bo‘lsa, b yonaki guruhcha raqamini
+belgilaydi.
+A)1, 3, 5
+B)2, 3, 6
+C)1, 2, 3
+D)2, 4, 6
+6. [2,2 ball]
+Qaysi qatordagi barcha ma’lumotlar to‘g‘ri?
+№ molekula bog‘lanish donorning donorning
+yoki ion turi valentligi oksidlanish darajasi
+1. NH+ qutblikovalent,koordinatsion IV −4
+4
+2. NH3 qutblikovalent , ion III −3
+3. H2O qutbsizkovalent,donor-akseptor II −2
+4. H3O+ qutblikovalent,donor-akseptor III −2
+A)4
+B)3
+C)2
+D)1
+2
+Kimyo fanidan namunaviy test topshiriqlari
+7. [2,2 ball]
+Hajmi 6 litr bo‘lgan reaktorda reaksiya natijasida 30 sekund davomida moddaning miqdori 65 moldan
+35 molgacha kamaygan.
+Ushbu reaksiyaning o‘rtacha tezligini (mol/(litr·min)) aniqlang.
+A)60
+B)16,67
+C)10
+D)1,25
+8. [2,2 ball]
+CO(g) +O2(g) ↔ CO2(g) reaksiyada CO va O2 ning boshlang‘ich konsentratsiyalari mos ravishda
+0,4 mol/l va 0,6 mol/l. Kislorodning 25 foizi reaksiyaga kirishganda muvozanat qaror topdi.
+Muvozanat konstantasini toping.
+A)6,66
+B)20
+C)0,05
+D)0,15
+9. [1,3 ball]
+Dastlabki eritmaning massasi 200 g.
+Hosil bo‘lgan eritmadagi suvning massasini (g) toping.
+HCOOH 5% HCOOH 0% HCOOH 1,25%
++
+H2O 95% H2O 100% H2O 98,75%
+A)190
+B)600
+C)790
+D)900
+10. [1,3 ball]
+Sog‘lom odamning hazm jarayonida oshqozonining pH ko‘rsatkichi qanday bo‘lishi
+mumkin?
+A)5−8
+B)1,5−2
+C)7
+D)7,4
+3
+Kimyo fanidan namunaviy test topshiriqlari
+11. [2,2 ball]
+2+ 2+
+100 ml qattiq suv tarkibida 4 mg Ca va 3,6 mg Mg ionlari bor.
+Suvning umumiy qattiqligini yo‘qotish uchun 4 litr shunday qattiq suvga necha gramm
+natriy karbonat qo‘shilishini hisoblang.
+A)10,6
+B)4,24
+C)1,06
+D)6,36
+12. [1,3 ball]
+Quyida elementlarning oksidlanish darajalarining o‘zgarishi berilgan.
++6e¯
+ze¯
+-4 -3 -2 -1 0 +1 +2 +3 +4 +5 +6 +7
+−3e¯
+xe¯
+ye¯
+x, y, z larning yig‘indisini toping.
+A)+18
+B)−10
+C)+10
+D)−14
+13. [2,2 ball]
+400 ml 0,5 M li AgNO3 eritmasiga 43,25 g rux plastinka tushirildi. Biroz vaqt o‘tishi bilan plastinka
+eritmadan olindi, yuvildi va quritildi. Reaksiya natijasida kumush nitratning miqdori 50% ga kamaydi.
+Eritmadan chiqarib olingan plastinkaning massasini (g) toping.
+A)48
+B)47,8
+C)54,3
+D)50,8
+4
+Kimyo fanidan namunaviy test topshiriqlari
+14. [1,3 ball]
+y
+Fe2 (SO4 ) 3
+eritmasi
+x
+NaCl
+z
+t◦
+FeCl3
+eritmasi
+z
+Laboratoriya tajribasi asosida x va y moddalar eritmalari o‘zaro reaksiyaga kirishganda
+qanday modda hosil bo‘lishini aniqlang.
+A)natriy gidrosulfid
+B)natriy sulfat
+C)natriy sulfit
+D)kaliy sulfat
+15. [2,2 ball]
+A+B → D
+D+A→ E
+FeO+E → Fe+D
+Noma’lum D moddaga mos javobni toping.
+A)ohakli suvni loyqalantiradi
+B)qora rangli oddiy modda
+C)zaharli gaz
+D)vodorodga nisbatan zichligi 8 ga teng
+16. [1,3 ball]
+Qaysi asos och yashil cho‘kma bo‘lib, vaqt o‘tishi bilan qo‘ng‘ir rangli moddaga aylanadi?
+A)Al(OH)
+3
+B)Fe(OH)
+3
+C)Fe(OH)
+2
+D)Cu(OH)
+2
+5
+Kimyo fanidan namunaviy test topshiriqlari
+17. [2,2 ball]
+75 % li sirka kislota essensiyasidan shu kislotaning 3 % li eritmasini tayyorlash uchun 10 g essensiyaga
+qancha hajm (ml) suv qo‘shish kerak? (ρ (suv)=1 g/ml).
+A)240
+B)160
+C)250
+D)200
+18. [2,2 ball]
+Inson organizmini temir moddasi bilan ta’minlash maqsadida ozuqaviy qo‘shimcha sifatida temirning
+tuzi ishlatiladi. Bu tuz tarkibida Fe, S va O elementlarining massa nisbati mos ravishda 7 :4 : 8. Inson
+organizmi bir kunda 0,0112 g temir moddasini talab etadi. Organizmda temirning o‘zlashtirilishi 10 %.
+Bir oy (30 kun) davomida inson qancha (mg) qo‘shimcha ozuqa (temir tuzi) qabul qilishini
+aniqlang.
+A)15200
+B)912
+C)3040
+D)9120
+19. [2,2 ball]
+O3 va O2 gazlari aralashmasi berilgan. Ozon to‘liq kislorodga aylantirilganda aralashmaning hajmi
+28% ga oshadi.
+Agar 1 litr (n.sh.) dastlabki aralashma KI eritmasidan o‘tkazilsa, necha gramm yod
+cho‘kmaga tushishini toping.
+A)6,35
+B)2,54
+C)12,7
+D)1,27
+20. [2,2 ball]
+Uglevodorodning azotga nisbatan zichligi 2 ga teng. U bromli suvni rangsizlantirmaydi.
+Uglevodorodning struktura formulasini toping.
+A)H2C =CH2
+B)H2C =CH−CH2 −CH3
+H H
+C =C
+C) CH3 CH2 −CH3
+H2C−CH2
+D) | |
+H2C−CH2
+6
+Kimyo fanidan namunaviy test topshiriqlari
+21. [2,2 ball]
+X Y
+C = C
+Z CH2 −CH3
+trans-izomer
+Geksadiyen-1,3 moddasining qismlarini ajratilgan joylarga (X, Y, Z) mos ravishda tanlang.
+A)X −CH2 = CH; Y −H; Z −H
+B)X −H; Y −H; Z −CH2 = CH
+C)X −CH3 −CH2; Y −CH3; Z −H
+D)X −CH3 −CH2; Y −H; Z −H
+22. [2,2 ball]
+Avtomashina 100 km masofani bosib o‘tishi uchun 10 litr benzin sarf qiladi. Benzinning zichligi
+0,72 kg/l. Benzin tarkibida uglerodning massa ulushi 85 % va vodorodning massa ulushi 15 %.
+Yuqorida talab etilgan benzin yonishi uchun sarf bo‘ladigan kislorodning miqdorini (mol)
+toping.
+A)270
+B)510
+C)280
+D)780
+23. [2,2 ball]
+2
+Sxemadagi oxirgi mahsulotning molekulasida sp gibridlangan orbitallarning sonini toping.
+C2H5OH − H −2− S − O −4−(k−on−s−),−t◦ −>−14−0◦ −→C A− + −B−r→2 B − K − O − H −−(s−pi−rt−)m−o→‘l D −C−,−ak−t−,t→ ◦ E − + −D→ F
+A)18
+B)21
+C)32
+D)24
+7
+Kimyo fanidan namunaviy test topshiriqlari
+24. [2,2 ball]
+Berilgan ma’lumotlardan nechtasi to‘g‘ri ekanligini toping.
+a) pentan kislota bilan valerian kislota bitta modda; b) molekulyar massa ortishi bilan kislotalarning
+suvda eruvchanligi pasayadi; c) propion kislota molekulasida 8 ta σ va 1 ta π bog‘ bor; d) olein kislota
+bromli suvni rangsizlantiradi; e) 270 g glukoza bijg‘ishi natijasida
+1,806·1023
+kislorod atomi tutgan moy
+kislota hosil bo‘ladi.
+A)2
+B)5
+C)4
+D)3
+25. [1,3 ball]
+Quyida umumiy formulasi keltirilgan, kosmetologiyada konservant sifatida ishlatiladigan moddaning
+molyar massasi 166 g/mol.
+O
+OH C O−R
+R ning nomini aniqlang.
+A)propil
+B)etil
+C)metil
+D)fenil
+26. [2,2 ball]
+200 g 34,2 % li maltoza eritmasi to‘liq gidrolizlandi.
+Hosil bo‘lgan eritmadagi uglevodning massa ulushini toping.
+A)34,2
+B)0,18
+C)0,072
+D)0,36
+27. [2,2 ball]
+46,6 g Gli-Ala-Ser tripeptidi to‘liq gidrolizlanishi uchun necha gramm suv sarflanishini hisoblang.
+A)1,8
+B)7,2
+C)10,8
+D)4,5
+8
+Kimyo fanidan namunaviy test topshiriqlari
+28. [1,3 ball]
+fenol etilamin anilin sirka kislota
+1 2 3 4
+binafsharang lakmuseritmasi
+Qaysi raqamdagi probirkada tajriba bajarilgandan keyin lakmus eritmasi ko‘k rangga
+aylanishini toping.
+A)1
+B)3
+C)4
+D)2
+29. [2,2 ball]
+Shinalar ishlab chiqarishda ishlatiladigan noma’lum polimerning nisbiy molekulyar massasi 513000.
+Polimer yondirilganda hosil bo‘lgan suvning massasi datlabki uglevodorodning massasiga teng.
+Polimer tarkibidagi monomerlarning sonini toping.
+A)9000
+B)9500
+C)8600
+D)9160
+30. [2,2 ball]
+2− 2+ − 2−
+To‘rtta raqamlangan probirkalarda alohida a) SiO , b) Ca , c) NO , d) CO ionlar tutuvchi
+3 3 3
+anorganik moddalar eritmalari bor.
+1- va 4-probirkalardagi eritmalarga xlorid kislota eritmasi qo‘shilganda 1-probirkada rangsiz, hidsiz gaz
+(n.sh.) ajraldi, 4-probirkada esa gelsimon cho‘kma hosil bo‘ldi. 2- va 3-probirkadagi moddalarga
+Na2CO3 eritmasi qo‘shilganda 2-probirkada oq cho‘kma tushdi, 3-probirkada o‘zgarish kuzatilmadi.
+Ionlar (a-d) va probirka raqamlari to‘g‘ri moslangan javobni toping.
+A)a-4, b-2, c-1, d-3
+B)a-4, b-2, c-3, d-1
+C)a-3, b-2, c-4, d-1
+D)a-2, b-3, c-1, d-4
+9
+Kimyo fanidan namunaviy test topshiriqlari
+31. [1,3 ball]
+ko‘mir bo‘lagi
+suyuqlantirilgan x tuz
+Laboratoriya tajribasi asosida x tuzning formulasini aniqlang.
+A)KHCO3
+B)Ca3 (PO4 ) 2
+C)CaCO3
+D)KNO3
+32. [2,2 ball]
+CH3COONa
+H2SO4
+Laboratoriya tajribasi asosida hosil bo‘lgan organik modda uchun noto‘g‘ri ma’lumotni
+toping.
+A)konservant modda sifatida ishlatiladi
+B)uchta − Mg, CH3OH, K2SO4 moddalaridan kerakli sharoitda faqat bittasi bilan reaksiyaga kirishadi
+C)tarkibida uglerodning massa ulushi 40 %
+D)molekulalari vodorod bog‘lari orqali dimerlarga bog‘langan
+10
+Kimyo fanidan namunaviy test topshiriqlari
+Topshiriqlar (33-35) va javob variant (A-F) larini o‘zaro to‘g‘ri
+A)4,48
+moslashtiring.
+B)17,8
+267 g 20 % li temir (II) gidrokarbonat eritmasi suv va kislorod ishtirokida asta-sekin
+temir (III) gidroksidga aylanadi. Bu jarayonda gaz (n.sh.) ham ajraladi. Hosil C)8,96
+bo‘lgan va sarf bo‘lgan gazlarning (n.sh.) massa farqi 16 g. D)35,6
+33. [2,2 ball] E)5,35
+Hosil bo‘lgan cho‘kmaning massasini (g) toping. F)21,4
+34. [2,2 ball]
+Hosil bo‘lgan gazning hajmini (l, n.sh.) toping.
+35. [2,2 ball]
+Dastlabki tuzning necha grammi oksidlanmaganligini toping.
+36. 61,5 gMgSO4 ·7H2O suvdaeritilib 15% limagniy sulfateritmasi olindi. Eritma ikkitastakanga ajratildi.
+Birinchi stakandagi eritmaga SrCl2 eritmasidan mo‘l miqdorda solinganda 18,4 g cho‘kma hosil bo‘ldi.
+Ikkinchi stakanga 212 g 20 % li kaliy fosfat eritmasi solindi.
+[1,5 ball]
+a) Reaksiyadan so‘ng ikkinchi stakandagi eritmaning massasini (g) toping.
+Javob: a)
+[1,7 ball]
+b) Ikkala stakanda hosil bo‘lgan cho‘kmalarning mol yig‘indisini toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+37. 31,4 g suvda 18,9 g HNO3 eritildi. Eritmaga to‘la neytrallanguncha yetarli miqdordagi 33,6 % li KOH
+◦ ◦
+eritmasi asta-sekin quyildi. Ushbu eritma 15 C gacha sovitildi. 15 C da tuzning eruvchanligi 25 ga teng.
+[1,5 ball]
+a) Cho‘kmaga tushadigan tuzning massasini (g) aniqlang.
+Javob: a)
+[1,7 ball]
+b) Hosil bo‘lgan eritma massasini (g) aniqlang.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+11
+Kimyo fanidan namunaviy test topshiriqlari
+38. kaliy nitrit + kaliy permanganat + suv →
+Oksidlanish-qaytarilish reaksiyasi uchun yarim reaksiya usuli bo‘yicha:
+[1,5 ball]
+a) oksidlanish tenglamasini yozing va tenglashtiring.
+Javob: a)
+[1,7 ball]
+b) qaytarilish tenglamasini yozing va tenglashtiring.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+39. 29,1 g ikki valentli metall tuzi ochiq havoda qizdirilganda ikkita oksid hosil bo‘ldi. Ulardan biri normal
+sharoitda gaz holatda bo‘ladi. Gaz holatdagi oksidni 19,2 g misning konsentrlangan sulfat kislota bilan
+reaksiyasidan ham olish mumkin. 24,3 g ikkinchi oksid xlorid kislota eritmasida eritildi. Eritmaga NaOH
+eritmasidan quyildi. Hosil bo‘lgan cho‘kma ikki probirkaga bo‘lindi va birinchisiga HCl, ikkinchisiga
+NaOH eritmalaridan qo‘shildi. Ikkala probirkada ham cho‘kma eridi.
+[1,5 ball]
+a) Dastlabki tuzning nomini yozing.
+Javob: a)
+[1,7 ball]
+b) Cho‘kma ishqor eritmasida erishidan hosil bo‘lgan kompleks tuzning formulasini yozing.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+40. Mg3N2 − + − H −
+m
+− B −
+o
+r
+‘
+(−
+l
+er−i→t) (cid:5)
+(cid:6)
+A
+B(
+−
+q
+K
+a
+−
+t
+O−
+)
+−H
+− + −
+−,t
+H
+→
+−
+◦
+−2
+·
+S −
+·
+O −
+·
+4−
+−
+(
++ −
+k−o
+H−
+−n→s
+2−
+)
+→O
+D
+C
+↑
+−A
+−
+−
++
+l
+−
+C−
+s − t
+→l
+i
+3
+− r → ol
+X
+X
+1
+2
+Berilgan sxema asosida:
+[1,5 ball]
+a) Alyuminiy tutuvchi modda X1 va organik modda X2 ning molyar massalari yig‘indisini
+toping.
+Javob: a)
+[1,7 ball]
+b) X2 moddaning nomini yozing.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+12
+Kimyo fanidan namunaviy test topshiriqlari
+41. Birikmalarda oksidlanish darajasi +2 bo‘lgan metall va uning karbonati aralashmasining massasi 23,55 g.
+Aralashmamo‘l olinganxloridkislotaeritmasida eritildiva3,36litr(n.sh.) gazajraldi. Gazohaklisuvdan
+o‘tkazilganda 5 g cho‘kma hosil bo‘ldi.
+[1,5 ball]
+a) Metallning nisbiy atom massasini toping.
+Javob: a)
+[1,7 ball]
+b) Sarflangan 10 % li xlorid kislota eritmasi massasini (g) toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+42. 22,4 litr (n.sh.) NH3 va H2 aralashmasi qizdirilib, 112 g CuO solingan nay orqali o‘tkazildi. Nay ichidagi
+qattiq modda 50 g 14,6 % li HCl eritmasi bilan reaksiyaga kirishdi.
+[1,5 ball]
+a) Dastlabki gazlar aralashmasining massasini (g) toping.
+Javob: a)
+[1,7 ball]
+b) Nay ichida hosil bo‘lgan gaz hajmini (l, n.sh.) toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+43. Propan, butan va butilen gazlaridan iborat 5,6 litr (n.sh.) aralashma bromli suvdan o‘tkazilganda 12 g
+brom reaksiyaga kirishdi. Dastlabki gazlar aralashmasining vodorodga nisbatan zichligi 26,6 ga teng.
+[1,5 ball]
+a) Reaksiyadan so‘ng gazlar aralashmasining o‘rtacha molyar massasini (g/mol) toping.
+Javob: a)
+[1,7 ball]
+b) Dastlabki aralashmadagi propan gazining mol ulushini toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+44. Izopropanolning etilatsetatdagi 20geritmasiga50ml5mol/l likaliygidroksidningsuvlieritmasiqo‘shildi.
+Reaksiyadan so‘ng hosil bo‘lgan aralashma bug‘latildi, quruq qoldiq qizdirildi. Reaksiya natijasida hosil
+bo‘lgan qattiq aralashmaning massasi 21,6 g.
+[1,5 ball]
+a) Dastlabki organik moddalar eritmasidagi spirtning massa ulushini toping.
+Javob: a)
+[1,7 ball]
+b) Hosil bo‘lgan gaz hajmini (l, n.sh.) toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+13
+Kimyo fanidan namunaviy test topshiriqlari
+45. Texnik sirka kislotasi etil spirti va atsetaldegid bilan ifloslangan. Bu kislota namunasi teng uch qismga
+bo‘lindi. Birinchi namunaga mo‘l olingan natriy gidrokarbonat eritmasi qo‘shilganda 11,2 l (n.sh.) gaz
+ajraldi. Ikkinchi qismiga mo‘l olingan kumush oksidning ammiakli eritmasi solinganda 2,16 g cho‘kma
+hosil bo‘ldi. Uchinchi namunaga konsentrlangan sulfat kislotadan bir necha tomchi tomizilganda 0,88 g
+murakkab efir hosil bo‘ldi.
+[1,5 ball]
+a) Texnik sirka kislotasining massasini (g) toping.
+Javob: a)
+[1,7 ball]
+b) Berilgan texnik sirka kislotasi yondirilganda hosil bo‘lgan suvning miqdorini (mol) toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+14

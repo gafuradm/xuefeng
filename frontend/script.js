@@ -5,7 +5,19 @@ let currentSessionId = null;
 let currentUserId = null;
 let currentQuestions = [];
 
-// Функция для рендеринга формул (отложенный вызов)
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+        return c;
+    });
+}
+
 function renderMath() {
     if (window.MathJax) {
         setTimeout(() => {
@@ -14,6 +26,7 @@ function renderMath() {
     }
 }
 
+// ========== ОСНОВНЫЕ ФУНКЦИИ ОБУЧЕНИЯ ==========
 async function startLearning() {
     const name = document.getElementById('userName').value;
     const email = document.getElementById('userEmail').value;
@@ -71,7 +84,6 @@ function displayTest(questions) {
     questions.forEach((q, idx) => {
         const difficultyClass = q.difficulty === 'легкий' ? 'easy' : (q.difficulty === 'средний' ? 'medium' : 'hard');
         let questionText = q.question || q.text || 'Нет текста';
-        // НЕ ДЕЛАЕМ НИКАКИХ ЗАМЕН
         const questionHtml = `
             <div class="question-card">
                 <h3>${q.topic || 'Без темы'}</h3>
@@ -97,7 +109,7 @@ async function submitTest() {
         const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/submit_test`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ answers: answers })
+            body: JSON.stringify({answers})
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
         const result = await response.json();
@@ -138,7 +150,7 @@ async function setTimeAndPlan() {
         const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/set_time`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({session_id: currentSessionId, days})
+            body: JSON.stringify({days})
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
         const plan = await response.json();
@@ -176,7 +188,6 @@ function displayPlan(plan) {
 }
 
 async function startLearningMode() {
-    alert("startLearningMode вызвана!");
     console.log("===== startLearningMode вызвана =====");
     console.log("currentSessionId:", currentSessionId);
     document.getElementById('step4').style.display = 'none';
@@ -185,8 +196,6 @@ async function startLearningMode() {
 }
 
 async function loadNextLesson() {
-    alert("loadNextLesson вызвана");
-    alert("currentSessionId = " + currentSessionId);
     console.log("===== loadNextLesson вызвана =====");
     console.log("sessionId:", currentSessionId);
     
@@ -199,7 +208,6 @@ async function loadNextLesson() {
     try {
         const url = `${API_URL}/api/sessions/${currentSessionId}/next_lesson`;
         console.log("Запрос:", url);
-        
         const response = await fetch(url);
         console.log("Статус ответа:", response.status);
         
@@ -240,7 +248,6 @@ function displayLesson(lessonData) {
     const content = lessonData.content || {};
     
     let theoryText = content.theory || 'Нет теории';
-    // Если сервер присылает \\\(, заменяем на \(
     theoryText = theoryText.replace(/\\\\\(/g, '\\(').replace(/\\\\\)/g, '\\)');
     
     let examplesHtml = '';
@@ -279,8 +286,7 @@ function displayLesson(lessonData) {
             ${tipsHtml}
         </div>
     `;
-
-    // Добавляем блок чата с ботом
+    
     const chatHtml = `
         <div class="bot-chat">
             <h3>🤖 Помощник ИИ</h3>
@@ -301,15 +307,10 @@ async function submitLesson(lessonId) {
         const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/submit_lesson`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                session_id: currentSessionId,
-                lesson_id: lessonId,
-                user_answers: answers
-            })
+            body: JSON.stringify({lesson_id: lessonId, user_answers: answers})
         });
         const result = await response.json();
         if (result.status === 'failed') {
-            // Показываем подсказки
             let feedbackHtml = '<div class="feedback-errors"><h3>Ошибки в задачах:</h3><ul>';
             for (let r of result.results) {
                 if (!r.correct) {
@@ -338,10 +339,7 @@ async function askBot(lessonId) {
         const response = await fetch(`${API_URL}/api/lessons/${lessonId}/chat`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                session_id: currentSessionId,
-                question: question
-            })
+            body: JSON.stringify({session_id: currentSessionId, question: question})
         });
         const data = await response.json();
         chatMessages.innerHTML += `<div><b>Бот:</b> ${data.answer}</div>`;
@@ -396,8 +394,357 @@ function showCompletionMessage(message) {
     renderMath();
 }
 
-// Привязка кнопки "Начать обучение"
+// ========== ПОЛЬЗОВАТЕЛЬСКИЕ ТЕСТЫ ==========
+let currentCustomTestId = null;
+let currentCustomQuestions = [];
+
+function showTestCreator() {
+    document.getElementById('customTestName').value = '';
+    document.getElementById('customTestDesc').value = '';
+    document.getElementById('questionsList').innerHTML = '';
+    addQuestionField();
+    
+    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+    document.getElementById('step6').style.display = 'block';
+}
+
+function addQuestionField() {
+    const container = document.getElementById('questionsList');
+    const questionId = Date.now();
+    const questionHtml = `
+        <div id="question_${questionId}" class="question-card">
+            <h4>Вопрос ${container.children.length + 1}</h4>
+            <textarea id="q_text_${questionId}" placeholder="Текст вопроса" rows="3" style="width:100%"></textarea>
+            <input type="text" id="q_answer_${questionId}" placeholder="Правильный ответ">
+            <textarea id="q_hint_${questionId}" placeholder="Пояснение (необязательно)" rows="2" style="width:100%"></textarea>
+            <button onclick="removeQuestionField(${questionId})" class="remove-question">Удалить вопрос</button>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', questionHtml);
+}
+
+function removeQuestionField(questionId) {
+    const element = document.getElementById(`question_${questionId}`);
+    if (element) element.remove();
+    const titles = document.querySelectorAll('#questionsList .question-card h4');
+    titles.forEach((title, idx) => {
+        title.textContent = `Вопрос ${idx + 1}`;
+    });
+}
+
+async function saveCustomTest() {
+    const name = document.getElementById('customTestName').value.trim();
+    if (!name) {
+        alert('Введите название теста');
+        return;
+    }
+    
+    const questionDivs = document.querySelectorAll('#questionsList .question-card');
+    const questions = [];
+    for (let div of questionDivs) {
+        const textarea = div.querySelector('textarea');
+        const answerInput = div.querySelector('input[type="text"]');
+        const hintTextarea = div.querySelectorAll('textarea')[1];
+        
+        const text = textarea?.value.trim();
+        const answer = answerInput?.value.trim();
+        const hint = hintTextarea?.value.trim();
+        
+        if (!text || !answer) {
+            alert('Заполните текст вопроса и правильный ответ для всех вопросов');
+            return;
+        }
+        
+        questions.push({
+            text: text,
+            correct_answer: answer,
+            explanation: hint || ''
+        });
+    }
+    
+    if (questions.length === 0) {
+        alert('Добавьте хотя бы один вопрос');
+        return;
+    }
+    
+    const description = document.getElementById('customTestDesc').value.trim();
+    
+    try {
+        const response = await fetch(`${API_URL}/api/custom_tests?user_id=${currentUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                description: description,
+                questions: questions
+            })
+        });
+        
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        alert(`Тест "${data.name}" сохранён! ID: ${data.id}`);
+        showCustomTestsList();
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка сохранения теста: ' + error.message);
+    }
+}
+
+async function trainCustomTest() {
+    const name = document.getElementById('customTestName').value.trim();
+    if (!name) {
+        alert('Сначала сохраните тест');
+        return;
+    }
+    
+    await saveCustomTest();
+    
+    try {
+        const response = await fetch(`${API_URL}/api/custom_tests?user_id=${currentUserId}`);
+        const tests = await response.json();
+        const test = tests.find(t => t.name === name);
+        if (!test) throw new Error('Тест не найден');
+        
+        const trainRes = await fetch(`${API_URL}/api/custom_tests/${test.id}/train`, {
+            method: 'POST'
+        });
+        const result = await trainRes.json();
+        alert(result.message);
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка обучения ИИ: ' + error.message);
+    }
+}
+
+async function showCustomTestsList() {
+    try {
+        const response = await fetch(`${API_URL}/api/custom_tests?user_id=${currentUserId}`);
+        const tests = await response.json();
+        
+        const container = document.getElementById('customTestsList');
+        container.innerHTML = '';
+        
+        if (tests.length === 0) {
+            container.innerHTML = '<p>У вас пока нет созданных тестов.</p>';
+        } else {
+            for (let test of tests) {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-item';
+                testDiv.innerHTML = `
+                    <h3>${escapeHtml(test.name)}</h3>
+                    <p>${test.description || 'Без описания'}</p>
+                    <p><strong>Вопросов:</strong> ${test.questions.length}</p>
+                    <div class="test-buttons">
+                        <button onclick="startCustomTest(${test.id})">▶ Пройти тест</button>
+                        <button onclick="deleteCustomTest(${test.id})">🗑 Удалить</button>
+                        <button onclick="trainExistingTest(${test.id}, '${escapeHtml(test.name)}')">🤖 Обучить ИИ</button>
+                        <button onclick="generateSimilar(${test.id}, '${escapeHtml(test.name)}')">🎲 Похожие вопросы</button>
+                    </div>
+                `;
+                container.appendChild(testDiv);
+            }
+        }
+        
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step7').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки тестов: ' + error.message);
+    }
+}
+
+async function deleteCustomTest(testId) {
+    if (!confirm('Удалить этот тест?')) return;
+    try {
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}?user_id=${currentUserId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error(await response.text());
+        alert('Тест удалён');
+        showCustomTestsList();
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка удаления: ' + error.message);
+    }
+}
+
+async function trainExistingTest(testId, testName) {
+    try {
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/train`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        alert(`Тест "${testName}" обучен!\n${result.message}`);
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка обучения: ' + error.message);
+    }
+}
+
+async function startCustomTest(testId) {
+    try {
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}`);
+        const test = await response.json();
+        
+        currentCustomTestId = test.id;
+        currentCustomQuestions = test.questions;
+        
+        document.getElementById('takingTestName').textContent = test.name;
+        
+        const container = document.getElementById('takingTestQuestions');
+        container.innerHTML = '';
+        
+        test.questions.forEach((q, idx) => {
+            const questionHtml = `
+                <div class="question-card" data-qidx="${idx}">
+                    <h3>Вопрос ${idx + 1}</h3>
+                    <p>${escapeHtml(q.text)}</p>
+                    <div class="answer-input">
+                        <input type="text" id="custom_answer_${idx}" placeholder="Ваш ответ">
+                    </div>
+                </div>
+            `;
+            container.innerHTML += questionHtml;
+        });
+        
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step8').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки теста: ' + error.message);
+    }
+}
+
+async function submitCustomTest() {
+    const answers = {};
+    for (let i = 0; i < currentCustomQuestions.length; i++) {
+        const input = document.getElementById(`custom_answer_${i}`);
+        if (input) answers[i] = input.value;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/custom_tests/${currentCustomTestId}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                test_id: currentCustomTestId,
+                answers: answers
+            })
+        });
+        
+        const result = await response.json();
+        
+        const container = document.getElementById('customTestResults');
+        let resultsHtml = `
+            <div class="lesson-card">
+                <h3>${escapeHtml(result.test_name)}</h3>
+                <p><strong>Результат:</strong> ${result.correct}/${result.total} (${result.score.toFixed(1)}%)</p>
+                <p><strong>Оценка:</strong> ${result.grade}</p>
+                <h4>Разбор ответов:</h4>
+        `;
+        
+        for (let i = 0; i < result.results.length; i++) {
+            const r = result.results[i];
+            const icon = r.is_correct ? '✅' : '❌';
+            resultsHtml += `
+                <div class="question-card" style="${r.is_correct ? 'border-left-color: green;' : 'border-left-color: red;'}">
+                    <h4>${icon} Вопрос ${i+1}</h4>
+                    <p><strong>Вопрос:</strong> ${escapeHtml(r.question)}</p>
+                    <p><strong>Ваш ответ:</strong> ${escapeHtml(r.user_answer) || '(пусто)'}</p>
+                    <p><strong>Правильный ответ:</strong> ${escapeHtml(r.correct_answer)}</p>
+                    ${r.explanation ? `<p><strong>Пояснение:</strong> ${escapeHtml(r.explanation)}</p>` : ''}
+                </div>
+            `;
+        }
+        resultsHtml += `</div>`;
+        container.innerHTML = resultsHtml;
+        
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step9').style.display = 'block';
+        
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка отправки ответов: ' + error.message);
+    }
+}
+
+async function generateSimilar(testId, testName) {
+    const num = prompt('Сколько вопросов сгенерировать?', 5);
+    if (!num) return;
+    
+    try {
+        // Важно: используем GET (как у вас) или POST? Проверим оба варианта
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/generate_similar?num_questions=${num}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        // Проверяем статус ответа
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Проверяем наличие ошибки в данных
+        if (data.error) {
+            alert('Ошибка: ' + data.error);
+            return;
+        }
+        
+        // Проверяем, что data.questions существует и является массивом
+        if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
+            alert('Не удалось сгенерировать вопросы. Попробуйте ещё раз.');
+            return;
+        }
+        
+        let msg = `Сгенерировано ${data.questions.length} вопросов по образцу "${testName}":\n\n`;
+        data.questions.forEach((q, i) => {
+            msg += `${i+1}. ${q.question}\n   Ответ: ${q.correct_answer}\n\n`;
+        });
+        alert(msg);
+        
+        if (confirm('Хотите создать новый тест из этих вопросов?')) {
+            document.getElementById('customTestName').value = `${testName} (копия)`;
+            document.getElementById('customTestDesc').value = `Сгенерировано на основе теста "${testName}"`;
+            
+            const container = document.getElementById('questionsList');
+            container.innerHTML = '';
+            for (let q of data.questions) {
+                const questionId = Date.now() + Math.random();
+                const questionHtml = `
+                    <div id="question_${questionId}" class="question-card">
+                        <h4>Вопрос</h4>
+                        <textarea id="q_text_${questionId}" placeholder="Текст вопроса" rows="3" style="width:100%">${escapeHtml(q.question)}</textarea>
+                        <input type="text" id="q_answer_${questionId}" placeholder="Правильный ответ" value="${escapeHtml(q.correct_answer)}">
+                        <textarea id="q_hint_${questionId}" placeholder="Пояснение (необязательно)" rows="2" style="width:100%">${escapeHtml(q.explanation || '')}</textarea>
+                        <button onclick="removeQuestionField(${questionId})" class="remove-question">Удалить вопрос</button>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', questionHtml);
+            }
+            showTestCreator();
+        }
+        
+    } catch (error) {
+        console.error('Ошибка генерации:', error);
+        alert('Ошибка генерации: ' + error.message);
+    }
+}
+
+function backToMainMenu() {
+    if (currentSessionId) {
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step5').style.display = 'block';
+    } else {
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step1').style.display = 'block';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Кнопка "Начать обучение"
     const startLearningBtn = document.getElementById('startLearningBtn');
     if (startLearningBtn) {
         startLearningBtn.addEventListener('click', function(e) {
@@ -407,5 +754,24 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Обработчик для кнопки 'Начать обучение' добавлен");
     } else {
         console.error("Кнопка 'Начать обучение' не найдена");
+    }
+    
+    // КНОПКА "СВОЙ ТЕСТ" (ДОБАВИТЬ ЭТОТ БЛОК)
+    const showTestCreatorBtn = document.getElementById('showTestCreatorBtn');
+    if (showTestCreatorBtn) {
+        showTestCreatorBtn.addEventListener('click', function(e) {
+            console.log("Клик по кнопке 'Свой тест'");
+            if (currentUserId) {
+                showTestCreator();
+            } else {
+                alert('Сначала зарегистрируйтесь');
+                document.getElementById('step1').style.display = 'block';
+                document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+                document.getElementById('step1').style.display = 'block';
+            }
+        });
+        console.log("Обработчик для кнопки 'Свой тест' добавлен");
+    } else {
+        console.error("Кнопка 'Свой тест' не найдена");
     }
 });

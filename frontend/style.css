@@ -174,3 +174,62 @@ input:focus, textarea:focus {
         font-size: 1.8em;
     }
 }
+
+/* frontend/style.css - добавить */
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.question-card input[type="text"], .question-card textarea {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.remove-question {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.remove-question:hover {
+    background: #c82333;
+}
+
+.test-item {
+    background: #f8f9fa;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+    cursor: pointer;
+}
+
+.test-item:hover {
+    background: #e9ecef;
+}
+
+.test-buttons {
+    margin-top: 10px;
+}
+
+.test-buttons button {
+    margin-right: 10px;
+}

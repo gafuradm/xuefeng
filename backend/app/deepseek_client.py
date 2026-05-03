@@ -415,73 +415,79 @@ class DeepSeekClient:
           }
     
     # --- Генерация глубокого урока (Khan Academy style) ---
-    async def generate_lesson_with_examples(self, topic: str, target_level: int, current_level: int, examples: List[Dict], subject: str = "математика") -> Dict[str, Any]:
-        # Адаптируем промпт под предмет
-        if subject == "математика":
-            task_instruction = "Сгенерируй 5-7 задач для самостоятельного решения (с ответами). Для каждой задачи укажи `task` (условие) и `answer` (ответ). Используй формулы в LaTeX."
-        elif subject == "физика":
-            task_instruction = "Сгенерируй 5-7 задач по физике. Для каждой задачи укажи `task` (условие, включая формулы) и `answer` (числовой ответ или формулу). Используй LaTeX для формул, например, \\(v = s/t\\)."
-        elif subject == "химия":
-            task_instruction = "Сгенерируй 5-7 задач по химии. Для каждой задачи укажи `task` (условие, с формулами) и `answer` (числовой ответ или уравнение реакции)."
-        elif subject == "история казахстана" or subject == "всемирная история":
-            task_instruction = "Сгенерируй 5-7 вопросов по истории с вариантами ответов. Для каждого вопроса укажи `task` (вопрос) и `answer` (правильный вариант). Варианты ответов можно перечислить в `task`."
-        elif subject in ["английский язык", "русский язык", "казахский язык"]:
-            task_instruction = "Сгенерируй 5-7 упражнений по языку. Для каждого упражнения укажи `task` (задание) и `answer` (правильный ответ)."
-        elif subject == "география":
-            task_instruction = "Сгенерируй 5-7 вопросов по географии. Для каждого вопроса укажи `task` (вопрос) и `answer` (краткий ответ)."
-        else:
-            task_instruction = "Сгенерируй 5-7 задач или вопросов. Для каждого укажи `task` и `answer`."
+    # backend/app/deepseek_client.py - метод generate_lesson_with_examples
 
-        examples_text = ""
-        if examples:
-            examples_text = "\n\n## Примеры реальных задач из архива:\n"
-            for i, ex in enumerate(examples[:3]):
-                text = ex.get('text', ex.get('question', ''))[:500]
-                examples_text += f"\n**Пример {i+1}:**\n{text}\n"
-        
-        prompt = f"""
-    Ты – опытный преподаватель по {subject}. Подготовь ОЧЕНЬ ПОДРОБНЫЙ урок по теме "{topic}".
+async def generate_lesson_with_examples(self, topic: str, target_level: int, current_level: int, examples: List[Dict], subject: str = "математика") -> Dict[str, Any]:
+    # Адаптируем промпт под предмет
+    if subject == "математика":
+        task_instruction = "Сгенерируй 5-7 задач для самостоятельного решения (с ответами). Для каждой задачи укажи `task` (условие) и `answer` (ответ). Используй формулы в LaTeX."
+    elif subject == "физика":
+        task_instruction = "Сгенерируй 5-7 задач по физике. Для каждой задачи укажи `task` (условие, включая формулы) и `answer` (числовой ответ или формулу)."
+    elif subject == "химия":
+        task_instruction = "Сгенерируй 5-7 задач по химии. Для каждой задачи укажи `task` (условие) и `answer` (ответ)."
+    else:
+        task_instruction = "Сгенерируй 5-7 задач или вопросов с ответами."
+    
+    examples_text = ""
+    if examples:
+        examples_text = "\n\n## Примеры реальных задач из архива:\n"
+        for i, ex in enumerate(examples[:3]):
+            text = ex.get('text', ex.get('question', ''))[:500]
+            examples_text += f"\n**Пример {i+1}:**\n{text}\n"
+    
+    prompt = f"""
+Ты – опытный преподаватель по {subject}. Подготовь ОЧЕНЬ ПОДРОБНЫЙ урок по теме "{topic}".
 
-    Текущий уровень ученика: {current_level}/100
-    Целевой уровень: {target_level}/100
+Текущий уровень ученика: {current_level}/100
+Целевой уровень: {target_level}/100
 
-    {examples_text}
+{examples_text}
 
-    ## Требования к уроку:
+## ВАЖНО: Восстановление неполных задач
+Если в примерах выше задачи обрезаны, содержат мусор или выглядят незавершёнными, ты МОЖЕШЬ и ДОЛЖЕН восстановить их полное условие, основываясь на контексте и твоём понимании темы. Сделай задачи логически завершёнными и решаемыми. Добавь недостающие данные, если это необходимо для понимания.
 
-    1. **Теория** – объясни тему понятно, с примерами. Используй LaTeX для формул (где нужно).
-    2. **Примеры** – разбери 3-4 задачи с пошаговым решением.
-    3. {task_instruction}
-    4. **Советы** – 5-7 практических советов, как избежать типичных ошибок.
-    5. **Дополнительные ресурсы** – ссылки на полезные материалы (если есть).
+## Требования к уроку:
 
-    Верни JSON формата:
-    {{
-    "theory": "текст теории",
-    "examples": [{{"problem": "условие", "solution": "решение"}}],
-    "tasks": [{{"task": "задача или вопрос", "answer": "ответ"}}],
-    "tips": ["совет1", "совет2"],
-    "resources": ["https://..."]
-    }}
-    """
-        response = await self.chat_completion([
-            {"role": "system", "content": f"Ты опытный преподаватель по {subject}. Отвечай только JSON."},
-            {"role": "user", "content": prompt}
-        ], max_tokens=8000)
-        try:
-            import re
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group())
-        except:
-            pass
-        return {
-            "theory": response,
-            "examples": [],
-            "tasks": [],
-            "tips": [],
-            "resources": []
-        }
+1. **Теория** – объясни тему понятно, с примерами. Используй LaTeX для формул (где нужно). Если тема сложная, разбей на подпункты.
+2. **Примеры** – разбери 3-4 задачи с пошаговым решением. Покажи все шаги рассуждений.
+3. **Задачи для самостоятельного решения** – {task_instruction}
+   Если в исходных примерах были задачи, но они неполные – восстанови их и включи в этот список.
+4. **Советы** – 5-7 практических советов, как избежать типичных ошибок.
+5. **Дополнительные ресурсы** – ссылки на полезные материалы (Khan Academy, YouTube, Википедия) по данной теме, если они существуют. Ресурсы должны быть реальными и проверенными.
+
+Верни ТОЛЬКО JSON, без дополнительного текста, в формате:
+{{
+  "theory": "текст теории",
+  "examples": [
+    {{"problem": "условие задачи", "solution": "пошаговое решение"}}
+  ],
+  "tasks": [
+    {{"task": "задача для ученика", "answer": "правильный ответ"}}
+  ],
+  "tips": ["совет1", "совет2", "совет3"],
+  "resources": ["https://ссылка1", "https://ссылка2"]
+}}
+
+ВАЖНО: Никаких пояснений до или после JSON. Только чистый JSON.
+"""
+    response = await self.chat_completion([
+        {"role": "system", "content": f"Ты опытный преподаватель по {subject}. Отвечай только JSON. Если исходные данные неполны, восстанавливай их по смыслу."},
+        {"role": "user", "content": prompt}
+    ], max_tokens=8000)
+    try:
+        import re
+        json_match = re.search(r'\{.*\}', response, re.DOTALL)
+        if json_match:
+            return json.loads(json_match.group())
+    except:
+        pass
+    return {
+        "theory": response,
+        "examples": [],
+        "tasks": [],
+        "tips": [],
+        "resources": []
+    }
 
     # --- Генерация прогресс-теста (промежуточный) ---
     async def generate_progress_test(self, weak_topics: List[str], exam_details: Dict, num_questions: int = 15) -> List[Dict]:

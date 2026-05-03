@@ -1,0 +1,500 @@
+Matematika fanidan namunaviy test topshiriqlari
+MATEMATIKA
+1. [1,3 ball]
+a va b natural sonlar uchun a·b = 30 bo‘lsa, a+2b−1 ifodaning eng kichik qiymatini toping.
+A)16
+B)15
+C)12
+D)31
+2. [2,2 ball]
+31
+Hisoblang: 7,2(1)−4,4(2)+
+90
+A)3,1(3)
+B)3,1(2)
+C)2,1(3)
+D)2,1(2)
+3. [2,2 ball]
+Do‘kon 3 kunda jami 175 kg kartoshka sotdi. Agar ikkinchi kun uchinchi kunga nisbatan 1,5 marta ko‘p,
+birinchi kun esa ikkinchi kunga nisbatan 2,4 marta kam kartoshka sotgan bo‘lsa, do‘kon birinchi kun
+necha kilogramm kartoshka sotgan?
+A)35
+B)44
+C)56
+D)27
+4. [2,2 ball]
+Xonaga eni hamda bo‘yi 2,4 m va 4 m bo‘lgan gilam to‘shalgan. Agar xonaning eni hamda bo‘yi 4 m va
+6 m bo‘lsa, xona yuzining necha foizini gilam egallagan?
+A)55
+B)40
+C)60
+D)45
+1
+Matematika fanidan namunaviy test topshiriqlari
+5. [1,3 ball]
+(cid:2)(cid:3) √ (cid:3) √ (cid:4) 2
+Ifodaning qiymatini toping: 4− 7+ 4+ 7
+A)7
+B)14
+C)11
+D)22
+6. [1,3 ball]
+Quyidagi son√larni o‘si√sh tartibida joylashtiring:
+a = 6, b = 4 2, c= 2 10
+A)a < b < c
+B)c< b < a
+C)b < a < c
+D)c< a < b
+7. [2,2 ball]
+(cid:5)√ √ (cid:6)(cid:5)√ √ (cid:6)
+Soddalashtiring: 7+1− 3 7+ 3−1
+√
+A)5+2 3
+√
+B)3−2 3
+√
+C)5−2 3
+√
+D)3+2 3
+8. [2,2 ball]
+Agar {an } arifmetik progressiyada a10+a12 = 25 va a20+a22 = 45 bo‘lsa, a11+a21 ni toping.
+A)25
+B)35
+C)30
+D)20
+2
+Matematika fanidan namunaviy test topshiriqlari
+9. [2,2 ball]
+Agar {bn } geometrik progressiyada b3 = 18 va S3 = 26 bo‘lsa, b1 ni toping.
+A)8 yoki 16
+B)6 yoki 36
+C)2 yoki 32
+D)4 yoki 64
+10. [1,3 ball]
+Agar x−y = 5 bo‘lsa, 6x+5−6y ning qiymatini toping.
+A)35
+B)25
+C)30
+D)40
+11. [2,2 ball]
+(cid:7) (cid:8)
+2 2 3 2
+4n k k mk
+Agar n= −3, m = −2 va k = 3 bo‘lsa, · : · ning qiymatini toping.
+m m 2 n 2 (mn) 3 n 3
+A)288
+B)48
+C)−48
+D)144
+12. [1,3 ball]
+cos3α+cosα
+Soddalashtiring:
+sin3α−sinα
+A)tgα
+B)ctgα
+C)2ctgα
+D)2tgα
+3
+Matematika fanidan namunaviy test topshiriqlari
+13. [2,2 ball]
+(cid:7) (cid:8)
+π 3π 5π 7π
+2· sin 4 +cos 4 +sin 4 +cos 4 ni hisoblang.
+8 8 8 8
+A)3,5
+B)2
+C)3
+D)1
+14. [2,2 ball]
+3 3x −2·3 2x +9·3 x−2 = 0 tenglamaning barcha haqiqiy ildizlari yig‘indisini (agar u bitta bo‘lsa,
+shu haqiqiy ildizni) toping.
+A)−1
+B)0,5
+C)0
+D)1
+15. [2,2 ball]
+(cid:9)
+2
+log (3x+5)+ log (2x+5) = 0 tenglama nechta haqiqiy ildizga ega?
+7 7
+A)3
+B)1
+C)0
+D)2
+16. [1,3 ball]
+1 1
+2x
+2−5x−3
+= 0 tenglamaning ildizlari x1 va x2 bo‘lsa, + ni hisoblang.
+x1 x2
+3
+A)−
+5
+5
+B)−
+3
+5
+C)
+3
+3
+D)
+5
+4
+Matematika fanidan namunaviy test topshiriqlari
+17. [2,2 ball]
+(cid:7) (cid:8)
+2
+x 48 x 4
++ = 10 − tenglamaning haqiqiy ildizlari yig‘indisini toping.
+3 x 2 3 x
+A)10
+B)6
+C)−1
+D)4
+18. [1,3 ball]
+√
+x+18 < 2−x tengsizlikni yeching.
+A)(−18;−1)
+B)[−18;−2)
+C)(−18;2)
+D)[−18;+∞)
+19. [2,2 ball]
+5x+3
+> 1 tengsizlikning barcha butun yechimlari yig‘indisini toping.
+x 2 +x−2
+A)9
+B)10
+C)15
+D)14
+20. [1,3 ball]
+Quyidagi funksiyalardan qaysi biri toq funksiya?
+4
+A)y = x +ctgx
+2
+x
+B)y =
+1+lgx
+(cid:5) (cid:6)
+C)y = sinx· 1+x 2
+√
+4
+D)y = x+x
+5
+Matematika fanidan namunaviy test topshiriqlari
+21. [2,2 ball]
+Agar f (x) = x 2−1 va g(x) = 3−2x bo‘lsa, f(g(x)) ni toping.
+A)4x 2 −12x+8
+B)4x 2 +12x−8
+C)5−2x 2
+D)4x 2 −6x+8
+22. [2,2 ball]
+f(t)= t
+4−2t 2
++1 bo‘lsa, f
+(cid:2)
+(1) ni hisoblang.
+A)0
+B)4
+C)2
+D)8
+23. [2,2 ball]
+1
+f(x)= funksiyaning boshlang‘ich funksiyasini toping.
+1−cos(−x+8π)
+1 x
+A) tg +C
+2 2
+1 x
+B)− ctg +C
+2 2
+x
+C)−ctg +C
+2
+x
+D)−tg +C
+2
+24. [1,3 ball]
+◦
+Ikki to‘g‘ri chiziqning kesishishidan hosil bo‘lgan qo‘shni burchaklarning ayirmasi 20 ga teng bo‘lsa, bu
+burchaklardan kichigini toping.
+◦
+A)90
+◦
+B)80
+◦
+C)60
+◦
+D)70
+6
+Matematika fanidan namunaviy test topshiriqlari
+25. [1,3 ball]
+ABC teng yonli (AB = BC) uchburchakning BD medianasi uzunligi 4 cm ga teng. Agar ABD
+uchburchak perimetri 12 cm ga teng bo‘lsa, ABC uchburchak perimetrini (cm) toping.
+A)9
+B)8
+C)16
+D)18
+26. [2,2 ball]
+Aylana 13 : 14 :9 nisbatda uchta yoyga bo‘lingan va bo‘linis√h nuqtalari tutashtirilib uchburchak hosil
+qilingan. Agar hosil bo‘lgan uchburchakning kichik tomoni 4 12 cm ga teng bo‘lsa, aylanaga tashqi
+2
+chizilgan muntazam uchburchakning yuzini (cm ) toping.
+√
+A)24 3
+B)9
+C)36
+√
+D)3 3
+27. [2,2 ball]
+D C
+y
+F
+3y
+A x K x B
+2
+Chizmadagi ABCD parallelogrammning yuzi 64 cm ga teng bo‘lsa, FKCD to‘rtburchakning yuzini
+2
+(cm ) toping.
+AF AK
+Bunda = 3, = 1 ga teng.
+FD KB
+A)52
+B)36
+C)48
+D)28
+7
+Matematika fanidan namunaviy test topshiriqlari
+28. [2,2 ball]
+Muntaza√m sakkizburchakka ichki va tashqi aylanalar chizilgan. Agar ichki chizilgan aylananing radiusi
+2
+r = 2+ 2 cm bo‘lsa, bu aylanalar hosil qilgan halqaning yuzini (cm ) toping.
+A)4π
+B)8π
+C)2π
+√
+D) 2π
+29. [2,2 ball]
+α tekislik va uni kesib o‘tmaydigan AB kesma berilgan. AB kesmaning uchlaridan α tekislikkacha
+bo‘lgan eng qisqa masofalar AA1 = 2 cm va BB1 = 7 cm ga teng.
+A uchidan boshlab hisoblaganda AB kesmani 3 :2 nisbatda bo‘luvchi nuqtadan α
+tekislikkacha bo‘lgan eng qisqa masofani (cm) toping.
+A)5
+B)3
+C)4,5
+D)4
+30. [2,2 ball]
+(cid:10) (cid:10)
+−→ (cid:10)−→(cid:10) −→ −→
+Agar |a|= 5 va (cid:10) b (cid:10)= 4 ga teng bo‘lib, bu vektorlar orasidagi burchak 60 ◦ ga teng bo‘lsa, 5a − b
+vektorning uzunligini toping.
+A)21
+B)9
+√
+C) 41
+√
+D) 541
+31. [2,2 ball]
+U = {x| −10 ≤ x ≤ 10, x ∈ Z} universal to‘plam hamda uning A = {x| −7 ≤ x ≤ 3, x ∈ Z} va
+B = {x| −3 ≤x ≤ 7, x ∈ Z} qism to‘plamlari bo‘lsin.
+(A∪B) (cid:2) to‘plamning elementlari sonini toping. Bunda (A∪B) (cid:2) to‘plam A∪B to‘plamning
+to‘ldiruvchisi.
+A)2
+B)6
+C)8
+D)4
+8
+Matematika fanidan namunaviy test topshiriqlari
+32. [2,2 ball]
+Qopchada har biri 8 tadan moviy va qizil sharlar bor.
+Ketma-ket olingan ikki shardan ikkalasining ham moviy bo‘lish ehtimolligini toping.
+1
+A)
+4
+7
+B)
+15
+7
+C)
+30
+1
+D)
+8
+Topshiriqlar (33-35) va javob variant (A-F) larini o‘zaro moslashtiring.
+A)30
+Uzunligi6mvaasosiningradiusi5dmgatengbo‘lgansilindrsimonshakldagiyog‘och
+B)3
+bo‘lagidan eng katta hajmli to‘g‘ri burchakli parallelepiped shaklidagi yog‘och ustun
+yasaldi. C)50
+D)25
+1
+E)33
+Yog‘och 3
+bo‘lagi F)3000
+Bo‘yi
+Eni
+33. [2,2 ball]
+2
+Yasalgan ustun asosining yuzini (dm ) toping.
+34. [2,2 ball]
+3
+Yasalgan ustunning hajmini (m ) toping.
+35. [2,2 ball]
+Ustun yasash natijasida (jarayonida) yog‘och bo‘lagining necha foizi
+chiqindiga chiqqan? (π ≈ 3 deb oling)
+9
+Matematika fanidan namunaviy test topshiriqlari
+36. Tenglamani yeching: (x−1) 4 +2x = x 2 +73
+[1,5 ball]
+a) Tenglama nechta haqiqiy ildizga ega?
+Javob: a)
+[1,7 ball]
+b) Tenglamaning haqiqiy ildizlari ko‘paytmasini toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+37. Tenglamani yeching: sin7x·cosx = sin6x
+[1,5 ball]
+a) Tenglamaning eng kichik musbat ildizini toping.
+Javob: a)
+[1,7 ball]
+b) Tenglama x ∈[−π;π] kesmada nechta haqiqiy ildizga ega?
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+(cid:7) (cid:8)
+1 1
+2
+38. Quyidagi chizmada f (x) = ax + bx + 6 funksiyaning grafigi tasvirlangan. Parabola uchi B ;6
+2 4
+nuqtada joylashgan bo‘lib, f (x) funksiya grafigi Oy o‘qini A nuqtada, Ox o‘qini esa abssissalari x1 va x2
+(x1 < x2) bo‘lgan nuqtalarda kesib o‘tgan.
+y
+(cid:2) (cid:3)
+B 1;61
+A 2 4
+x x x
+1 2
+[1,5 ball]
+x2
+a) ni toping.
+x1
+Javob: a)
+[1,7 ball]
+b) A va B nuqtalar orasidagi masofani toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+10
+Matematika fanidan namunaviy test topshiriqlari
+39. Quyidagi chizmada (−6;12) oraliqda aniqlangan y = f (cid:2) (x) funksiyaning grafigi tasvirlangan. Bunda
+(cid:2)
+y = f (x) funksiya y = f(x) funksiyaning hosilasi.
+y
+y=f(cid:2)(x)
+1
+1 10
+x
+-6 -3 0 3 5 7 12
+[1,5 ball]
+a) y = f(x) funksiyaning (−6;12) oraliqdagi lokal maksimum nuqtalari sonini toping.
+Javob: a)
+[1,7 ball]
+b) y = f(x) funksiyaning (−6;12) oraliqdagi lokal minimum nuqtalari sonini toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+√
+40. Bizga f(x)= 2 x va g(x)= 2x funksiyalar berilgan bo‘lsin.
+[1,5 ball]
+a) f(x) va g(x) funksiyalar nechta umumiy nuqtaga ega?
+Javob: a)
+[1,7 ball]
+b) f(x) va g(x) funksiyalar grafiklari bilan chegaralangan shakl yuzini hisoblang.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+11
+Matematika fanidan namunaviy test topshiriqlari
+41. Quyidagi chizmada radiusi 1 cm ga teng va markazi O nuqtada bo‘lgan aylana tasvirlangan. F va G
+nuqtalar aylanaga tegishli bo‘lib, O, F va E nuqtalar bir to‘g‘ri chiziqda yotadi. Bunda ∠GEF = 2 ◦ va
+GE = 1 cm.
+E
+F 2◦ m
+c
+1
+G
+O 1cm
+[1,5 ball]
+a) ∠EGF ni toping.
+Javob: a)
+[1,7 ball]
+b) ∠EFG ni toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+12
+Matematika fanidan namunaviy test topshiriqlari
+42. ABCD kvadratning ichki sohasida chizmadagi kabi KLGE kvadrat joylashtirilgan. Bunda AE = 6 cm
+va ED =8 cm.
+C
+B
+L
+K
+F
+G
+A D
+6cm E 8cm
+[1,5 ball]
+a) CG kesma uzunligini (cm) toping.
+Javob: a)
+[1,7 ball]
+2
+b) KLGE kvadratning yuzini (cm ) toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+43. Koordinatalar tekisligida markazi M nuqtada bo‘lgan aylana Oy o‘qiga A nuqtada, Ox o‘qiga esa
+C nuqtada urinadi (rasm). Koordinatalari (6;0) va (0;8) bo‘lgan nuqtalarni tutashtirishdan hosil bo‘lgan
+kesma aylanaga B nuqtada urinadi.
+y
+M(x;y)
+A
+8
+B
+O 6 C x
+[1,5 ball]
+a) Aylana radiusini toping.
+Javob: a)
+[1,7 ball]
+b) Aylana markazidan koordinata boshigacha bo‘lgan masofani toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+13
+Matematika fanidan namunaviy test topshiriqlari
+44. Uchi S nuqtada bo‘lgan SABC muntazam uchburchakli piramida yon qirrasining uzunligi asosining
+tomonidan 2 marta katta. SAB uchburchakda AH balandlik va ABC uchburchakda BM mediana
+o‘tkazilgan.
+[1,5 ball]
+a) AH kesma uzunligining BH kesma uzunligiga nisbatini toping.
+Javob: a)
+[1,7 ball]
+b) MH kesma uzunligining BH kesma uzunligiga nisbatini toping.
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+45. Shaharni elektr energiyasi bilan ta’minlash maqsadida ikki xil kabeldan foydalanilgan. Daryo tubidan
+o‘tadigan FJ uzunlikdagi kabelning har bir kilometri uchun 7500$ dan va qirg‘oq bo‘ylab (yer ostidan)
+JL masofaga tortilgan kabelning har bir kilometri uchun 6000$ dan pul to‘langan. Bunda daryoning
+kengligi FE=1 km, EL=5 km va EL⊥FE bo‘lib, eng kam pul ($) sarflab F nuqta(stansiya)dan
+L nuqta(shahar)ga kabel tortib borilgan.
+GES
+Daryo
+rahahS
+Yer
+F
+1km
+J L
+E
+x
+5km
+Yer
+[1,5 ball]
+a) Qirg‘oq bo‘ylab JL masofaga tortilgan kabel uchun qancha mablag‘ ($) sarflangan?
+Javob: a)
+[1,7 ball]
+b) Daryo tubidan FJ masofaga tortilgan kabel uchun qancha mablag‘ ($) sarflangan?
+Javob: b)
+Diqqat! Javoblaringizni javoblar varaqasiga ko‘chirib yozing.
+14
