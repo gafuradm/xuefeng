@@ -1,16 +1,20 @@
 # backend/app/main.py
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"  # Отключаем предупреждения tokenizers
+
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from typing import List, Optional
-import os
 import json
+import concurrent.futures
+from datetime import datetime
+import asyncio
 
 from .database import engine, get_db
 from .models import Base, User, CustomTest
 from .deepseek_client import deepseek_client
-from .models import Base
 from .schemas import *
 from .services import AITeacherService
 from .config import settings
@@ -124,8 +128,6 @@ async def lesson_chat(lesson_id: int, request: Request, db: Session = Depends(ge
     answer = await ai_service.chat_with_bot(db, session_id, lesson_id, question)
     return {"answer": answer}
 
-# backend/app/main.py - замените существующий эндпоинт get_session
-
 @app.get("/api/sessions/{session_id}")
 async def get_session(session_id: int, db: Session = Depends(get_db)):
     """Получение информации о сессии с тестами"""
@@ -188,7 +190,7 @@ async def search_problems(
     k: int = Query(5, ge=1, le=50, description="Количество результатов"),
     year: Optional[int] = Query(None, description="Год"),
     topic: Optional[str] = Query(None, description="Тема"),
-    subject: Optional[str] = Query(None, description="Предмет (физика, химия, биология...)")  # НОВОЕ
+    subject: Optional[str] = Query(None, description="Предмет (физика, химия, биология...)")
 ):
     """Поиск задач в векторной базе с фильтрацией по предмету"""
     try:
@@ -198,7 +200,7 @@ async def search_problems(
         if topic:
             filters['topic'] = topic
         if subject:
-            filters['subject'] = subject   # добавляем фильтр по предмету
+            filters['subject'] = subject
         
         if exam_type not in ai_service.exam_manager.active_exams:
             return {"results": [], "message": f"Экзамен {exam_type} не найден"}
@@ -213,7 +215,7 @@ async def search_problems(
                 'id': r.get('id'),
                 'topic': r.get('topic'),
                 'year': r.get('year'),
-                'subject': r.get('subject'),          # добавим предмет в вывод
+                'subject': r.get('subject'),
                 'text': (r.get('text') or r.get('question') or r.get('raw_text') or '')[:2000],
                 'answer': r.get('answer', ''),
                 'solution': r.get('solution', ''),
@@ -467,51 +469,62 @@ async def generate_similar_questions(
             return {"error": "Не удалось распарсить ответ", "raw": response}
     except Exception as e:
         return {"error": str(e)}
-    
-# backend/app/main.py (добавить в конец)
 
-from .video_generator import VideoGenerator
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-
-video_gen = VideoGenerator()
-executor = ThreadPoolExecutor(max_workers=2)
-
-# backend/app/main.py – исправленный эндпоинт generate_video_for_lesson
-
+# ========== ЭНДПОИНТ ГЕНЕРАЦИИ ВИДЕО ==========
 @app.post("/api/lessons/{lesson_id}/generate_video")
 async def generate_video_for_lesson(lesson_id: int, db: Session = Depends(get_db)):
     from .models import Lesson, LessonVideo
-    import os
-    import json
-
+    from .video_generator import VideoGenerator
+    
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден")
-
-    # ПРОВЕРКА: существует ли уже видео для этого урока
-    existing_video = db.query(LessonVideo).filter(LessonVideo.lesson_id == lesson_id).first()
-    if existing_video and os.path.exists(existing_video.video_path):
-        return {"video_url": f"/static/videos/{os.path.basename(existing_video.video_path)}", "already_exists": True}
-
+    
+    # Проверяем, есть ли уже видео
+    existing = db.query(LessonVideo).filter(LessonVideo.lesson_id == lesson_id).first()
+    if existing and os.path.exists(existing.video_path):
+        return {"video_url": f"/static/videos/{os.path.basename(existing.video_path)}"}
+    
     try:
         content = json.loads(lesson.content) if lesson.content else {}
     except:
         content = {}
-    theory = content.get("theory", f"Видео-урок по теме {lesson.topic}")
-
-    def generate():
-        filename = f"lesson_{lesson_id}.mp4"
-        path = video_gen.generate_video(lesson.topic, theory, filename)
-        # Проверяем ещё раз, не появилась ли запись за время генерации
-        existing = db.query(LessonVideo).filter(LessonVideo.lesson_id == lesson.id).first()
-        if existing:
-            return
-        lesson_video = LessonVideo(lesson_id=lesson.id, video_path=path)
-        db.add(lesson_video)
-        db.commit()
-
-    loop = asyncio.get_event_loop()
-    loop.run_in_executor(executor, generate)
-
-    return {"status": "generating", "message": "Видео генерируется, повторите запрос через 20-30 секунд"}
+    
+    theory = content.get("theory", f"Изучение темы {lesson.topic}")
+    examples = content.get("examples", [])
+    tasks = content.get("tasks", [])
+    
+    # Для каждой задачи генерируем пошаговое решение через DeepSeek
+    print(f"Генерация пошаговых решений для {len(tasks)} задач...")
+    tasks_with_solutions = []
+    for idx, task in enumerate(tasks[:5]):
+        problem = task.get('task', '')
+        answer = task.get('answer', '')
+        if problem and answer:
+            print(f"  Задача {idx+1}: {problem[:50]}...")
+            steps = await deepseek_client.get_step_by_step_solution(problem, subject="математика")
+            tasks_with_solutions.append({
+                "problem": problem,
+                "steps": steps,
+                "answer": answer
+            })
+    
+    vg = VideoGenerator()
+    filename = f"lesson_{lesson_id}_{int(datetime.now().timestamp())}.mp4"
+    
+    def sync_gen():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(vg.generate_video(
+            lesson.topic, theory, examples, tasks_with_solutions, filename
+        ))
+    
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(sync_gen)
+        path = future.result()
+    
+    lesson_video = LessonVideo(lesson_id=lesson.id, video_path=path)
+    db.add(lesson_video)
+    db.commit()
+    
+    return {"video_url": f"/static/videos/{filename}"}

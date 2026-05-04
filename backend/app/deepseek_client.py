@@ -553,5 +553,31 @@ class DeepSeekClient:
         except Exception as e:
             print(f"Ошибка в repair_task: {e}")
             return task_text
+        
+        # backend/app/deepseek_client.py (добавить в класс DeepSeekClient)
+
+    async def get_step_by_step_solution(self, problem: str, subject: str = "математика") -> list:
+        """Генерирует пошаговое решение задачи для видео."""
+        prompt = f"""
+    Ты – репетитор по {subject}. Перед тобой задача:
+    {problem}
+
+    Напиши пошаговое решение этой задачи. Каждый шаг должен быть чётким, коротким предложением.
+    Используй LaTeX для формул, где нужно. Разделяй шаги новой строкой.
+    Верни ТОЛЬКО список шагов (каждый шаг с новой строки), без лишнего текста.
+    Например:
+    1. Запишем условие.
+    2. Применим формулу $E=mc^2$.
+    3. Вычислим значение.
+    """
+        response = await self.chat_completion([
+            {"role": "system", "content": "Ты опытный репетитор. Отвечай только шагами решения, по одному шагу на строку."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=2000)
+        # Парсим шаги
+        steps = [line.strip() for line in response.split('\n') if line.strip() and not line.strip().startswith('```')]
+        if not steps:
+            steps = ["Решение задачи стандартными методами.", "Проверьте корректность условия."]
+        return steps
 
 deepseek_client = DeepSeekClient()
