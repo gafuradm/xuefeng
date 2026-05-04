@@ -68,3 +68,59 @@ class CustomTestResponse(BaseModel):
 class CustomTestSubmit(BaseModel):
     test_id: int
     answers: Dict[str, str]
+
+# backend/app/schemas.py (добавить в конец)
+
+# ========== ПОЛЬЗОВАТЕЛЬСКИЕ КУРСЫ ==========
+class CourseModuleCreate(BaseModel):
+    title: str
+    order: int
+    description: Optional[str] = None
+
+class CourseLessonCreate(BaseModel):
+    title: str
+    order: int
+    content: Optional[Dict] = None
+    homework: Optional[List] = None
+    success_criteria: Optional[str] = None
+    youtube_urls: Optional[List[str]] = None
+    presentation_url: Optional[str] = None
+
+class UserCourseCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    success_criteria: Optional[str] = None   # если не указано, ИИ сгенерирует
+
+class UserCourseResponse(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    description: Optional[str]
+    success_criteria: Optional[str]
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    modules: List[Any] = []   # можно будет подгрузить
+
+    model_config = ConfigDict(from_attributes=True)
+
+# ========== ПОЛЬЗОВАТЕЛЬСКИЕ УРОКИ ==========
+class UserLessonCreate(BaseModel):
+    title: str
+    subject: str
+    description: Optional[str] = None
+
+class UserLessonResponse(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    subject: str
+    description: Optional[str]
+    content: Dict
+    success_criteria: Optional[str]
+    youtube_urls: List[str]
+    presentation_url: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

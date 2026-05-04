@@ -938,3 +938,89 @@ class AITeacherService:
             {"role": "user", "content": prompt}
         ], max_tokens=1000)
         return response
+    
+    # backend/app/services.py (добавить в конец класса AITeacherService)
+
+    # ========== ГЕНЕРАЦИЯ ПОЛЬЗОВАТЕЛЬСКОГО КУРСА ==========
+    async def generate_course_structure(self, name: str, description: str, success_criteria: str) -> Dict:
+        """Генерирует структуру курса (модули, уроки) на основе входных данных"""
+        criteria_text = success_criteria if success_criteria else "не указаны, придумай разумные критерии"
+        prompt = f"""
+Ты – эксперт по созданию образовательных курсов. Пользователь хочет создать курс:
+
+НАЗВАНИЕ: {name}
+ОПИСАНИЕ: {description if description else 'не указано'}
+КРИТЕРИИ УСПЕХА: {criteria_text}
+
+Сгенерируй подробную структуру курса в формате JSON. Курс должен состоять из 3-5 модулей, в каждом модуле 2-4 урока.
+Для каждого урока укажи: название, краткое описание, тип (theory/practice/test). Также добавь общие критерии успеха для всего курса и для каждого модуля.
+
+Верни ТОЛЬКО JSON:
+{{
+  "success_criteria": "общие критерии успеха для курса",
+  "modules": [
+    {{
+      "title": "Название модуля",
+      "description": "Описание модуля",
+      "success_criteria": "критерии успеха модуля",
+      "lessons": [
+        {{"title": "Название урока", "description": "краткое описание", "type": "theory"}},
+        ...
+      ]
+    }}
+  ]
+}}
+"""
+        response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "Ты эксперт по структуре курсов. Отвечай только JSON."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=4000)
+        try:
+            import re
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            else:
+                return {"error": "Не удалось распарсить ответ"}
+        except:
+            return {"error": "Ошибка парсинга"}
+    
+    async def generate_lesson_content(self, title: str, subject: str, description: str) -> Dict:
+        """Генерирует полное содержание урока: теория, практика, ДЗ, видео, презентация"""
+        prompt = f"""
+Ты – опытный преподаватель по предмету "{subject}". Создай подробный урок на тему "{title}".
+
+Описание от пользователя: {description if description else 'нет дополнительных требований'}
+
+Сгенерируй содержание урока в JSON формате со следующими полями:
+
+1. theory (string) – теоретическая часть, объяснение темы, формулы в LaTeX.
+2. practice (array) – практические задания для закрепления (3-5 задач). Каждая задача: {{"task": "текст", "answer": "ответ"}}.
+3. homework (array) – домашние задания (3-5 задач). Каждая задача: {{"task": "текст", "answer": "ответ"}}.
+4. success_criteria (string) – критерии успешного освоения урока (что ученик должен знать и уметь).
+5. youtube_urls (array) – 2-3 ссылки на обучающие видео с YouTube по этой теме (реальные ссылки).
+6. presentation_content (string) – HTML/CSS код для презентации (слайд-шоу с теорией и примерами). Сделай её красивой, с современным дизайном.
+
+Верни ТОЛЬКО JSON:
+{{
+  "theory": "...",
+  "practice": [{{"task": "...", "answer": "..."}}],
+  "homework": [{{"task": "...", "answer": "..."}}],
+  "success_criteria": "...",
+  "youtube_urls": ["url1", "url2"],
+  "presentation_content": "..."
+}}
+"""
+        response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "Ты создатель учебных материалов. Отвечай только JSON."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=8000)
+        try:
+            import re
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            else:
+                return {"error": "Не удалось распарсить ответ"}
+        except:
+            return {"error": "Ошибка парсинга"}

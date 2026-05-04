@@ -117,6 +117,95 @@
                 <div id="customTestResults"></div>
                 <button onclick="showCustomTestsList()" class="btn-secondary">← К списку тестов</button>
             </div>
+
+            <!-- В main, после step9 добавить: -->
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="showCreateCourse()" class="btn-secondary">📚 Создать курс</button>
+                <button onclick="showCreateLesson()" class="btn-secondary">📖 Создать урок</button>
+            </div>
+
+            <!-- frontend/index.html - добавить после step9 -->
+
+<!-- Шаг 10: Список пользовательских курсов -->
+<div id="step10" class="step" style="display:none">
+    <h2>📚 Мои курсы</h2>
+    <div id="userCoursesList"></div>
+    <button onclick="showMainMenu()" class="btn-secondary">← Главное меню</button>
+    <button onclick="showCreateCourseForm()" class="btn-secondary">➕ Создать новый курс</button>
+</div>
+
+<!-- Шаг 11: Просмотр курса (модули и уроки) -->
+<div id="step11" class="step" style="display:none">
+    <h2 id="courseViewTitle"></h2>
+    <p id="courseViewDescription"></p>
+    <p><strong>Критерии успеха:</strong> <span id="courseViewCriteria"></span></p>
+    <div id="courseModulesList"></div>
+    <button onclick="showCoursesList()" class="btn-secondary">← К списку курсов</button>
+    <button onclick="generateAllLessonsContent()" class="btn-primary">✨ Сгенерировать всё содержание</button>
+</div>
+
+<!-- Шаг 12: Просмотр урока -->
+<div id="step12" class="step" style="display:none">
+    <h2 id="lessonViewTitle"></h2>
+    <p><strong>Предмет:</strong> <span id="lessonViewSubject"></span></p>
+    <div class="lesson-view-content" id="lessonViewContent"></div>
+    <div id="lessonViewHomework"></div>
+    <div id="lessonViewYoutube"></div>
+    <button onclick="generatePresentation()" class="btn-primary">📊 Скачать презентацию</button>
+    <button onclick="backToLessonsList()" class="btn-secondary">← К списку уроков</button>
+</div>
+
+<!-- Шаг 13: Создание курса (форма) -->
+<div id="step13" class="step" style="display:none">
+    <h2>📚 Создать новый курс</h2>
+    <div class="form-group">
+        <label>Название курса:</label>
+        <input type="text" id="newCourseName" placeholder="например: Python для начинающих">
+    </div>
+    <div class="form-group">
+        <label>Описание:</label>
+        <textarea id="newCourseDesc" rows="3" placeholder="Краткое описание курса"></textarea>
+    </div>
+    <div class="form-group">
+        <label>Критерии успеха (необязательно):</label>
+        <textarea id="newCourseCriteria" rows="2" placeholder="Что должен знать и уметь студент после курса"></textarea>
+    </div>
+    <button onclick="createCourse()" class="btn-primary">🚀 Создать курс</button>
+    <button onclick="showCoursesList()" class="btn-secondary">← Отмена</button>
+</div>
+
+<!-- Шаг 14: Список пользовательских уроков -->
+<div id="step14" class="step" style="display:none">
+    <h2>📖 Мои уроки</h2>
+    <div id="userLessonsList"></div>
+    <button onclick="showMainMenu()" class="btn-secondary">← Главное меню</button>
+    <button onclick="showCreateLessonForm()" class="btn-secondary">➕ Создать новый урок</button>
+</div>
+
+<!-- Шаг 15: Создание урока (форма) -->
+<div id="step15" class="step" style="display:none">
+    <h2>📖 Создать новый урок</h2>
+    <div class="form-group">
+        <label>Название урока:</label>
+        <input type="text" id="newLessonTitle" placeholder="например: Введение в переменные">
+    </div>
+    <div class="form-group">
+        <label>Предмет:</label>
+        <input type="text" id="newLessonSubject" placeholder="например: Программирование">
+    </div>
+    <div class="form-group">
+        <label>Описание (необязательно):</label>
+        <textarea id="newLessonDesc" rows="3" placeholder="Дополнительные требования"></textarea>
+    </div>
+    <button onclick="createLesson()" class="btn-primary">🚀 Создать урок</button>
+    <button onclick="showLessonsList()" class="btn-secondary">← Отмена</button>
+</div>
+<div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+    <button onclick="showCoursesList()" class="btn-secondary">📚 Мои курсы</button>
+    <button onclick="showLessonsList()" class="btn-secondary">📖 Мои уроки</button>
+    <button onclick="showCreateCourseForm()" class="btn-secondary">➕ Создать курс</button>
+    <button onclick="showCreateLessonForm()" class="btn-secondary">➕ Создать урок</button>
+</div>
         </main>
     </div>
 

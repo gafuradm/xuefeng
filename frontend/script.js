@@ -829,3 +829,528 @@ async function checkVideoStatus(lessonId, statusDiv) {
         statusDiv.innerHTML = '❌ Ошибка проверки: ' + error.message;
     }
 }
+
+// ========== СОЗДАНИЕ КУРСА ==========
+async function showCreateCourse() {
+    const name = prompt("Введите название курса:");
+    if (!name) return;
+    const description = prompt("Введите описание курса (необязательно):");
+    const successCriteria = prompt("Введите критерии успеха (или оставьте пустым, ИИ сам придумает):");
+    
+    try {
+        const response = await fetch(`${API_URL}/api/courses/generate?user_id=${currentUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                description: description || "",
+                success_criteria: successCriteria || ""
+            })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const course = await response.json();
+        alert(`Курс "${course.name}" создан! ID: ${course.id}. Теперь можно генерировать уроки.`);
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+// ========== СОЗДАНИЕ УРОКА ==========
+async function showCreateLesson() {
+    const title = prompt("Введите название урока:");
+    if (!title) return;
+    const subject = prompt("Введите предмет (например, математика):");
+    const description = prompt("Введите описание урока (необязательно):");
+    
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/generate?user_id=${currentUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: title,
+                subject: subject,
+                description: description || ""
+            })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const lesson = await response.json();
+        alert(`Урок "${lesson.title}" создан! ID: ${lesson.id}.`);
+        
+        // Предложить сгенерировать презентацию
+        if (confirm('Сгенерировать презентацию?')) {
+            const presRes = await fetch(`${API_URL}/api/lessons/${lesson.id}/generate_presentation`, {
+                method: 'POST'
+            });
+            const presData = await presRes.json();
+            alert(`Презентация доступна по ссылке: ${presData.presentation_url}`);
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+// ========== КУРСЫ ==========
+async function showCoursesList() {
+    if (!currentUserId) {
+        alert('Сначала создайте пользователя');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/api/courses?user_id=${currentUserId}`);
+        const courses = await response.json();
+        
+        const container = document.getElementById('userCoursesList');
+        container.innerHTML = '';
+        
+        if (courses.length === 0) {
+            container.innerHTML = '<p>У вас пока нет созданных курсов.</p>';
+        } else {
+            for (let course of courses) {
+                const courseDiv = document.createElement('div');
+                courseDiv.className = 'test-item';
+                courseDiv.innerHTML = `
+                    <h3>${escapeHtml(course.name)}</h3>
+                    <p>${escapeHtml(course.description || 'Без описания')}</p>
+                    <p><strong>Статус:</strong> ${course.status}</p>
+                    <div class="test-buttons">
+                        <button onclick="viewCourse(${course.id})">👁️ Просмотр</button>
+                        <button onclick="deleteCourse(${course.id})">🗑 Удалить</button>
+                    </div>
+                `;
+                container.appendChild(courseDiv);
+            }
+        }
+        
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step10').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки курсов: ' + error.message);
+    }
+}
+
+async function viewCourse(courseId) {
+    try {
+        const response = await fetch(`${API_URL}/api/courses/${courseId}`);
+        const course = await response.json();
+
+        window.currentCourseId = courseId;
+        
+        document.getElementById('courseViewTitle').textContent = course.name;
+        document.getElementById('courseViewDescription').textContent = course.description || 'Нет описания';
+        document.getElementById('courseViewCriteria').textContent = course.success_criteria || 'Не указаны';
+        
+        const modulesContainer = document.getElementById('courseModulesList');
+        modulesContainer.innerHTML = '';
+        
+        for (let module of course.modules) {
+            const moduleDiv = document.createElement('div');
+            moduleDiv.className = 'lesson-card';
+            moduleDiv.innerHTML = `
+                <h3>📁 ${escapeHtml(module.title)}</h3>
+                <p>${escapeHtml(module.description || '')}</p>
+                <div style="margin-left: 20px;">
+                    ${module.lessons.map(lesson => `
+                        <div class="test-item" style="margin: 10px 0; cursor: pointer;" onclick="viewCourseLesson(${courseId}, ${lesson.id}, '${escapeHtml(lesson.title)}')">
+                            <strong>📖 ${escapeHtml(lesson.title)}</strong>
+                            <button class="btn-secondary" style="margin-left: 10px;" onclick="event.stopPropagation(); generateLessonContent(${courseId}, ${lesson.id})">✨ Сгенерировать содержание</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            modulesContainer.appendChild(moduleDiv);
+        }
+        
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step11').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки курса: ' + error.message);
+    }
+}
+
+async function viewCourseLesson(courseId, lessonId, lessonTitle) {
+    try {
+        // Получаем данные урока из API (нужно добавить эндпоинт)
+        const response = await fetch(`${API_URL}/api/course_lessons/${lessonId}`);
+        if (!response.ok) throw new Error(await response.text());
+        const lesson = await response.json();
+        
+        // Показываем урок в том же формате, что и обычный урок
+        document.getElementById('lessonViewTitle').textContent = lesson.title;
+        document.getElementById('lessonViewSubject').textContent = 'Курс: ' + lessonTitle;
+        
+        const content = lesson.content || {};
+        const theory = content.theory || 'Теория не сгенерирована';
+        const practice = content.practice || [];
+        const homework = content.homework || [];
+        const youtubeUrls = lesson.youtube_urls || [];
+        
+        let contentHtml = `
+            <div class="lesson-card">
+                <h3>📖 Теория</h3>
+                <div class="theory">${marked.parse(theory)}</div>
+            </div>
+            <div class="lesson-card">
+                <h3>✍️ Практические задания</h3>
+                ${practice.map((p, i) => `
+                    <div class="task">
+                        <p><strong>Задача ${i+1}:</strong> ${p.task}</p>
+                        <p><em>Ответ: ${p.answer}</em></p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        document.getElementById('lessonViewContent').innerHTML = contentHtml;
+        
+        document.getElementById('lessonViewHomework').innerHTML = `
+            <div class="lesson-card">
+                <h3>🏠 Домашнее задание</h3>
+                ${homework.map((h, i) => `
+                    <div class="task">
+                        <p><strong>Задача ${i+1}:</strong> ${h.task}</p>
+                        <p><em>Ответ: ${h.answer}</em></p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        document.getElementById('lessonViewYoutube').innerHTML = `
+            <div class="lesson-card">
+                <h3>🎥 Видео по теме</h3>
+                ${youtubeUrls.map(url => `
+                    <div><a href="${url}" target="_blank">${url}</a></div>
+                `).join('')}
+                ${youtubeUrls.length === 0 ? '<p>Нет видео</p>' : ''}
+            </div>
+        `;
+        
+        window.currentLessonId = lessonId;
+        
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step12').style.display = 'block';
+        
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки урока: ' + error.message);
+    }
+}
+
+async function generateLessonContent(courseId, lessonId) {
+    try {
+        const response = await fetch(`${API_URL}/api/courses/${courseId}/generate_lesson_content/${lessonId}`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        alert(result.message);
+        viewCourse(courseId); // обновляем страницу курса
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка генерации: ' + error.message);
+    }
+}
+
+async function deleteCourse(courseId) {
+    if (!confirm('Удалить этот курс? Все модули и уроки внутри будут также удалены. Это действие нельзя отменить.')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/api/courses/${courseId}?user_id=${currentUserId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) throw new Error(await response.text());
+        
+        alert('Курс успешно удалён');
+        showCoursesList(); // обновляем список курсов
+        
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка удаления: ' + error.message);
+    }
+}
+
+function showCreateCourseForm() {
+    document.getElementById('newCourseName').value = '';
+    document.getElementById('newCourseDesc').value = '';
+    document.getElementById('newCourseCriteria').value = '';
+    
+    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+    document.getElementById('step13').style.display = 'block';
+}
+
+async function createCourse() {
+    if (!currentUserId) {
+        alert('Сначала создайте пользователя');
+        return;
+    }
+    const name = document.getElementById('newCourseName').value.trim();
+    if (!name) {
+        alert('Введите название курса');
+        return;
+    }
+    const description = document.getElementById('newCourseDesc').value.trim();
+    const successCriteria = document.getElementById('newCourseCriteria').value.trim();
+    
+    try {
+        const response = await fetch(`${API_URL}/api/courses/generate?user_id=${currentUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                description: description,
+                success_criteria: successCriteria
+            })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const course = await response.json();
+        alert(`Курс "${course.name}" создан!`);
+        showCoursesList();
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+// ========== УРОКИ ==========
+async function showLessonsList() {
+    if (!currentUserId) {
+        alert('Сначала создайте пользователя');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/api/lessons?user_id=${currentUserId}`);
+        const lessons = await response.json();
+        
+        const container = document.getElementById('userLessonsList');
+        container.innerHTML = '';
+        
+        if (lessons.length === 0) {
+            container.innerHTML = '<p>У вас пока нет созданных уроков.</p>';
+        } else {
+            for (let lesson of lessons) {
+                const lessonDiv = document.createElement('div');
+                lessonDiv.className = 'test-item';
+                lessonDiv.innerHTML = `
+                    <h3>${escapeHtml(lesson.title)}</h3>
+                    <p><strong>Предмет:</strong> ${escapeHtml(lesson.subject)}</p>
+                    <p>${escapeHtml(lesson.description || 'Без описания')}</p>
+                    <div class="test-buttons">
+                        <button onclick="viewLesson(${lesson.id})">👁️ Просмотр</button>
+                        <button onclick="deleteLesson(${lesson.id})">🗑 Удалить</button>
+                    </div>
+                `;
+                container.appendChild(lessonDiv);
+            }
+        }
+        
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step14').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки уроков: ' + error.message);
+    }
+}
+
+async function viewLesson(lessonId) {
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}`);
+        const lesson = await response.json();
+        
+        document.getElementById('lessonViewTitle').textContent = lesson.title;
+        document.getElementById('lessonViewSubject').textContent = lesson.subject;
+        
+        const content = lesson.content;
+        const theory = content.theory || 'Теория не сгенерирована';
+        const practice = content.practice || [];
+        const homework = content.homework || [];
+        const youtubeUrls = lesson.youtube_urls || [];
+        
+        let contentHtml = `
+            <div class="lesson-card">
+                <h3>📖 Теория</h3>
+                <div class="theory">${marked.parse(theory)}</div>
+            </div>
+            <div class="lesson-card">
+                <h3>✍️ Практические задания</h3>
+                ${practice.map((p, i) => `
+                    <div class="task">
+                        <p><strong>Задача ${i+1}:</strong> ${p.task}</p>
+                        <p><em>Ответ: ${p.answer}</em></p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        document.getElementById('lessonViewContent').innerHTML = contentHtml;
+        
+        document.getElementById('lessonViewHomework').innerHTML = `
+            <div class="lesson-card">
+                <h3>🏠 Домашнее задание</h3>
+                ${homework.map((h, i) => `
+                    <div class="task">
+                        <p><strong>Задача ${i+1}:</strong> ${h.task}</p>
+                        <p><em>Ответ: ${h.answer}</em></p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        document.getElementById('lessonViewYoutube').innerHTML = `
+            <div class="lesson-card">
+                <h3>🎥 Видео по теме</h3>
+                ${youtubeUrls.map(url => `
+                    <div><a href="${url}" target="_blank">${url}</a></div>
+                `).join('')}
+                ${youtubeUrls.length === 0 ? '<p>Нет видео</p>' : ''}
+            </div>
+        `;
+        
+        window.currentLessonId = lessonId;
+        
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step12').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки урока: ' + error.message);
+    }
+}
+
+async function generatePresentation() {
+    if (!window.currentLessonId) return;
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/${window.currentLessonId}/generate_presentation`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        if (data.presentation_url) {
+            window.open(data.presentation_url, '_blank');
+        } else {
+            alert('Ошибка генерации презентации');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function deleteLesson(lessonId) {
+    if (!confirm('Удалить этот урок? Это действие нельзя отменить.')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}?user_id=${currentUserId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) throw new Error(await response.text());
+        
+        alert('Урок успешно удалён');
+        showLessonsList(); // обновляем список уроков
+        
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка удаления: ' + error.message);
+    }
+}
+
+function showCreateLessonForm() {
+    document.getElementById('newLessonTitle').value = '';
+    document.getElementById('newLessonSubject').value = '';
+    document.getElementById('newLessonDesc').value = '';
+    
+    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+    document.getElementById('step15').style.display = 'block';
+}
+
+async function createLesson() {
+    if (!currentUserId) {
+        alert('Сначала создайте пользователя');
+        return;
+    }
+    const title = document.getElementById('newLessonTitle').value.trim();
+    if (!title) {
+        alert('Введите название урока');
+        return;
+    }
+    const subject = document.getElementById('newLessonSubject').value.trim();
+    if (!subject) {
+        alert('Введите предмет');
+        return;
+    }
+    const description = document.getElementById('newLessonDesc').value.trim();
+    
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/generate?user_id=${currentUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: title,
+                subject: subject,
+                description: description
+            })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const lesson = await response.json();
+        alert(`Урок "${lesson.title}" создан!`);
+        showLessonsList();
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+function backToLessonsList() {
+    showLessonsList();
+}
+
+function showMainMenu() {
+    if (currentSessionId) {
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step5').style.display = 'block';
+    } else {
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step1').style.display = 'block';
+    }
+}
+
+async function generateAllLessonsContent() {
+    // Получаем ID текущего курса (нужно сохранять при просмотре курса)
+    if (!window.currentCourseId) {
+        alert('Ошибка: ID курса не найден');
+        return;
+    }
+    
+    if (!confirm('Сгенерировать содержание для ВСЕХ уроков этого курса? Это может занять несколько минут.')) {
+        return;
+    }
+    
+    try {
+        // Показываем индикатор загрузки
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '⏳ Генерация...';
+        btn.disabled = true;
+        
+        const response = await fetch(`${API_URL}/api/courses/${window.currentCourseId}/generate_all_lessons_content`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        btn.textContent = originalText;
+        btn.disabled = false;
+        
+        if (result.status === 'ok') {
+            alert(`Содержание сгенерировано для ${result.generated_count} уроков`);
+            // Обновляем страницу курса
+            viewCourse(window.currentCourseId);
+        } else {
+            alert('Ошибка: ' + (result.message || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка генерации: ' + error.message);
+    }
+}

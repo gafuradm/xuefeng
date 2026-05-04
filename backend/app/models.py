@@ -11,7 +11,8 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+    user_courses = relationship('UserCourse', back_populates='user', cascade='all, delete-orphan')
+    user_lessons = relationship('UserLesson', back_populates='user', cascade='all, delete-orphan')
     sessions = relationship('Session', back_populates='user', cascade="all, delete-orphan")
     custom_tests = relationship('CustomTest', back_populates='user', cascade="all, delete-orphan")  # НОВОЕ
 
@@ -100,3 +101,69 @@ class CustomTest(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = relationship('User', back_populates='custom_tests')
+
+# backend/app/models.py (добавить в конец)
+
+class UserCourse(Base):
+    """Пользовательский курс"""
+    __tablename__ = 'user_courses'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    success_criteria = Column(Text, nullable=True)   # критерии успеха (текст или JSON)
+    status = Column(String, default='draft')        # draft, generating, ready, active
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship('User', back_populates='user_courses')
+    modules = relationship('CourseModule', back_populates='course', cascade='all, delete-orphan')
+
+class CourseModule(Base):
+    """Модуль курса"""
+    __tablename__ = 'course_modules'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey('user_courses.id', ondelete='CASCADE'))
+    title = Column(String, nullable=False)
+    order = Column(Integer, default=0)
+    description = Column(Text, nullable=True)
+    
+    course = relationship('UserCourse', back_populates='modules')
+    lessons = relationship('CourseLesson', back_populates='module', cascade='all, delete-orphan')
+
+class CourseLesson(Base):
+    """Урок внутри модуля"""
+    __tablename__ = 'course_lessons'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    module_id = Column(Integer, ForeignKey('course_modules.id', ondelete='CASCADE'))
+    title = Column(String, nullable=False)
+    order = Column(Integer, default=0)
+    content = Column(JSON, default={})       # теория, примеры, задачи и т.д.
+    homework = Column(JSON, default=[])      # домашние задания
+    success_criteria = Column(Text, nullable=True)
+    youtube_urls = Column(JSON, default=[])   # ссылки на видео
+    presentation_url = Column(String, nullable=True)  # ссылка на презентацию
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    module = relationship('CourseModule', back_populates='lessons')
+
+class UserLesson(Base):
+    """Самостоятельный урок (не в составе курса)"""
+    __tablename__ = 'user_lessons'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    title = Column(String, nullable=False)
+    subject = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    content = Column(JSON, default={})        # теория, практика, ДЗ
+    success_criteria = Column(Text, nullable=True)
+    youtube_urls = Column(JSON, default=[])
+    presentation_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship('User', back_populates='user_lessons')

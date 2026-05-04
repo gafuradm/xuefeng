@@ -528,3 +528,441 @@ async def generate_video_for_lesson(lesson_id: int, db: Session = Depends(get_db
     db.commit()
     
     return {"video_url": f"/static/videos/{filename}"}
+
+# backend/app/main.py (добавить новые эндпоинты)
+
+from .models import UserCourse, CourseModule, CourseLesson, UserLesson
+from .schemas import UserCourseCreate, UserCourseResponse, UserLessonCreate, UserLessonResponse
+
+# ========== ПОЛЬЗОВАТЕЛЬСКИЕ КУРСЫ ==========
+
+# backend/app/main.py - исправленный эндпоинт
+
+@app.post("/api/courses/generate")  # убрали response_model
+async def generate_course(
+    course_data: UserCourseCreate,
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Сгенерировать новый курс (структуру) на основе названия и описания"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "Пользователь не найден")
+    
+    # Генерируем структуру через AI
+    structure = await ai_service.generate_course_structure(
+        course_data.name,
+        course_data.description,
+        course_data.success_criteria
+    )
+    
+    if "error" in structure:
+        raise HTTPException(400, structure["error"])
+    
+    # Создаём курс
+    new_course = UserCourse(
+        user_id=user_id,
+        name=course_data.name,
+        description=course_data.description,
+        success_criteria=structure.get("success_criteria", course_data.success_criteria),
+        status="ready"
+    )
+    db.add(new_course)
+    db.commit()
+    db.refresh(new_course)
+    
+    # Создаём модули и уроки
+    modules_list = []
+    for module_idx, module_data in enumerate(structure.get("modules", [])):
+        new_module = CourseModule(
+            course_id=new_course.id,
+            title=module_data["title"],
+            description=module_data.get("description", ""),
+            order=module_idx
+        )
+        db.add(new_module)
+        db.commit()
+        db.refresh(new_module)
+        
+        lessons_list = []
+        for lesson_idx, lesson_data in enumerate(module_data.get("lessons", [])):
+            new_lesson = CourseLesson(
+                module_id=new_module.id,
+                title=lesson_data["title"],
+                order=lesson_idx,
+                content={"description": lesson_data.get("description", ""), "type": lesson_data.get("type", "theory")},
+                success_criteria=module_data.get("success_criteria", "")
+            )
+            db.add(new_lesson)
+            lessons_list.append({
+                "id": new_lesson.id,
+                "title": new_lesson.title,
+                "order": new_lesson.order,
+                "content": new_lesson.content
+            })
+        
+        modules_list.append({
+            "id": new_module.id,
+            "title": new_module.title,
+            "description": new_module.description,
+            "order": new_module.order,
+            "lessons": lessons_list
+        })
+    
+    db.commit()
+    
+    # Возвращаем словарь вручную (без response_model)
+    return {
+        "id": new_course.id,
+        "user_id": new_course.user_id,
+        "name": new_course.name,
+        "description": new_course.description,
+        "success_criteria": new_course.success_criteria,
+        "status": new_course.status,
+        "created_at": new_course.created_at,
+        "updated_at": new_course.updated_at,
+        "modules": modules_list
+    }
+
+@app.get("/api/courses")
+async def get_user_courses(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Получить все курсы пользователя"""
+    courses = db.query(UserCourse).filter(UserCourse.user_id == user_id).all()
+    return courses
+
+@app.get("/api/courses/{course_id}")
+async def get_course_details(
+    course_id: int,
+    db: Session = Depends(get_db)
+):
+    """Получить курс с модулями и уроками"""
+    course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
+    if not course:
+        raise HTTPException(404, "Курс не найден")
+    # Подгружаем модули и уроки
+    result = {
+        "id": course.id,
+        "name": course.name,
+        "description": course.description,
+        "success_criteria": course.success_criteria,
+        "status": course.status,
+        "created_at": course.created_at,
+        "modules": []
+    }
+    for module in course.modules:
+        module_data = {
+            "id": module.id,
+            "title": module.title,
+            "description": module.description,
+            "order": module.order,
+            "lessons": []
+        }
+        for lesson in module.lessons:
+            lesson_data = {
+                "id": lesson.id,
+                "title": lesson.title,
+                "order": lesson.order,
+                "content": lesson.content,
+                "success_criteria": lesson.success_criteria
+            }
+            module_data["lessons"].append(lesson_data)
+        result["modules"].append(module_data)
+    return result
+
+@app.post("/api/courses/{course_id}/generate_lesson_content/{lesson_id}")
+async def generate_lesson_content(
+    course_id: int,
+    lesson_id: int,
+    db: Session = Depends(get_db)
+):
+    """Сгенерировать полное содержание для конкретного урока курса"""
+    lesson = db.query(CourseLesson).filter(CourseLesson.id == lesson_id, CourseLesson.module.has(course_id=course_id)).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден")
+    
+    # Получаем тему и описание из lesson.content
+    subject = "общий предмет"  # можно определить из контекста курса
+    title = lesson.title
+    description = lesson.content.get("description", "")
+    
+    content = await ai_service.generate_lesson_content(title, subject, description)
+    if "error" in content:
+        raise HTTPException(400, content["error"])
+    
+    lesson.content = content
+    lesson.success_criteria = content.get("success_criteria", "")
+    lesson.youtube_urls = content.get("youtube_urls", [])
+    # presentation_url можно сохранить отдельно (сгенерировать ссылку)
+    db.commit()
+    
+    return {"status": "ok", "message": "Содержание урока сгенерировано"}
+
+# ========== ПОЛЬЗОВАТЕЛЬСКИЕ УРОКИ (отдельные) ==========
+
+@app.post("/api/lessons/generate", response_model=UserLessonResponse)
+async def generate_lesson(
+    lesson_data: UserLessonCreate,
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Сгенерировать отдельный урок (не в составе курса)"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "Пользователь не найден")
+    
+    content = await ai_service.generate_lesson_content(
+        lesson_data.title,
+        lesson_data.subject,
+        lesson_data.description
+    )
+    if "error" in content:
+        raise HTTPException(400, content["error"])
+    
+    new_lesson = UserLesson(
+        user_id=user_id,
+        title=lesson_data.title,
+        subject=lesson_data.subject,
+        description=lesson_data.description,
+        content=content,
+        success_criteria=content.get("success_criteria", ""),
+        youtube_urls=content.get("youtube_urls", [])
+    )
+    db.add(new_lesson)
+    db.commit()
+    db.refresh(new_lesson)
+    
+    return new_lesson
+
+@app.get("/api/lessons")
+async def get_user_lessons(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    lessons = db.query(UserLesson).filter(UserLesson.user_id == user_id).all()
+    return lessons
+
+@app.get("/api/lessons/{lesson_id}")
+async def get_lesson_details(
+    lesson_id: int,
+    db: Session = Depends(get_db)
+):
+    lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден")
+    return lesson
+
+# ========== ГЕНЕРАЦИЯ ПРЕЗЕНТАЦИИ ==========
+@app.post("/api/lessons/{lesson_id}/generate_presentation")
+async def generate_presentation(
+    lesson_id: int,
+    db: Session = Depends(get_db)
+):
+    """Сгенерировать HTML-презентацию для урока и вернуть ссылку"""
+    lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден")
+    
+    # Если презентация уже есть, вернуть существующую ссылку
+    if lesson.presentation_url:
+        return {"presentation_url": lesson.presentation_url}
+    
+    # Генерируем HTML из content
+    content = lesson.content
+    theory = content.get("theory", "")
+    practice = content.get("practice", [])
+    homework = content.get("homework", [])
+    
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{lesson.title}</title>
+    <meta charset="utf-8">
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }}
+        .slide {{ margin-bottom: 40px; page-break-after: always; }}
+        h1 {{ color: #667eea; }}
+        .task {{ background: #f5f5f5; padding: 15px; border-radius: 10px; margin: 10px 0; }}
+        .answer {{ color: #2c3e50; font-weight: bold; }}
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <h1>{lesson.title}</h1>
+        <p><strong>Предмет:</strong> {lesson.subject}</p>
+        <p>{lesson.description or ''}</p>
+    </div>
+    <div class="slide">
+        <h2>📖 Теория</h2>
+        {theory}
+    </div>
+    <div class="slide">
+        <h2>✍️ Практические задания</h2>
+        {''.join(f'<div class="task"><strong>Задача {i+1}:</strong> {p["task"]}<br><span class="answer">Ответ: {p["answer"]}</span></div>' for i, p in enumerate(practice))}
+    </div>
+    <div class="slide">
+        <h2>🏠 Домашнее задание</h2>
+        {''.join(f'<div class="task"><strong>Задача {i+1}:</strong> {h["task"]}<br><span class="answer">Ответ: {h["answer"]}</span></div>' for i, h in enumerate(homework))}
+    </div>
+    <div class="slide">
+        <h2>🎯 Критерии успеха</h2>
+        <p>{lesson.success_criteria}</p>
+    </div>
+</body>
+</html>
+    """
+    # Сохраняем HTML во временный файл и возвращаем ссылку
+    import os
+    pres_dir = "static/presentations"
+    os.makedirs(pres_dir, exist_ok=True)
+    filename = f"lesson_{lesson_id}.html"
+    filepath = os.path.join(pres_dir, filename)
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(html)
+    
+    presentation_url = f"/static/presentations/{filename}"
+    lesson.presentation_url = presentation_url
+    db.commit()
+    
+    return {"presentation_url": presentation_url}
+
+# backend/app/main.py - добавить
+
+@app.delete("/api/courses/{course_id}")
+async def delete_course(
+    course_id: int,
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    course = db.query(UserCourse).filter(UserCourse.id == course_id, UserCourse.user_id == user_id).first()
+    if not course:
+        raise HTTPException(404, "Курс не найден")
+    db.delete(course)
+    db.commit()
+    return {"status": "ok"}
+
+# backend/app/main.py - добавить эндпоинты
+
+# Получить урок из курса по ID
+@app.get("/api/course_lessons/{lesson_id}")
+async def get_course_lesson(
+    lesson_id: int,
+    db: Session = Depends(get_db)
+):
+    lesson = db.query(CourseLesson).filter(CourseLesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден")
+    return lesson
+
+# Удалить самостоятельный урок
+@app.delete("/api/lessons/{lesson_id}")
+async def delete_lesson(
+    lesson_id: int,
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id, UserLesson.user_id == user_id).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден или не принадлежит вам")
+    db.delete(lesson)
+    db.commit()
+    return {"status": "ok", "message": "Урок удалён"}
+
+# Удалить курс
+@app.delete("/api/courses/{course_id}")
+async def delete_course(
+    course_id: int,
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    course = db.query(UserCourse).filter(UserCourse.id == course_id, UserCourse.user_id == user_id).first()
+    if not course:
+        raise HTTPException(404, "Курс не найден или не принадлежит вам")
+    db.delete(course)
+    db.commit()
+    return {"status": "ok", "message": "Курс удалён"}
+
+# Генерация содержания для урока курса (если ещё нет)
+@app.post("/api/courses/{course_id}/generate_lesson_content/{lesson_id}")
+async def generate_course_lesson_content(
+    course_id: int,
+    lesson_id: int,
+    db: Session = Depends(get_db)
+):
+    lesson = db.query(CourseLesson).filter(
+        CourseLesson.id == lesson_id,
+        CourseLesson.module.has(course_id=course_id)
+    ).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден")
+    
+    # Если контент уже есть, не перезаписываем
+    if lesson.content and lesson.content.get("theory"):
+        return {"status": "already_exists", "message": "Контент уже сгенерирован"}
+    
+    # Получаем контекст курса для лучшей генерации
+    course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
+    subject = "общий предмет"
+    title = lesson.title
+    description = lesson.content.get("description", "") if lesson.content else ""
+    
+    content = await ai_service.generate_lesson_content(title, subject, description)
+    
+    if "error" in content:
+        raise HTTPException(400, content["error"])
+    
+    lesson.content = content
+    lesson.success_criteria = content.get("success_criteria", "")
+    lesson.youtube_urls = content.get("youtube_urls", [])
+    db.commit()
+    
+    return {"status": "ok", "message": "Содержание урока сгенерировано"}
+
+@app.post("/api/courses/{course_id}/generate_all_lessons_content")
+async def generate_all_lessons_content(
+    course_id: int,
+    db: Session = Depends(get_db)
+):
+    """Сгенерировать содержание для всех уроков курса"""
+    course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
+    if not course:
+        raise HTTPException(404, "Курс не найден")
+    
+    generated_count = 0
+    errors = []
+    
+    # Проходим по всем модулям и урокам
+    for module in course.modules:
+        for lesson in module.lessons:
+            # Пропускаем, если контент уже есть
+            if lesson.content and lesson.content.get("theory"):
+                continue
+            
+            try:
+                # Получаем контекст
+                subject = "общий предмет"
+                title = lesson.title
+                description = lesson.content.get("description", "") if lesson.content else ""
+                
+                content = await ai_service.generate_lesson_content(title, subject, description)
+                
+                if "error" not in content:
+                    lesson.content = content
+                    lesson.success_criteria = content.get("success_criteria", "")
+                    lesson.youtube_urls = content.get("youtube_urls", [])
+                    generated_count += 1
+                else:
+                    errors.append(f"Урок '{title}': {content['error']}")
+            except Exception as e:
+                errors.append(f"Урок '{title}': {str(e)}")
+    
+    db.commit()
+    
+    return {
+        "status": "ok",
+        "generated_count": generated_count,
+        "errors": errors
+    }
