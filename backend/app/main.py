@@ -29,6 +29,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+video_dir = os.path.join(os.path.dirname(__file__), "data", "videos")
+os.makedirs(video_dir, exist_ok=True)
+app.mount("/static/videos", StaticFiles(directory=video_dir), name="videos")
+
 # Монтируем статику (фронтенд)
 frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 if os.path.exists(frontend_path):
@@ -463,3 +467,51 @@ async def generate_similar_questions(
             return {"error": "Не удалось распарсить ответ", "raw": response}
     except Exception as e:
         return {"error": str(e)}
+    
+# backend/app/main.py (добавить в конец)
+
+from .video_generator import VideoGenerator
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+video_gen = VideoGenerator()
+executor = ThreadPoolExecutor(max_workers=2)
+
+# backend/app/main.py – исправленный эндпоинт generate_video_for_lesson
+
+@app.post("/api/lessons/{lesson_id}/generate_video")
+async def generate_video_for_lesson(lesson_id: int, db: Session = Depends(get_db)):
+    from .models import Lesson, LessonVideo
+    import os
+    import json
+
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден")
+
+    # ПРОВЕРКА: существует ли уже видео для этого урока
+    existing_video = db.query(LessonVideo).filter(LessonVideo.lesson_id == lesson_id).first()
+    if existing_video and os.path.exists(existing_video.video_path):
+        return {"video_url": f"/static/videos/{os.path.basename(existing_video.video_path)}", "already_exists": True}
+
+    try:
+        content = json.loads(lesson.content) if lesson.content else {}
+    except:
+        content = {}
+    theory = content.get("theory", f"Видео-урок по теме {lesson.topic}")
+
+    def generate():
+        filename = f"lesson_{lesson_id}.mp4"
+        path = video_gen.generate_video(lesson.topic, theory, filename)
+        # Проверяем ещё раз, не появилась ли запись за время генерации
+        existing = db.query(LessonVideo).filter(LessonVideo.lesson_id == lesson.id).first()
+        if existing:
+            return
+        lesson_video = LessonVideo(lesson_id=lesson.id, video_path=path)
+        db.add(lesson_video)
+        db.commit()
+
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(executor, generate)
+
+    return {"status": "generating", "message": "Видео генерируется, повторите запрос через 20-30 секунд"}

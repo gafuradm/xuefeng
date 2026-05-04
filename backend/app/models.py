@@ -61,8 +61,21 @@ class Lesson(Base):
     score = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime)
+    video = relationship('LessonVideo', back_populates='lesson', uselist=False, cascade="all, delete-orphan")
     
     session = relationship('Session', back_populates='lessons')
+
+# backend/app/models.py (добавить после класса Lesson)
+
+class LessonVideo(Base):
+    __tablename__ = 'lesson_videos'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    lesson_id = Column(Integer, ForeignKey('lessons.id', ondelete='CASCADE'), unique=True)
+    video_path = Column(String, nullable=False)
+    generated_at = Column(DateTime, default=datetime.utcnow)
+    
+    lesson = relationship('Lesson', back_populates='video')
 
 class ProgressHistory(Base):
     __tablename__ = 'progress_history'

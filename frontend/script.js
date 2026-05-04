@@ -277,6 +277,7 @@ function displayLesson(lessonData) {
         tipsHtml = '<div class="tips"><strong>💡 Советы:</strong><br>' + content.tips.map(tip => `• ${tip}<br>`).join('') + '</div>';
     }
     
+    // ========== СБОРКА ОСНОВНОГО HTML ==========
     container.innerHTML = `
         <div class="lesson-card">
             <h2>${lessonData.topic || 'Новая тема'}</h2>
@@ -287,6 +288,17 @@ function displayLesson(lessonData) {
         </div>
     `;
     
+    // ========== НОВЫЙ БЛОК: ВИДЕО-УРОК ==========
+    const videoHtml = `
+        <div class="video-section">
+            <button onclick="generateVideo(${lessonData.lesson_id})" class="btn-secondary">🎬 Создать видео-урок</button>
+            <div id="videoStatus_${lessonData.lesson_id}" style="margin-top: 10px;"></div>
+        </div>
+    `;
+    container.innerHTML += videoHtml;
+    // ==========================================
+    
+    // Чат с ботом
     const chatHtml = `
         <div class="bot-chat">
             <h3>🤖 Помощник ИИ</h3>
@@ -296,6 +308,7 @@ function displayLesson(lessonData) {
         </div>
     `;
     container.innerHTML += chatHtml;
+    
     renderMath();
 }
 
@@ -775,3 +788,44 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Кнопка 'Свой тест' не найдена");
     }
 });
+
+async function generateVideo(lessonId) {
+    const statusDiv = document.getElementById(`videoStatus_${lessonId}`);
+    if (!statusDiv) return;
+    statusDiv.innerHTML = '⏳ Генерация видео... (20-40 секунд)';
+    
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}/generate_video`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.video_url) {
+            statusDiv.innerHTML = `<a href="${data.video_url}" target="_blank">▶ Смотреть видео-урок</a>`;
+        } else {
+            statusDiv.innerHTML = data.message;
+            setTimeout(() => checkVideoStatus(lessonId, statusDiv), 25000);
+        }
+    } catch (error) {
+        statusDiv.innerHTML = '❌ Ошибка: ' + error.message;
+    }
+}
+
+async function checkVideoStatus(lessonId, statusDiv) {
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}/generate_video`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        if (data.video_url) {
+            statusDiv.innerHTML = `<a href="${data.video_url}" target="_blank">▶ Смотреть видео-урок</a>`;
+        } else {
+            statusDiv.innerHTML = data.message;
+            if (data.status === 'generating') {
+                setTimeout(() => checkVideoStatus(lessonId, statusDiv), 20000);
+            }
+        }
+    } catch (error) {
+        statusDiv.innerHTML = '❌ Ошибка проверки: ' + error.message;
+    }
+}

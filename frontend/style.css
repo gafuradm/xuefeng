@@ -233,3 +233,22 @@ input:focus, textarea:focus {
 .test-buttons button {
     margin-right: 10px;
 }
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 10px 0;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.video-section {
+    margin-top: 20px;
+    text-align: center;
+}
