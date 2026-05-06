@@ -9,6 +9,10 @@ from .context_service import ContextService
 from .models import User, Session as SessionModel, TestResult, Lesson, ProgressHistory
 from .deepseek_client import deepseek_client
 from .config import settings
+import yt_dlp
+import whisper
+from pathlib import Path
+import shutil
 from .models import (
     User, Session as SessionModel, TestResult, Lesson, 
     ProgressHistory, UserCourse, CourseModule, CourseLesson, 
@@ -181,6 +185,77 @@ class AITeacherService:
         elif self._is_india(exam_name):
             return 'india'
         return 'ent'
+    
+    # backend/app/services.py (добавить в класс AITeacherService)
+
+    import os
+    import subprocess
+    import whisper
+    import yt_dlp
+    from pathlib import Path
+
+    async def process_video(self, url: str, target_language: str) -> Dict[str, Any]:
+        """Скачивает видео с YouTube, извлекает аудио, распознаёт речь, переводит текст."""
+        # Создаём временную папку
+        temp_dir = Path("temp_video")
+        temp_dir.mkdir(exist_ok=True)
+        
+        try:
+            # 1. Скачиваем аудио
+            audio_path = await self._download_audio(url, temp_dir)
+            # 2. Распознаём речь
+            transcript = await self._transcribe_audio(audio_path)
+            # 3. Переводим на целевой язык
+            translation = await self._translate_text(transcript, target_language)
+            return {
+                "original_text": transcript,
+                "translated_text": translation,
+                "language": target_language
+            }
+        finally:
+            # Очищаем временные файлы
+            import shutil
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+    async def _download_audio(self, url: str, output_dir: Path) -> Path:
+        """Скачивает аудио с YouTube и возвращает путь к файлу"""
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'outtmpl': str(output_dir / '%(title)s.%(ext)s'),
+            'quiet': True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            # Ищем созданный файл
+            base = output_dir / info['title']
+            audio_file = base.with_suffix('.mp3')
+            # Если файл не существует, ищем другой
+            if not audio_file.exists():
+                for f in output_dir.glob("*"):
+                    if f.suffix in ['.mp3', '.m4a', '.webm']:
+                        audio_file = f
+                        break
+            return audio_file
+
+    async def _transcribe_audio(self, audio_path: Path) -> str:
+        """Распознаёт речь через Whisper (локально)"""
+        model = whisper.load_model("base")  # можно "small", "medium" для качества
+        result = model.transcribe(str(audio_path), language="ru", task="transcribe")
+        return result["text"]
+
+    async def _translate_text(self, text: str, target_language: str) -> str:
+        """Переводит текст через DeepSeek"""
+        prompt = f"Переведи следующий текст на {target_language} язык:\n\n{text}"
+        response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "Ты профессиональный переводчик. Отвечай только переведённым текстом без пояснений."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=4000)
+        return response.strip()
 
     def _get_subject(self, exam_name: str) -> str:
         exam_lower = exam_name.lower()

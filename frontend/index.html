@@ -35,6 +35,21 @@
                     👨‍🏫 Начать лекцию (учитель)
                 </button>
             </div>
+            <!-- Вкладка для видео -->
+<div id="videoTab" class="step">
+    <h2>🎥 Извлечь и перевести текст из видео</h2>
+    <div class="form-group">
+        <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео">
+        <select id="targetLang">
+            <option value="ru">Русский</option>
+            <option value="en">Английский</option>
+            <option value="kk">Казахский</option>
+            <option value="zh">Китайский</option>
+        </select>
+        <button onclick="processVideo()" class="btn-primary">Обработать</button>
+    </div>
+    <div id="videoResult" style="margin-top: 20px;"></div>
+</div>
         </header>
 
         <main>

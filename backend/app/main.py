@@ -1038,3 +1038,15 @@ async def conference_teacher_redirect():
 @app.get("/conference/student")
 async def conference_student_redirect():
     return RedirectResponse(url="http://localhost:8000/student")
+
+# backend/app/main.py (добавить в конец)
+
+@app.post("/api/video/transcribe")
+async def transcribe_video(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    url = data.get("url")
+    target_language = data.get("language", "ru")
+    if not url:
+        raise HTTPException(400, "URL видео не указан")
+    result = await ai_service.process_video(url, target_language)
+    return result

@@ -1357,6 +1357,35 @@ async function generateAllLessonsContent() {
 
 // frontend/script.js - добавить функцию showUserPerformance
 
+async function processVideo() {
+    const url = document.getElementById('videoUrl').value;
+    const language = document.getElementById('targetLang').value;
+    if (!url) {
+        alert('Введите URL видео');
+        return;
+    }
+    const resultDiv = document.getElementById('videoResult');
+    resultDiv.innerHTML = '<p>Обработка видео, пожалуйста, подождите...</p>';
+    try {
+        const response = await fetch(`${API_URL}/api/video/transcribe`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({url, language})
+        });
+        const data = await response.json();
+        resultDiv.innerHTML = `
+            <div class="lesson-card">
+                <h3>Оригинальный текст (распознанный)</h3>
+                <p>${data.original_text}</p>
+                <h3>Перевод на ${language}</h3>
+                <p>${data.translated_text}</p>
+            </div>
+        `;
+    } catch (error) {
+        resultDiv.innerHTML = `<p style="color:red;">Ошибка: ${error.message}</p>`;
+    }
+}
+
 async function showUserPerformance() {
     if (!currentUserId) {
         alert('Сначала создайте пользователя (начните обучение)');
