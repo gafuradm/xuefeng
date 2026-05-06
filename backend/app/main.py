@@ -11,6 +11,7 @@ import json
 import concurrent.futures
 from datetime import datetime
 import asyncio
+from fastapi.responses import RedirectResponse
 
 # backend/app/main.py - добавьте импорты в начало файла
 
@@ -1025,3 +1026,15 @@ async def get_user_interactions(
         }
         for i in interactions
     ]
+
+@app.get("/conference")
+async def conference_redirect():
+    return RedirectResponse(url="http://localhost:8000")
+
+@app.get("/conference/teacher")
+async def conference_teacher_redirect():
+    return RedirectResponse(url="http://localhost:8000/teacher")
+
+@app.get("/conference/student")
+async def conference_student_redirect():
+    return RedirectResponse(url="http://localhost:8000/student")
