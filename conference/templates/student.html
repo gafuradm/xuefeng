@@ -1,14 +1,18 @@
-<!-- conference/templates/student.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Lecture Student</title>
+    <title>Lecture - Student Panel</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f0f2f5;
-            margin: 0;
+            min-height: 100vh;
             padding: 20px;
         }
         .container {
@@ -77,12 +81,21 @@
             padding: 20px;
             margin: 20px;
             border-radius: 15px;
+            position: relative;
         }
         #remoteVideo {
             width: 100%;
             max-width: 800px;
             background: #000;
             border-radius: 10px;
+        }
+        #remoteCameraVideo {
+            width: 100%;
+            max-width: 300px;
+            background: #000;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
         }
         .translation-box {
             background: #f8f9fa;
@@ -111,7 +124,7 @@
             border-radius: 15px;
             padding: 20px;
             margin: 20px;
-            max-height: 250px;
+            max-height: 200px;
             overflow-y: auto;
         }
         .history-item {
@@ -130,6 +143,33 @@
         .history-original {
             font-size: 12px;
             color: #666;
+        }
+        .chat-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        .chat-messages {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #fafafa;
+            border-radius: 10px;
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
         }
         .controls {
             display: flex;
@@ -158,9 +198,9 @@
             background: #28a745;
             color: white;
         }
-        .btn-warning {
-            background: #ffc107;
-            color: #333;
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
         }
         .stream-status {
             display: inline-block;
@@ -199,7 +239,7 @@
 <div class="container">
     <div class="header">
         <h1>🎓 Lecture Translator</h1>
-        <p>Живая лекция с синхронным переводом</p>
+        <p>Живая лекция с синхронным переводом и чатом</p>
     </div>
 
     <div id="verificationBox" class="verification-box">
@@ -221,21 +261,24 @@
                 <span id="streamStatus" class="stream-status stream-inactive">📺 Ожидание трансляции</span>
             </div>
             <div>
-                <select id="langSelect" class="lang-select">
+                <select id="myLanguage" class="lang-select">
                     <option value="en">🇺🇸 English</option>
-                    <option value="ru">🇷🇺 Russian</option>
-                    <option value="kk">🇰🇿 Kazakh</option>
-                    <option value="de">🇩🇪 German</option>
-                    <option value="ja">🇯🇵 Japanese</option>
-                    <option value="ko">🇰🇷 Korean</option>
-                    <option value="zh">🇨🇳 Chinese</option>
+                    <option value="ru">🇷🇺 Русский</option>
+                    <option value="kk">🇰🇿 Қазақша</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                    <option value="ja">🇯🇵 日本語</option>
+                    <option value="ko">🇰🇷 한국어</option>
+                    <option value="zh">🇨🇳 中文</option>
                 </select>
+                <span style="margin-left: 15px;">👤 Имя: <input type="text" id="userNameInput" placeholder="Ваше имя" value="Студент" style="width: 100px;"></span>
+                <button onclick="setName()" class="btn btn-success btn-sm">OK</button>
                 <span style="margin-left: 15px;">📝 Фраз: <strong id="phraseCount">0</strong></span>
             </div>
         </div>
 
         <div class="video-container">
             <video id="remoteVideo" autoplay playsinline></video>
+            <video id="remoteCameraVideo" autoplay playsinline></video>
         </div>
 
         <div class="translation-box">
@@ -253,9 +296,20 @@
             </div>
         </div>
 
+        <div class="chat-panel">
+            <h3>💬 Чат (автоперевод)</h3>
+            <div class="chat-messages" id="chatMessages">
+                <div style="color:#999; text-align:center;">Сообщения будут здесь</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Введите сообщение..." autocomplete="off">
+                <button onclick="sendChatMessage()" class="btn btn-primary">Отправить</button>
+            </div>
+        </div>
+
         <div class="controls">
             <button onclick="toggleSound()" id="soundBtn" class="btn btn-primary">🔊 Озвучка включена</button>
-            <button onclick="reconnectWebRTC()" class="btn btn-success">🔄 Переподключиться</button>
+            <button onclick="reconnectWebRTC()" class="btn btn-primary">🔄 Переподключиться</button>
         </div>
     </div>
 </div>
@@ -283,6 +337,7 @@
     const verificationBox = document.getElementById('verificationBox');
     const mainInterface = document.getElementById('mainInterface');
     const remoteVideo = document.getElementById('remoteVideo');
+    const remoteCameraVideo = document.getElementById('remoteCameraVideo');
     const currentTranslationDiv = document.getElementById('currentTranslation');
     const originalTextDiv = document.getElementById('originalText');
     const historyListDiv = document.getElementById('historyList');
@@ -333,18 +388,26 @@
         peerConnection = new RTCPeerConnection(configuration);
         
         peerConnection.ontrack = (event) => {
-    console.log('🎥 Трек получен!', event.streams[0].id);
-    if (remoteVideo.srcObject !== event.streams[0]) {
-        remoteVideo.srcObject = event.streams[0];
-        remoteVideo.play().catch(e => console.log('Play error:', e));
-        updateStreamStatus(true);
-        console.log('✅ Видео отображается');
-    }
-};
+            console.log('🎥 Трек получен:', event.track.kind);
+            if (event.track.kind === 'video') {
+                if (event.streams[0]) {
+                    if (!remoteVideo.srcObject || remoteVideo.srcObject.id !== event.streams[0].id) {
+                        if (!remoteVideo.srcObject) {
+                            remoteVideo.srcObject = event.streams[0];
+                            remoteVideo.play().catch(e => console.log(e));
+                        } else if (!remoteCameraVideo.srcObject) {
+                            remoteCameraVideo.srcObject = event.streams[0];
+                            remoteCameraVideo.style.display = 'block';
+                            remoteCameraVideo.play().catch(e => console.log(e));
+                        }
+                    }
+                }
+            }
+            updateStreamStatus(true);
+        };
         
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                // Всегда отправляем ICE кандидаты сразу, сервер перенаправит их учителю
                 socket.emit('webrtc_ice_candidate', {
                     studentId: studentId,
                     candidate: event.candidate
@@ -355,29 +418,13 @@
         peerConnection.oniceconnectionstatechange = () => {
             console.log('ICE состояние:', peerConnection.iceConnectionState);
             if (peerConnection.iceConnectionState === 'connected') {
-                console.log('✅ WebRTC соединение установлено!');
+                console.log('✅ WebRTC соединение установлено');
                 updateStreamStatus(true);
             }
         };
         
         return peerConnection;
     }
-
-    socket.on('verification_result', (data) => {
-    if (data.success) {
-        verificationBox.style.display = 'none';
-        mainInterface.style.display = 'block';
-        isVerified = true;
-        updateStatus(true);
-        // Не вызываем setupWebRTC() отдельно – reconnectWebRTC() сделает всё
-        reconnectWebRTC();        // создаст PeerConnection и запросит offer
-        socket.emit('join_student_room', { studentId: studentId });
-    } else {
-        alert(`Ошибка: ${data.message}`);
-        document.getElementById('lectureCode').value = '';
-        document.getElementById('lectureCode').focus();
-    }
-});
 
     function reconnectWebRTC() {
         console.log('🔄 Переподключение WebRTC...');
@@ -432,107 +479,154 @@
         btn.innerHTML = soundEnabled ? '🔊 Озвучка включена' : '🔇 Озвучка выключена';
         if (!soundEnabled) speechSynthesis.cancel();
     }
-    socket.on('connect', () => {
-    console.log('Connected to server');
-    if (studentId) socket.emit('restore_session', { student_id: studentId });
-});
 
-socket.on('verification_required', () => {
-    verificationBox.style.display = 'block';
-    mainInterface.style.display = 'none';
-    startCodeTimer();
-});
-
-socket.on('verification_result', (data) => {
-    if (data.success) {
-        verificationBox.style.display = 'none';
-        mainInterface.style.display = 'block';
-        isVerified = true;
-        updateStatus(true);
-        setupWebRTC();
-        socket.emit('join_student_room', { studentId: studentId });
-        // Запрашиваем offer у учителя
-        setTimeout(() => {
-            socket.emit('request_webrtc_restart', { studentId: studentId });
-        }, 500);
-    } else {
-        alert(`Ошибка: ${data.message}`);
-        document.getElementById('lectureCode').value = '';
-        document.getElementById('lectureCode').focus();
+    function setName() {
+        const name = document.getElementById('userNameInput').value.trim();
+        if (name) socket.emit('set_name', { name: name });
     }
-});
 
-socket.on('screen_share_started', () => {
-    console.log('📺 Трансляция началась, запрашиваем offer');
-    socket.emit('request_webrtc_restart', { studentId: studentId });
-});
-
-socket.on('screen_share_stopped', () => {
-    console.log('📺 Трансляция остановлена');
-    if (peerConnection) {
-        peerConnection.close();
-        peerConnection = null;
-    }
-    remoteVideo.srcObject = null;
-    updateStreamStatus(false);
-});
-
-// ⚡ КЛЮЧЕВОЙ ОБРАБОТЧИК – получаем offer и отправляем answer
-socket.on('webrtc_offer', async (data) => {
-    console.log('📺 Получен offer от учителя');
-    
-    if (!peerConnection) {
-        setupWebRTC();
-    }
-    
-    try {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-        console.log('✅ Remote description установлен');
-        
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        
-        // ОТПРАВЛЯЕМ ANSWER ОБРАТНО УЧИТЕЛЮ
-        socket.emit('webrtc_answer', {
-            studentId: studentId,
-            answer: peerConnection.localDescription
-        });
-        console.log('✅ Answer отправлен учителю');
-        
-    } catch (err) {
-        console.error('❌ Ошибка при обработке offer:', err);
-    }
-});
-
-socket.on('webrtc_ice_candidate', (data) => {
-    if (peerConnection && peerConnection.remoteDescription && data.candidate) {
-        peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
-            .catch(e => console.error('ICE ошибка:', e));
-    }
-});
-
-socket.on('stats', (data) => {
-    phraseCountSpan.innerText = data.phrases;
-});
-
-socket.on('new_translation', (data) => {
-    currentTranslationDiv.innerHTML = `<strong>${data.translation}</strong>`;
-    if (data.original) originalTextDiv.innerHTML = `<i>Оригинал: "${data.original}"</i>`;
-    if (data.is_final) {
-        addToHistory(data.translation, data.original);
-        if (soundEnabled) {
-            const utterance = new SpeechSynthesisUtterance(data.translation);
-            utterance.lang = selectedLang === 'kk' ? 'kk-KZ' : selectedLang === 'ru' ? 'ru-RU' : 'en-US';
-            speechSynthesis.cancel();
-            speechSynthesis.speak(utterance);
+    function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        if (message) {
+            socket.emit('send_message', { message: message });
+            input.value = '';
         }
     }
-});
 
-    document.getElementById('langSelect').onchange = (e) => {
+    // Socket события
+    socket.on('connect', () => {
+        console.log('Connected to server');
+        if (studentId) socket.emit('restore_session', { student_id: studentId });
+        const savedLang = localStorage.getItem('student_lang') || 'en';
+        document.getElementById('myLanguage').value = savedLang;
+        socket.emit('set_language', { lang: savedLang });
+    });
+
+    socket.on('verification_required', () => {
+        verificationBox.style.display = 'block';
+        mainInterface.style.display = 'none';
+        startCodeTimer();
+    });
+
+    socket.on('verification_result', (data) => {
+        if (data.success) {
+            verificationBox.style.display = 'none';
+            mainInterface.style.display = 'block';
+            isVerified = true;
+            updateStatus(true);
+            setupWebRTC();
+            socket.emit('join_student_room', { studentId: studentId });
+            setTimeout(() => {
+                socket.emit('request_webrtc_restart', { studentId: studentId });
+            }, 500);
+        } else {
+            alert(`Ошибка: ${data.message}`);
+            document.getElementById('lectureCode').value = '';
+            document.getElementById('lectureCode').focus();
+        }
+    });
+
+    socket.on('screen_share_started', () => {
+        console.log('📺 Трансляция началась, запрашиваем offer');
+        socket.emit('request_webrtc_restart', { studentId: studentId });
+    });
+
+    socket.on('screen_share_stopped', () => {
+        console.log('📺 Трансляция остановлена');
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+        remoteVideo.srcObject = null;
+        remoteCameraVideo.srcObject = null;
+        remoteCameraVideo.style.display = 'none';
+        updateStreamStatus(false);
+    });
+
+    socket.on('camera_state', (data) => {
+        if (data.enabled) {
+            console.log('📷 Камера учителя включена');
+        } else {
+            console.log('📷 Камера учителя выключена');
+            remoteCameraVideo.srcObject = null;
+            remoteCameraVideo.style.display = 'none';
+        }
+    });
+
+    socket.on('webrtc_offer', async (data) => {
+        console.log('📺 Получен offer от учителя');
+        
+        if (!peerConnection) {
+            setupWebRTC();
+        }
+        
+        try {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+            console.log('✅ Remote description установлен');
+            
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            
+            socket.emit('webrtc_answer', {
+                studentId: studentId,
+                answer: peerConnection.localDescription
+            });
+            console.log('✅ Answer отправлен учителю');
+            
+        } catch (err) {
+            console.error('❌ Ошибка при обработке offer:', err);
+        }
+    });
+
+    socket.on('webrtc_ice_candidate', (data) => {
+        if (peerConnection && peerConnection.remoteDescription && data.candidate) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
+                .catch(e => console.error('ICE ошибка:', e));
+        }
+    });
+
+    socket.on('stats', (data) => {
+        phraseCountSpan.innerText = data.phrases;
+    });
+
+    socket.on('new_translation', (data) => {
+        currentTranslationDiv.innerHTML = `<strong>${data.translation}</strong>`;
+        if (data.original) originalTextDiv.innerHTML = `<i>Оригинал: "${data.original}"</i>`;
+        if (data.is_final) {
+            addToHistory(data.translation, data.original);
+            if (soundEnabled) {
+                const utterance = new SpeechSynthesisUtterance(data.translation);
+                const langMap = { 'kk': 'kk-KZ', 'ru': 'ru-RU', 'en': 'en-US', 'de': 'de-DE', 'ja': 'ja-JP', 'ko': 'ko-KR', 'zh': 'zh-CN' };
+                utterance.lang = langMap[selectedLang] || 'en-US';
+                speechSynthesis.cancel();
+                speechSynthesis.speak(utterance);
+            }
+        }
+    });
+
+    socket.on('chat_message', (data) => {
+        const chatDiv = document.getElementById('chatMessages');
+        const sender = data.sender === 'me' ? 'Я' : data.sender;
+        const msgDiv = document.createElement('div');
+        msgDiv.style.marginBottom = '8px';
+        msgDiv.innerHTML = `<strong>${sender}:</strong> ${data.translated}<br><small style="color:gray">${data.original}</small>`;
+        chatDiv.appendChild(msgDiv);
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+        if (chatDiv.children.length === 1 && chatDiv.children[0].innerText.includes('Сообщения будут здесь')) {
+            chatDiv.innerHTML = '';
+        }
+    });
+
+    socket.on('language_set', (data) => {
+        console.log('Language set to', data.lang);
+    });
+
+    document.getElementById('myLanguage').addEventListener('change', (e) => {
         selectedLang = e.target.value;
+        localStorage.setItem('student_lang', selectedLang);
         socket.emit('set_language', { lang: selectedLang });
-    };
+    });
 
     if (studentId) document.getElementById('studentIdInput').value = studentId;
     startCodeTimer();

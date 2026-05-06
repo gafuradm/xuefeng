@@ -1,4 +1,3 @@
-# conference/app.py
 import os
 import sys
 import json
@@ -71,6 +70,7 @@ STUDENTS_ROOM = "students_room"
 # Для аудио
 audio_queue = q.Queue(maxsize=100)
 clients_lang = {}
+clients_name = {}           # sid -> имя пользователя
 FULL_LECTURE_TEXT = []
 translation_cache = OrderedDict()
 MAX_CACHE = 1000
@@ -91,6 +91,9 @@ PERF_METRICS = {
 LECTURE_HISTORY = []
 LECTURE_INDEX = {}
 MAX_HISTORY_SIZE = 10000
+
+# Камера учителя
+camera_stream_active = False
 
 # ================= Math Terms Dictionary =================
 MATH_TERMS_EN = {
@@ -337,8 +340,69 @@ def handle_disconnect():
 @socketio.on("set_language")
 def handle_set_language(data):
     sid = request.sid
-    clients_lang[sid] = data.get("lang", "en")
-    socketio.emit("language_set", {"lang": clients_lang[sid]}, to=sid)
+    lang = data.get("lang", "en")
+    clients_lang[sid] = lang
+    logger.info(f"Client {sid[:8]} set language to {lang}")
+    socketio.emit("language_set", {"lang": lang}, to=sid)
+
+@socketio.on("set_name")
+def handle_set_name(data):
+    sid = request.sid
+    name = data.get("name", "")
+    if name:
+        clients_name[sid] = name
+        logger.info(f"Client {sid[:8]} set name to {name}")
+
+@socketio.on("send_message")
+def handle_send_message(data):
+    sid = request.sid
+    message = data.get('message', '')
+    if not message:
+        return
+    sender_lang = clients_lang.get(sid, 'en')
+    sender_name = clients_name.get(sid, 'Учитель' if sid == current_teacher_sid else 'Студент')
+    
+    # Сохраняем в историю лекции
+    add_to_lecture_history(text=message, text_type='chat', language=sender_lang, 
+                           speaker=sender_name, translation=None)
+    
+    # Переводим на языки всех участников
+    for target_sid, target_lang in clients_lang.items():
+        if target_sid == sid:
+            socketio.emit('chat_message', {
+                'sender': 'me',
+                'original': message,
+                'translated': message,
+                'language': target_lang
+            }, to=target_sid)
+        else:
+            try:
+                translated = deepseek_translate(message, target_lang)
+                socketio.emit('chat_message', {
+                    'sender': sender_name,
+                    'original': message,
+                    'translated': translated,
+                    'language': target_lang
+                }, to=target_sid)
+            except Exception as e:
+                logger.error(f"Chat translation error: {e}")
+                socketio.emit('chat_message', {
+                    'sender': sender_name,
+                    'original': message,
+                    'translated': f"[Translation error] {message}",
+                    'language': target_lang
+                }, to=target_sid)
+
+@socketio.on("camera_toggled")
+def handle_camera_toggle(data):
+    global camera_stream_active
+    sid = request.sid
+    if sid != current_teacher_sid:
+        return
+    camera_stream_active = data.get('enabled', False)
+    for student_sid in CONNECTED_CLIENTS:
+        if student_sid != sid:
+            socketio.emit('camera_state', {'enabled': camera_stream_active}, to=student_sid)
 
 @socketio.on("request_verification")
 def handle_verification_request():
@@ -459,14 +523,11 @@ def assistant_query():
         return jsonify({"answer": answer, "status": "success"})
     except Exception as e:
         return jsonify({"answer": "Xiao Shu временно недоступен", "status": "error"})
-# Прокси для WebRTC сигналинга (прямая адресация)
+
+# WebRTC сигналинг
 @socketio.on('webrtc_offer')
 def handle_webrtc_offer(data):
     print(f"📺 Прокси: offer от учителя для {data.get('studentId')}")
-    # Ищем сокет студента по student_id (нужно хранить соответствие)
-    # Простой вариант: рассылаем всем в комнату студентов или используем current_teacher_sid
-    # Здесь offer всегда от учителя, отправляем студенту
-    # Найдём сокет студента по его ID
     student_sid = None
     for sid, att in ATTENDANCE.items():
         if att.get('student_id') == data.get('studentId') and att.get('verified'):
@@ -481,7 +542,6 @@ def handle_webrtc_offer(data):
 @socketio.on('webrtc_answer')
 def handle_webrtc_answer(data):
     print(f"📺 Прокси: answer от студента {data.get('studentId')}")
-    # Отправляем answer учителю
     if current_teacher_sid:
         socketio.emit('webrtc_answer', data, to=current_teacher_sid)
         print(f"   Answer отправлен учителю (socket {current_teacher_sid})")
@@ -495,7 +555,6 @@ def handle_ice_candidate(data):
     if target == 'teacher' and current_teacher_sid:
         socketio.emit('webrtc_ice_candidate', data, to=current_teacher_sid)
     else:
-        # ищем сокет студента
         student_sid = None
         for sid, att in ATTENDANCE.items():
             if att.get('student_id') == data.get('studentId') and att.get('verified'):
@@ -513,7 +572,14 @@ def handle_join_teacher_room(data):
 def handle_join_student_room(data):
     join_room('teacher_room')
     print(f"✅ Студент {data.get('studentId')} присоединился к комнате teacher_room")
-    
+
+@socketio.on('request_webrtc_restart')
+def handle_webrtc_restart(data):
+    print(f"🔄 Запрос на перезапуск WebRTC от студента {data.get('studentId')}")
+    # Отправляем учителю, чтобы он снова отправил offer
+    if current_teacher_sid:
+        socketio.emit('request_webrtc_restart', {'studentId': data.get('studentId')}, to=current_teacher_sid)
+
 # ================= Запуск =================
 if __name__ == "__main__":
     generate_session_code()
