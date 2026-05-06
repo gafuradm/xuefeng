@@ -1354,3 +1354,104 @@ async function generateAllLessonsContent() {
         alert('Ошибка генерации: ' + error.message);
     }
 }
+
+// frontend/script.js - добавить функцию showUserPerformance
+
+async function showUserPerformance() {
+    if (!currentUserId) {
+        alert('Сначала создайте пользователя (начните обучение)');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/user/performance?user_id=${currentUserId}`);
+        if (!response.ok) throw new Error(await response.text());
+        
+        const data = await response.json();
+        
+        if (data.length === 0) {
+            alert('Нет данных об успеваемости. Пройдите несколько уроков или тестов.');
+            return;
+        }
+        
+        // Формируем HTML для отображения статистики
+        let html = `
+            <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                        background: white; padding: 30px; border-radius: 20px; 
+                        max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 1000;">
+                <h2>📊 Моя успеваемость</h2>
+                <button onclick="this.parentElement.remove()" style="float: right; background: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">✕ Закрыть</button>
+                <div style="clear: both;"></div>
+        `;
+        
+        // Сортируем по уровню mastery (сначала слабые)
+        data.sort((a, b) => a.mastery_level - b.mastery_level);
+        
+        for (let item of data) {
+            const level = item.mastery_level;
+            const color = level >= 70 ? '#28a745' : (level >= 40 ? '#ffc107' : '#dc3545');
+            const status = level >= 70 ? '✅ Освоено' : (level >= 40 ? '⚠️ В процессе' : '❌ Требует внимания');
+            
+            html += `
+                <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong>${escapeHtml(item.topic)}</strong>
+                        <span style="color: ${color}; font-weight: bold;">${status}</span>
+                    </div>
+                    <div style="background: #e0e0e0; height: 25px; border-radius: 12px; overflow: hidden;">
+                        <div style="background: ${color}; width: ${level}%; height: 25px; text-align: center; color: white; font-size: 12px; line-height: 25px;">
+                            ${level.toFixed(0)}%
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #666;">
+                        <span>✅ Правильно: ${item.correct_count}</span>
+                        <span>📝 Всего: ${item.total_count}</span>
+                        <span>📅 ${new Date(item.last_attempt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Средний уровень
+        const avgLevel = data.reduce((sum, item) => sum + item.mastery_level, 0) / data.length;
+        const avgColor = avgLevel >= 70 ? '#28a745' : (avgLevel >= 40 ? '#ffc107' : '#dc3545');
+        
+        html += `
+            <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; text-align: center;">
+                <h3>📈 Общий прогресс</h3>
+                <div style="font-size: 36px; font-weight: bold;">${avgLevel.toFixed(0)}%</div>
+                <div style="background: rgba(255,255,255,0.3); height: 10px; border-radius: 5px; margin-top: 10px;">
+                    <div style="background: white; width: ${avgLevel}%; height: 10px; border-radius: 5px;"></div>
+                </div>
+                <p style="margin-top: 10px;">Изучено тем: ${data.length}</p>
+            </div>
+        `;
+        
+        html += `</div>`;
+        
+        // Добавляем overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.background = 'rgba(0,0,0,0.5)';
+        overlay.style.zIndex = '999';
+        overlay.onclick = () => {
+            overlay.remove();
+            perfDiv.remove();
+        };
+        
+        const perfDiv = document.createElement('div');
+        perfDiv.innerHTML = html;
+        
+        document.body.appendChild(overlay);
+        document.body.appendChild(perfDiv);
+        
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки статистики: ' + error.message);
+    }
+}

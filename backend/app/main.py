@@ -12,6 +12,14 @@ import concurrent.futures
 from datetime import datetime
 import asyncio
 
+# backend/app/main.py - добавьте импорты в начало файла
+
+from .models import (
+    User, Session as SessionModel, TestResult, Lesson, ProgressHistory,
+    UserCourse, CourseModule, CourseLesson, UserLesson,
+    UserInteraction, UserPerformance  # <--- ВАЖНО: добавить эти две модели
+)
+
 from .database import engine, get_db
 from .models import Base, User, CustomTest
 from .deepseek_client import deepseek_client
@@ -966,3 +974,54 @@ async def generate_all_lessons_content(
         "generated_count": generated_count,
         "errors": errors
     }
+
+# backend/app/main.py – добавить эндпоинты
+
+@app.get("/api/user/statistics")
+async def get_user_statistics(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Получить статистику пользователя"""
+    stats = await ai_service.get_user_statistics(db, user_id)
+    return stats
+
+@app.get("/api/user/performance")
+async def get_user_performance(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Получить статистику успеваемости пользователя"""
+    performances = db.query(UserPerformance).filter(UserPerformance.user_id == user_id).all()
+    return [
+        {
+            "topic": p.topic,
+            "correct_count": p.correct_count,
+            "total_count": p.total_count,
+            "mastery_level": p.mastery_level,
+            "last_attempt": p.last_attempt
+        }
+        for p in performances
+    ]
+
+@app.get("/api/user/interactions")
+async def get_user_interactions(
+    user_id: int,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    """Получить историю взаимодействий с ИИ"""
+    interactions = db.query(UserInteraction).filter(
+        UserInteraction.user_id == user_id
+    ).order_by(UserInteraction.created_at.desc()).limit(limit).all()
+    
+    return [
+        {
+            "type": i.interaction_type,
+            "user_input": i.user_input,
+            "ai_response": i.ai_response,
+            "topic": i.topic,
+            "created_at": i.created_at
+        }
+        for i in interactions
+    ]

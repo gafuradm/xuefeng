@@ -15,6 +15,8 @@ class User(Base):
     user_lessons = relationship('UserLesson', back_populates='user', cascade='all, delete-orphan')
     sessions = relationship('Session', back_populates='user', cascade="all, delete-orphan")
     custom_tests = relationship('CustomTest', back_populates='user', cascade="all, delete-orphan")  # НОВОЕ
+    interactions = relationship('UserInteraction', back_populates='user', cascade='all, delete-orphan')
+    performances = relationship('UserPerformance', back_populates='user', cascade='all, delete-orphan')
 
 class Session(Base):
     __tablename__ = 'sessions'
@@ -167,3 +169,35 @@ class UserLesson(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = relationship('User', back_populates='user_lessons')
+
+# backend/app/models.py
+
+class UserInteraction(Base):
+    """История взаимодействий пользователя с ИИ"""
+    __tablename__ = 'user_interactions'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    session_id = Column(Integer, ForeignKey('sessions.id', ondelete='SET NULL'), nullable=True)
+    interaction_type = Column(String)  # 'question', 'lesson_generated', 'test_taken', 'course_created', 'lesson_created'
+    topic = Column(String, nullable=True)
+    user_input = Column(Text, nullable=True)      # вопрос пользователя или его ответы
+    ai_response = Column(Text, nullable=True)     # ответ ИИ
+    feedback_score = Column(Integer, nullable=True)  # оценка качества от 1 до 5 (можно добавить позже)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship('User', back_populates='interactions')
+
+class UserPerformance(Base):
+    """Статистика успеваемости пользователя по темам"""
+    __tablename__ = 'user_performances'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    topic = Column(String, nullable=False)
+    correct_count = Column(Integer, default=0)    # количество правильных ответов
+    total_count = Column(Integer, default=0)      # всего попыток
+    last_attempt = Column(DateTime, default=datetime.utcnow)
+    mastery_level = Column(Float, default=0.0)    # уровень владения (0-100)
+    
+    user = relationship('User', back_populates='performances')

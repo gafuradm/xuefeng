@@ -5,10 +5,15 @@ import pickle
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
-
+from .context_service import ContextService
 from .models import User, Session as SessionModel, TestResult, Lesson, ProgressHistory
 from .deepseek_client import deepseek_client
 from .config import settings
+from .models import (
+    User, Session as SessionModel, TestResult, Lesson, 
+    ProgressHistory, UserCourse, CourseModule, CourseLesson, 
+    UserLesson, UserInteraction, UserPerformance  # <-- добавить UserPerformance
+)
 from .subject_topics import (
     get_modules_for_subject, get_default_tasks,
     get_gaokao_modules, GAOKAO_TOPICS,
@@ -510,6 +515,15 @@ class AITeacherService:
         test.score = evaluation.get("overall_score", 0)
         session.current_profile = evaluation.get("topic_scores", {})
         db.commit()
+        
+        # Сохраняем результаты теста в статистику по темам
+        topic_scores = evaluation.get("topic_scores", {})
+        for topic, score in topic_scores.items():
+            # Для каждой темы считаем количество правильных ответов
+            # (упрощённо: если score > 60 считаем тему усвоенной)
+            is_correct = score >= 60
+            await ContextService.update_performance(db, session.user_id, topic, is_correct)
+        
         return evaluation
 
     # ==================== ПОСТРОЕНИЕ ПЛАНА ====================
@@ -814,19 +828,45 @@ class AITeacherService:
                 "message": "Урок успешно завершён (без задач)"
             }
         
-        check = await self.check_lesson_answers(lesson, user_answers)
-        if not check["all_correct"]:
+        # Проверяем ответы и обновляем статистику по каждой задаче
+        session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+        results = []
+        all_correct = True
+        correct_count = 0
+        
+        for i, task in enumerate(tasks):
+            user_ans = user_answers.get(str(i), "").strip().lower()
+            correct_ans = task.get("answer", "").strip().lower()
+            is_correct = (user_ans == correct_ans)
+            if is_correct:
+                correct_count += 1
+            else:
+                all_correct = False
+            
+            # Обновляем статистику по теме
+            if session:
+                await ContextService.update_performance(
+                    db, session.user_id, lesson.topic, is_correct
+                )
+            
+            hint = task.get("hint", "Проверьте решение. Возможно, нужно применить формулу или правило.")
+            results.append({
+                "task_index": i,
+                "correct": is_correct,
+                "hint": hint if not is_correct else None
+            })
+        
+        if not all_correct:
             return {
                 "status": "failed",
-                "message": "Некоторые ответы неправильные. Исправьте их.",
-                "results": check["results"]
+                "message": f"Правильных ответов: {correct_count}/{len(tasks)}. Исправьте ошибки.",
+                "results": results
             }
         
         lesson.completed = True
         lesson.completed_at = datetime.utcnow()
         db.commit()
         
-        session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
         new_level = 0
         if session:
             current = session.current_profile.get(lesson.topic, 0)
@@ -840,7 +880,7 @@ class AITeacherService:
             "status": "success",
             "score": 100,
             "new_level": new_level,
-            "message": "Урок успешно завершён!"
+            "message": f"Урок успешно завершён! Правильных ответов: {correct_count}/{len(tasks)}"
         }
 
     async def generate_progress_test(self, db: Session, session_id: int) -> List[Dict[str, Any]]:
@@ -924,103 +964,183 @@ class AITeacherService:
         lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
         if not session or not lesson:
             return "Извините, не удалось найти контекст урока."
+        
         topic = lesson.topic
-        weak_topics = [t for t, score in session.current_profile.items() if score < 50]
+        user_id = session.user_id
+        
+        # Получаем контекст из истории
+        context = await ContextService.get_user_context(db, user_id, current_topic=topic)
+        
         prompt = f"""
 Ты – ИИ-помощник по {session.exam_name}. Ученик изучает тему "{topic}".
-Его слабые темы (по входному тесту): {', '.join(weak_topics) if weak_topics else 'не определены'}.
+
+{context}
+
 Вопрос ученика: {question}
 
-Дай понятный, подробный ответ, объясни шаги решения, если нужно. Используй формулы в LaTeX (например, \\(x^2\\)).
+Дай понятный, подробный ответ, объясни шаги решения. Учти историю предыдущих вопросов и уровень знаний ученика.
+Используй формулы в LaTeX (например, \\(x^2\\)).
 """
         response = await deepseek_client.chat_completion([
             {"role": "system", "content": "Ты полезный помощник по учебным предметам. Отвечай дружелюбно и понятно."},
             {"role": "user", "content": prompt}
         ], max_tokens=1000)
+        
+        # Сохраняем взаимодействие
+        await ContextService.add_interaction(
+            db, user_id, 'question', question, response, session_id, topic
+        )
+        
         return response
     
     # backend/app/services.py (добавить в конец класса AITeacherService)
 
     # ========== ГЕНЕРАЦИЯ ПОЛЬЗОВАТЕЛЬСКОГО КУРСА ==========
-    async def generate_course_structure(self, name: str, description: str, success_criteria: str) -> Dict:
-        """Генерирует структуру курса (модули, уроки) на основе входных данных"""
+    async def generate_course_structure(self, db: Session, user_id: int, name: str, description: str, success_criteria: str) -> Dict:
+        """Генерирует структуру курса и сохраняет в БД"""
         criteria_text = success_criteria if success_criteria else "не указаны, придумай разумные критерии"
         prompt = f"""
-Ты – эксперт по созданию образовательных курсов. Пользователь хочет создать курс:
+    Ты – эксперт по созданию образовательных курсов. Пользователь хочет создать курс:
 
-НАЗВАНИЕ: {name}
-ОПИСАНИЕ: {description if description else 'не указано'}
-КРИТЕРИИ УСПЕХА: {criteria_text}
+    НАЗВАНИЕ: {name}
+    ОПИСАНИЕ: {description if description else 'не указано'}
+    КРИТЕРИИ УСПЕХА: {criteria_text}
 
-Сгенерируй подробную структуру курса в формате JSON. Курс должен состоять из 3-5 модулей, в каждом модуле 2-4 урока.
-Для каждого урока укажи: название, краткое описание, тип (theory/practice/test). Также добавь общие критерии успеха для всего курса и для каждого модуля.
+    Сгенерируй подробную структуру курса в формате JSON. Курс должен состоять из 3-5 модулей, в каждом модуле 2-4 урока.
+    Для каждого урока укажи: название, краткое описание, тип (theory/practice/test). Также добавь общие критерии успеха для всего курса и для каждого модуля.
 
-Верни ТОЛЬКО JSON:
-{{
-  "success_criteria": "общие критерии успеха для курса",
-  "modules": [
+    Верни ТОЛЬКО JSON:
     {{
-      "title": "Название модуля",
-      "description": "Описание модуля",
-      "success_criteria": "критерии успеха модуля",
-      "lessons": [
-        {{"title": "Название урока", "description": "краткое описание", "type": "theory"}},
-        ...
-      ]
+    "success_criteria": "общие критерии успеха для курса",
+    "modules": [
+        {{
+        "title": "Название модуля",
+        "description": "Описание модуля",
+        "success_criteria": "критерии успеха модуля",
+        "lessons": [
+            {{"title": "Название урока", "description": "краткое описание", "type": "theory"}},
+            ...
+        ]
+        }}
+    ]
     }}
-  ]
-}}
-"""
+    """
         response = await deepseek_client.chat_completion([
             {"role": "system", "content": "Ты эксперт по структуре курсов. Отвечай только JSON."},
             {"role": "user", "content": prompt}
         ], max_tokens=4000)
+        
         try:
             import re
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
-                return json.loads(json_match.group())
+                structure = json.loads(json_match.group())
+                
+                # Сохраняем взаимодействие
+                await ContextService.add_interaction(
+                    db, user_id, 'course_created',
+                    f"Создан курс: {name}",
+                    f"Структура сгенерирована: {len(structure.get('modules', []))} модулей",
+                    topic=name
+                )
+                
+                return structure
             else:
                 return {"error": "Не удалось распарсить ответ"}
-        except:
-            return {"error": "Ошибка парсинга"}
+        except Exception as e:
+            return {"error": f"Ошибка парсинга: {str(e)}"}
     
-    async def generate_lesson_content(self, title: str, subject: str, description: str) -> Dict:
-        """Генерирует полное содержание урока: теория, практика, ДЗ, видео, презентация"""
+    async def generate_lesson_content(self, db: Session, user_id: int, title: str, subject: str, description: str) -> Dict:
+        """Генерирует полное содержание урока и сохраняет в БД"""
+        
+        # Получаем контекст пользователя для персонализации
+        context = await ContextService.get_user_context(db, user_id, current_topic=title)
+        
         prompt = f"""
-Ты – опытный преподаватель по предмету "{subject}". Создай подробный урок на тему "{title}".
+    Ты – опытный преподаватель по предмету "{subject}". Создай подробный урок на тему "{title}".
 
-Описание от пользователя: {description if description else 'нет дополнительных требований'}
+    Описание от пользователя: {description if description else 'нет дополнительных требований'}
 
-Сгенерируй содержание урока в JSON формате со следующими полями:
+    Контекст ученика:
+    {context}
 
-1. theory (string) – теоретическая часть, объяснение темы, формулы в LaTeX.
-2. practice (array) – практические задания для закрепления (3-5 задач). Каждая задача: {{"task": "текст", "answer": "ответ"}}.
-3. homework (array) – домашние задания (3-5 задач). Каждая задача: {{"task": "текст", "answer": "ответ"}}.
-4. success_criteria (string) – критерии успешного освоения урока (что ученик должен знать и уметь).
-5. youtube_urls (array) – 2-3 ссылки на обучающие видео с YouTube по этой теме (реальные ссылки).
-6. presentation_content (string) – HTML/CSS код для презентации (слайд-шоу с теорией и примерами). Сделай её красивой, с современным дизайном.
+    Сгенерируй содержание урока в JSON формате со следующими полями:
 
-Верни ТОЛЬКО JSON:
-{{
-  "theory": "...",
-  "practice": [{{"task": "...", "answer": "..."}}],
-  "homework": [{{"task": "...", "answer": "..."}}],
-  "success_criteria": "...",
-  "youtube_urls": ["url1", "url2"],
-  "presentation_content": "..."
-}}
-"""
+    1. theory (string) – теоретическая часть, объяснение темы, формулы в LaTeX.
+    2. practice (array) – практические задания для закрепления (3-5 задач). Каждая задача: {{"task": "текст", "answer": "ответ"}}.
+    3. homework (array) – домашние задания (3-5 задач). Каждая задача: {{"task": "текст", "answer": "ответ"}}.
+    4. success_criteria (string) – критерии успешного освоения урока (что ученик должен знать и уметь).
+    5. youtube_urls (array) – 2-3 ссылки на обучающие видео с YouTube по этой теме (реальные ссылки).
+    6. presentation_content (string) – HTML/CSS код для презентации.
+
+    Верни ТОЛЬКО JSON:
+    {{
+    "theory": "...",
+    "practice": [{{"task": "...", "answer": "..."}}],
+    "homework": [{{"task": "...", "answer": "..."}}],
+    "success_criteria": "...",
+    "youtube_urls": ["url1", "url2"],
+    "presentation_content": "..."
+    }}
+    """
         response = await deepseek_client.chat_completion([
             {"role": "system", "content": "Ты создатель учебных материалов. Отвечай только JSON."},
             {"role": "user", "content": prompt}
         ], max_tokens=8000)
+        
         try:
             import re
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
-                return json.loads(json_match.group())
+                content = json.loads(json_match.group())
+                
+                # Сохраняем взаимодействие
+                await ContextService.add_interaction(
+                    db, user_id, 'lesson_created',
+                    f"Создан урок: {title}",
+                    f"Сгенерировано {len(content.get('practice', []))} практических заданий",
+                    topic=title
+                )
+                
+                return content
             else:
                 return {"error": "Не удалось распарсить ответ"}
-        except:
-            return {"error": "Ошибка парсинга"}
+        except Exception as e:
+            return {"error": f"Ошибка парсинга: {str(e)}"}
+        
+    async def get_user_statistics(self, db: Session, user_id: int) -> Dict:
+        """Получить статистику успеваемости пользователя"""
+        performances = db.query(UserPerformance).filter(UserPerformance.user_id == user_id).all()
+        
+        weak_topics = []
+        strong_topics = []
+        average_mastery = 0
+        
+        for p in performances:
+            if p.mastery_level < 50:
+                weak_topics.append({"topic": p.topic, "mastery": p.mastery_level})
+            elif p.mastery_level > 70:
+                strong_topics.append({"topic": p.topic, "mastery": p.mastery_level})
+            average_mastery += p.mastery_level
+        
+        if performances:
+            average_mastery /= len(performances)
+        
+        # Получаем последние взаимодействия
+        interactions = db.query(UserInteraction).filter(
+            UserInteraction.user_id == user_id
+        ).order_by(UserInteraction.created_at.desc()).limit(10).all()
+        
+        return {
+            "total_topics": len(performances),
+            "average_mastery": average_mastery,
+            "weak_topics": weak_topics[:5],
+            "strong_topics": strong_topics[:5],
+            "recent_interactions": [
+                {
+                    "type": i.interaction_type,
+                    "topic": i.topic,
+                    "created_at": i.created_at
+                } for i in interactions
+            ]
+        }
