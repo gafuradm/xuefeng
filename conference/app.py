@@ -1,3 +1,4 @@
+# conference/app.py
 import os
 import sys
 import json
@@ -70,7 +71,7 @@ STUDENTS_ROOM = "students_room"
 # Для аудио
 audio_queue = q.Queue(maxsize=100)
 clients_lang = {}
-clients_name = {}           # sid -> имя пользователя
+clients_name = {}
 FULL_LECTURE_TEXT = []
 translation_cache = OrderedDict()
 MAX_CACHE = 1000
@@ -201,19 +202,41 @@ def deepseek_translate(text, target_lang):
     lang_names = {"en": "English", "ru": "Russian", "kk": "Kazakh", "de": "German", "ja": "Japanese", "ko": "Korean", "zh": "Chinese"}
     target_lang_name = lang_names.get(target_lang, target_lang)
     
-    prompt = f"Translate this mathematical lecture from Chinese to {target_lang_name}. Keep all mathematical expressions intact: {text}"
+    # ИЗМЕНЁННЫЙ ПРОМПТ - только перевод, без лишних слов
+    prompt = f"""Translate the following text to {target_lang_name}. 
+Return ONLY the translated text, nothing else. No explanations, no comments, no additional words.
+
+Text: {text}
+
+Translation:"""
     
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
-    body = {"model": "deepseek-chat", "messages": [{"role": "user", "content": prompt}], "max_tokens": 1024, "temperature": 0.3}
+    body = {
+        "model": "deepseek-chat", 
+        "messages": [
+            {"role": "system", "content": "You are a translator. Return ONLY the translation, no additional text."},
+            {"role": "user", "content": prompt}
+        ], 
+        "max_tokens": 1024, 
+        "temperature": 0.1  # снижаем температуру для более точного перевода
+    }
     
     try:
         resp = requests.post("https://api.deepseek.com/v1/chat/completions", json=body, headers=headers, timeout=30)
         resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"].strip()
+        translated = resp.json()["choices"][0]["message"]["content"].strip()
+        
+        # Удаляем возможные кавычки и лишние пробелы
+        if translated.startswith('"') and translated.endswith('"'):
+            translated = translated[1:-1]
+        if translated.startswith("'") and translated.endswith("'"):
+            translated = translated[1:-1]
+        
+        return translated
     except Exception as e:
         logger.error(f"Translation error: {e}")
         return text
-
+    
 # ================= WebSocket обработчики =================
 def on_message(ws, message):
     global PHRASE_COUNT, LAST_SEGMENT_TIME, LAST_SEGMENTS
@@ -362,11 +385,9 @@ def handle_send_message(data):
     sender_lang = clients_lang.get(sid, 'en')
     sender_name = clients_name.get(sid, 'Учитель' if sid == current_teacher_sid else 'Студент')
     
-    # Сохраняем в историю лекции
     add_to_lecture_history(text=message, text_type='chat', language=sender_lang, 
                            speaker=sender_name, translation=None)
     
-    # Переводим на языки всех участников
     for target_sid, target_lang in clients_lang.items():
         if target_sid == sid:
             socketio.emit('chat_message', {
@@ -392,17 +413,6 @@ def handle_send_message(data):
                     'translated': f"[Translation error] {message}",
                     'language': target_lang
                 }, to=target_sid)
-
-@socketio.on("camera_toggled")
-def handle_camera_toggle(data):
-    global camera_stream_active
-    sid = request.sid
-    if sid != current_teacher_sid:
-        return
-    camera_stream_active = data.get('enabled', False)
-    for student_sid in CONNECTED_CLIENTS:
-        if student_sid != sid:
-            socketio.emit('camera_state', {'enabled': camera_stream_active}, to=student_sid)
 
 @socketio.on("request_verification")
 def handle_verification_request():
@@ -469,6 +479,17 @@ def handle_get_full_history(data):
     history_formatted = [{'time': entry['datetime'], 'text': entry['text'], 'translation': entry.get('translation', ''), 'type': entry['type']} for entry in LECTURE_HISTORY[-500:]]
     socketio.emit("full_lecture_history", {"history": history_formatted, "total": len(LECTURE_HISTORY)}, to=sid)
 
+@socketio.on("camera_toggled")
+def handle_camera_toggle(data):
+    global camera_stream_active
+    sid = request.sid
+    if sid != current_teacher_sid:
+        return
+    camera_stream_active = data.get('enabled', False)
+    for student_sid in CONNECTED_CLIENTS:
+        if student_sid != sid:
+            socketio.emit('camera_state', {'enabled': camera_stream_active}, to=student_sid)
+
 # ================= Маршруты Flask =================
 @app.route("/")
 def index():
@@ -504,7 +525,6 @@ def assistant_query():
     if not query:
         return jsonify({"error": "Empty query"}), 400
     
-    # Собираем контекст из последних записей лекции
     context = "\n".join([entry.get('translation', entry['text']) for entry in LECTURE_HISTORY[-20:]])
     
     prompt = f"""
@@ -524,10 +544,9 @@ def assistant_query():
     except Exception as e:
         return jsonify({"answer": "Xiao Shu временно недоступен", "status": "error"})
 
-# WebRTC сигналинг
+# ================= WebRTC сигналинг =================
 @socketio.on('webrtc_offer')
 def handle_webrtc_offer(data):
-    print(f"📺 Прокси: offer от учителя для {data.get('studentId')}")
     student_sid = None
     for sid, att in ATTENDANCE.items():
         if att.get('student_id') == data.get('studentId') and att.get('verified'):
@@ -535,23 +554,15 @@ def handle_webrtc_offer(data):
             break
     if student_sid:
         socketio.emit('webrtc_offer', data, to=student_sid)
-        print(f"   Offer отправлен студенту {data.get('studentId')} (socket {student_sid})")
-    else:
-        print(f"⚠️ Не найден сокет для студента {data.get('studentId')}")
 
 @socketio.on('webrtc_answer')
 def handle_webrtc_answer(data):
-    print(f"📺 Прокси: answer от студента {data.get('studentId')}")
     if current_teacher_sid:
         socketio.emit('webrtc_answer', data, to=current_teacher_sid)
-        print(f"   Answer отправлен учителю (socket {current_teacher_sid})")
-    else:
-        print("⚠️ Нет активного учителя")
 
 @socketio.on('webrtc_ice_candidate')
 def handle_ice_candidate(data):
     target = data.get('target', 'teacher')
-    print(f"📺 Прокси: ICE кандидат от {data.get('studentId')} для {target}")
     if target == 'teacher' and current_teacher_sid:
         socketio.emit('webrtc_ice_candidate', data, to=current_teacher_sid)
     else:
@@ -566,17 +577,13 @@ def handle_ice_candidate(data):
 @socketio.on('join_teacher_room')
 def handle_join_teacher_room(data):
     join_room('teacher_room')
-    print(f"✅ Учитель присоединился к комнате teacher_room")
 
 @socketio.on('join_student_room')
 def handle_join_student_room(data):
     join_room('teacher_room')
-    print(f"✅ Студент {data.get('studentId')} присоединился к комнате teacher_room")
 
 @socketio.on('request_webrtc_restart')
 def handle_webrtc_restart(data):
-    print(f"🔄 Запрос на перезапуск WebRTC от студента {data.get('studentId')}")
-    # Отправляем учителю, чтобы он снова отправил offer
     if current_teacher_sid:
         socketio.emit('request_webrtc_restart', {'studentId': data.get('studentId')}, to=current_teacher_sid)
 
@@ -584,7 +591,6 @@ def handle_webrtc_restart(data):
 if __name__ == "__main__":
     generate_session_code()
     
-    # Запуск фоновых потоков
     threading.Thread(target=audio_thread, daemon=True).start()
     threading.Thread(target=ws_thread, daemon=True).start()
     

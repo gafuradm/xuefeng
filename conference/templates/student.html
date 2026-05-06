@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Lecture - Student Panel</title>
+    <title>Student - Live Lecture</title>
     <style>
         * {
             margin: 0;
@@ -81,9 +81,8 @@
             padding: 20px;
             margin: 20px;
             border-radius: 15px;
-            position: relative;
         }
-        #remoteVideo {
+        #remoteScreenVideo {
             width: 100%;
             max-width: 800px;
             background: #000;
@@ -238,8 +237,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>🎓 Lecture Translator</h1>
-        <p>Живая лекция с синхронным переводом и чатом</p>
+        <h1>🎓 Студент - Живая лекция</h1>
+        <p>Просмотр лекции | Синхронный перевод | Чат</p>
     </div>
 
     <div id="verificationBox" class="verification-box">
@@ -258,7 +257,8 @@
         <div class="status-bar">
             <div>
                 <span id="presenceStatus" class="status-badge status-pending">⏳ Ожидание</span>
-                <span id="streamStatus" class="stream-status stream-inactive">📺 Ожидание трансляции</span>
+                <span id="screenStatus" class="stream-status stream-inactive">📺 Экран: ожидание</span>
+                <span id="cameraStatus" class="stream-status stream-inactive" style="margin-left: 5px;">📷 Камера: ожидание</span>
             </div>
             <div>
                 <select id="myLanguage" class="lang-select">
@@ -277,30 +277,24 @@
         </div>
 
         <div class="video-container">
-            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="remoteScreenVideo" autoplay playsinline></video>
             <video id="remoteCameraVideo" autoplay playsinline></video>
         </div>
 
         <div class="translation-box">
             <h3>📝 Перевод в реальном времени</h3>
-            <div id="currentTranslation">
-                <em>Лекция начнётся soon...</em>
-            </div>
+            <div id="currentTranslation"><em>Лекция начнётся...</em></div>
             <div id="originalText"></div>
         </div>
 
         <div class="history-box">
             <h3>📜 История перевода</h3>
-            <div id="historyList">
-                <em>История будет здесь...</em>
-            </div>
+            <div id="historyList"><em>Пусто</em></div>
         </div>
 
         <div class="chat-panel">
             <h3>💬 Чат (автоперевод)</h3>
-            <div class="chat-messages" id="chatMessages">
-                <div style="color:#999; text-align:center;">Сообщения будут здесь</div>
-            </div>
+            <div class="chat-messages" id="chatMessages"><div style="color:#999; text-align:center;">Сообщения будут здесь</div></div>
             <div class="chat-input-area">
                 <input type="text" id="chatInput" placeholder="Введите сообщение..." autocomplete="off">
                 <button onclick="sendChatMessage()" class="btn btn-primary">Отправить</button>
@@ -309,7 +303,7 @@
 
         <div class="controls">
             <button onclick="toggleSound()" id="soundBtn" class="btn btn-primary">🔊 Озвучка включена</button>
-            <button onclick="reconnectWebRTC()" class="btn btn-primary">🔄 Переподключиться</button>
+            <button onclick="reconnectAll()" class="btn btn-primary">🔄 Переподключиться</button>
         </div>
     </div>
 </div>
@@ -319,13 +313,14 @@
 <script>
     const socket = io();
     let studentId = localStorage.getItem("student_id") || "";
-    let isVerified = false;
     let selectedLang = "en";
     let soundEnabled = true;
     let history = [];
     let verificationTimer;
-    let peerConnection = null;
-    let pendingIceCandidates = [];
+    let screenPeer = null;
+    let cameraPeer = null;
+    let screenConnected = false;
+    let cameraConnected = false;
 
     const configuration = {
         iceServers: [
@@ -336,14 +331,15 @@
 
     const verificationBox = document.getElementById('verificationBox');
     const mainInterface = document.getElementById('mainInterface');
-    const remoteVideo = document.getElementById('remoteVideo');
+    const remoteScreenVideo = document.getElementById('remoteScreenVideo');
     const remoteCameraVideo = document.getElementById('remoteCameraVideo');
     const currentTranslationDiv = document.getElementById('currentTranslation');
     const originalTextDiv = document.getElementById('originalText');
     const historyListDiv = document.getElementById('historyList');
     const phraseCountSpan = document.getElementById('phraseCount');
     const presenceStatus = document.getElementById('presenceStatus');
-    const streamStatusSpan = document.getElementById('streamStatus');
+    const screenStatusSpan = document.getElementById('screenStatus');
+    const cameraStatusSpan = document.getElementById('cameraStatus');
 
     function updateStatus(verified) {
         if (verified) {
@@ -355,13 +351,23 @@
         }
     }
 
-    function updateStreamStatus(active) {
+    function updateScreenStreamStatus(active) {
         if (active) {
-            streamStatusSpan.innerHTML = '🔴 Трансляция идёт';
-            streamStatusSpan.className = 'stream-status stream-active';
+            screenStatusSpan.innerHTML = '📺 Экран: идёт';
+            screenStatusSpan.className = 'stream-status stream-active';
         } else {
-            streamStatusSpan.innerHTML = '📺 Ожидание трансляции';
-            streamStatusSpan.className = 'stream-status stream-inactive';
+            screenStatusSpan.innerHTML = '📺 Экран: ожидание';
+            screenStatusSpan.className = 'stream-status stream-inactive';
+        }
+    }
+
+    function updateCameraStreamStatus(active) {
+        if (active) {
+            cameraStatusSpan.innerHTML = '📷 Камера: идёт';
+            cameraStatusSpan.className = 'stream-status stream-active';
+        } else {
+            cameraStatusSpan.innerHTML = '📷 Камера: ожидание';
+            cameraStatusSpan.className = 'stream-status stream-inactive';
         }
     }
 
@@ -369,6 +375,7 @@
         const time = new Date().toLocaleTimeString();
         history.unshift({ time, translation, original });
         if (history.length > 30) history.pop();
+        if (historyListDiv.children[0]?.innerText === 'Пусто') historyListDiv.innerHTML = '';
         historyListDiv.innerHTML = history.map(item => `
             <div class="history-item">
                 <div class="history-time">${item.time}</div>
@@ -378,57 +385,54 @@
         `).join('');
     }
 
-    function setupWebRTC() {
-        if (peerConnection) {
-            peerConnection.close();
-            peerConnection = null;
-        }
-        pendingIceCandidates = [];
+    function createPeerConnection(type) {
+        const pc = new RTCPeerConnection(configuration);
         
-        peerConnection = new RTCPeerConnection(configuration);
-        
-        peerConnection.ontrack = (event) => {
-            console.log('🎥 Трек получен:', event.track.kind);
-            if (event.track.kind === 'video') {
-                if (event.streams[0]) {
-                    if (!remoteVideo.srcObject || remoteVideo.srcObject.id !== event.streams[0].id) {
-                        if (!remoteVideo.srcObject) {
-                            remoteVideo.srcObject = event.streams[0];
-                            remoteVideo.play().catch(e => console.log(e));
-                        } else if (!remoteCameraVideo.srcObject) {
-                            remoteCameraVideo.srcObject = event.streams[0];
-                            remoteCameraVideo.style.display = 'block';
-                            remoteCameraVideo.play().catch(e => console.log(e));
-                        }
-                    }
+        pc.ontrack = (event) => {
+            console.log(`🎥 Трек получен для ${type}`);
+            if (type === 'screen') {
+                if (remoteScreenVideo.srcObject !== event.streams[0]) {
+                    remoteScreenVideo.srcObject = event.streams[0];
+                    remoteScreenVideo.play().catch(e => console.log(e));
+                    updateScreenStreamStatus(true);
+                    screenConnected = true;
+                }
+            } else {
+                if (remoteCameraVideo.srcObject !== event.streams[0]) {
+                    remoteCameraVideo.srcObject = event.streams[0];
+                    remoteCameraVideo.style.display = 'block';
+                    remoteCameraVideo.play().catch(e => console.log(e));
+                    updateCameraStreamStatus(true);
+                    cameraConnected = true;
                 }
             }
-            updateStreamStatus(true);
         };
         
-        peerConnection.onicecandidate = (event) => {
+        pc.onicecandidate = (event) => {
             if (event.candidate) {
-                socket.emit('webrtc_ice_candidate', {
-                    studentId: studentId,
-                    candidate: event.candidate
-                });
+                socket.emit('webrtc_ice_candidate', { studentId: studentId, candidate: event.candidate, type: type });
             }
         };
         
-        peerConnection.oniceconnectionstatechange = () => {
-            console.log('ICE состояние:', peerConnection.iceConnectionState);
-            if (peerConnection.iceConnectionState === 'connected') {
-                console.log('✅ WebRTC соединение установлено');
-                updateStreamStatus(true);
+        pc.oniceconnectionstatechange = () => {
+            console.log(`${type} ICE состояние:`, pc.iceConnectionState);
+            if (pc.iceConnectionState === 'connected') {
+                console.log(`✅ ${type} WebRTC соединение установлено`);
+            } else if (pc.iceConnectionState === 'disconnected') {
+                if (type === 'screen') updateScreenStreamStatus(false);
+                else updateCameraStreamStatus(false);
             }
         };
         
-        return peerConnection;
+        return pc;
     }
 
-    function reconnectWebRTC() {
-        console.log('🔄 Переподключение WebRTC...');
-        setupWebRTC();
+    function reconnectAll() {
+        console.log('🔄 Переподключение всех потоков...');
+        if (screenPeer) screenPeer.close();
+        if (cameraPeer) cameraPeer.close();
+        screenPeer = createPeerConnection('screen');
+        cameraPeer = createPeerConnection('camera');
         socket.emit('request_webrtc_restart', { studentId: studentId });
     }
 
@@ -462,9 +466,7 @@
             secondsLeft--;
             if (secondsLeft >= 0) {
                 document.getElementById("codeTimer").innerText = `Код действителен: ${secondsLeft} сек`;
-                if (secondsLeft <= 5) {
-                    document.getElementById("codeTimer").style.color = "#dc3545";
-                }
+                if (secondsLeft <= 5) document.getElementById("codeTimer").style.color = "#dc3545";
                 if (secondsLeft <= 0) {
                     clearInterval(verificationTimer);
                     document.getElementById("codeTimer").innerText = "🔄 Код обновлён!";
@@ -513,11 +515,13 @@
         if (data.success) {
             verificationBox.style.display = 'none';
             mainInterface.style.display = 'block';
-            isVerified = true;
             updateStatus(true);
-            setupWebRTC();
-            socket.emit('join_student_room', { studentId: studentId });
+            
+            screenPeer = createPeerConnection('screen');
+            cameraPeer = createPeerConnection('camera');
+            
             setTimeout(() => {
+                socket.emit('join_student_room', { studentId: studentId });
                 socket.emit('request_webrtc_restart', { studentId: studentId });
             }, 500);
         } else {
@@ -528,61 +532,58 @@
     });
 
     socket.on('screen_share_started', () => {
-        console.log('📺 Трансляция началась, запрашиваем offer');
+        console.log('📺 Трансляция экрана началась');
+        if (!screenPeer) screenPeer = createPeerConnection('screen');
         socket.emit('request_webrtc_restart', { studentId: studentId });
     });
 
     socket.on('screen_share_stopped', () => {
-        console.log('📺 Трансляция остановлена');
-        if (peerConnection) {
-            peerConnection.close();
-            peerConnection = null;
-        }
-        remoteVideo.srcObject = null;
-        remoteCameraVideo.srcObject = null;
-        remoteCameraVideo.style.display = 'none';
-        updateStreamStatus(false);
+        console.log('📺 Трансляция экрана остановлена');
+        if (screenPeer) screenPeer.close();
+        screenPeer = null;
+        remoteScreenVideo.srcObject = null;
+        updateScreenStreamStatus(false);
+        screenConnected = false;
     });
 
     socket.on('camera_state', (data) => {
         if (data.enabled) {
             console.log('📷 Камера учителя включена');
+            if (!cameraPeer) cameraPeer = createPeerConnection('camera');
+            socket.emit('request_webrtc_restart', { studentId: studentId });
         } else {
             console.log('📷 Камера учителя выключена');
+            if (cameraPeer) cameraPeer.close();
+            cameraPeer = null;
             remoteCameraVideo.srcObject = null;
             remoteCameraVideo.style.display = 'none';
+            updateCameraStreamStatus(false);
+            cameraConnected = false;
         }
     });
 
     socket.on('webrtc_offer', async (data) => {
-        console.log('📺 Получен offer от учителя');
-        
-        if (!peerConnection) {
-            setupWebRTC();
+        let pc = data.type === 'screen' ? screenPeer : cameraPeer;
+        if (!pc) {
+            pc = createPeerConnection(data.type);
+            if (data.type === 'screen') screenPeer = pc;
+            else cameraPeer = pc;
         }
         
         try {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-            console.log('✅ Remote description установлен');
-            
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            
-            socket.emit('webrtc_answer', {
-                studentId: studentId,
-                answer: peerConnection.localDescription
-            });
-            console.log('✅ Answer отправлен учителю');
-            
+            await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit('webrtc_answer', { studentId: studentId, answer: answer, type: data.type });
         } catch (err) {
-            console.error('❌ Ошибка при обработке offer:', err);
+            console.error(`Ошибка при ответе на offer ${data.type}:`, err);
         }
     });
 
     socket.on('webrtc_ice_candidate', (data) => {
-        if (peerConnection && peerConnection.remoteDescription && data.candidate) {
-            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
-                .catch(e => console.error('ICE ошибка:', e));
+        let pc = data.type === 'screen' ? screenPeer : cameraPeer;
+        if (pc && data.candidate) {
+            pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.error(e));
         }
     });
 
@@ -607,15 +608,9 @@
 
     socket.on('chat_message', (data) => {
         const chatDiv = document.getElementById('chatMessages');
-        const sender = data.sender === 'me' ? 'Я' : data.sender;
-        const msgDiv = document.createElement('div');
-        msgDiv.style.marginBottom = '8px';
-        msgDiv.innerHTML = `<strong>${sender}:</strong> ${data.translated}<br><small style="color:gray">${data.original}</small>`;
-        chatDiv.appendChild(msgDiv);
+        if (chatDiv.children[0]?.innerText.includes('Сообщения будут здесь')) chatDiv.innerHTML = '';
+        chatDiv.innerHTML += `<div><strong>${data.sender === 'me' ? 'Я' : data.sender}:</strong> ${data.translated}<br><small>${data.original}</small></div>`;
         chatDiv.scrollTop = chatDiv.scrollHeight;
-        if (chatDiv.children.length === 1 && chatDiv.children[0].innerText.includes('Сообщения будут здесь')) {
-            chatDiv.innerHTML = '';
-        }
     });
 
     socket.on('language_set', (data) => {

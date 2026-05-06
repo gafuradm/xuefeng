@@ -80,8 +80,9 @@
             border-radius: 15px;
             overflow: hidden;
             margin-bottom: 20px;
+            padding: 10px;
         }
-        #localVideo {
+        #localScreenVideo {
             width: 100%;
             background: #000;
             border-radius: 10px;
@@ -92,7 +93,6 @@
             background: #000;
             border-radius: 10px;
             margin-top: 10px;
-            display: none;
         }
         .share-controls {
             display: flex;
@@ -185,7 +185,7 @@
             border: 1px solid #e0e0e0;
         }
         .chat-messages {
-            height: 200px;
+            height: 250px;
             overflow-y: auto;
             border: 1px solid #ccc;
             padding: 10px;
@@ -250,21 +250,14 @@
             border-bottom: 1px solid #e0e0e0;
             font-size: 14px;
         }
-        .camera-control {
-            margin-top: 15px;
-        }
         .lang-select {
             padding: 8px 12px;
             border-radius: 10px;
             border: 1px solid #ddd;
         }
         @media (max-width: 768px) {
-            .main-content {
-                flex-direction: column;
-            }
-            .screen-share-panel {
-                min-width: auto;
-            }
+            .main-content { flex-direction: column; }
+            .screen-share-panel { min-width: auto; }
         }
     </style>
 </head>
@@ -278,17 +271,18 @@
         <div class="status-bar">
             <div>
                 <span class="status-badge" id="connectionStatus">🟡 Подключение...</span>
-                <span class="status-badge" id="streamStatus" style="margin-left: 10px;">📺 Не в трансляции</span>
+                <span class="status-badge" id="screenStatus" style="margin-left: 10px;">📺 Экран: выкл</span>
+                <span class="status-badge" id="cameraStatus" style="margin-left: 10px;">📷 Камера: выкл</span>
             </div>
             <div>
                 <select id="myLanguage" class="lang-select">
                     <option value="en">🇺🇸 English</option>
-                    <option value="ru">🇷🇺 Russian</option>
-                    <option value="kk">🇰🇿 Kazakh</option>
-                    <option value="de">🇩🇪 German</option>
-                    <option value="ja">🇯🇵 Japanese</option>
-                    <option value="ko">🇰🇷 Korean</option>
-                    <option value="zh">🇨🇳 Chinese</option>
+                    <option value="ru">🇷🇺 Русский</option>
+                    <option value="kk">🇰🇿 Қазақша</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                    <option value="ja">🇯🇵 日本語</option>
+                    <option value="ko">🇰🇷 한국어</option>
+                    <option value="zh">🇨🇳 中文</option>
                 </select>
                 <span style="margin-left: 15px;">👤 Имя: <input type="text" id="userNameInput" placeholder="Ваше имя" value="Преподаватель" style="width: 120px;"></span>
                 <button onclick="setName()" class="btn btn-success btn-sm">OK</button>
@@ -302,14 +296,14 @@
         <div class="main-content">
             <div class="screen-share-panel">
                 <div class="video-container">
-                    <video id="localVideo" autoplay playsinline muted style="width: 100%;"></video>
+                    <video id="localScreenVideo" autoplay playsinline muted style="width: 100%;"></video>
                     <video id="localCameraVideo" autoplay playsinline muted style="width: 100%; max-width: 300px; margin-top: 10px;"></video>
                 </div>
                 <div class="share-controls">
-                    <button id="startScreenShareBtn" class="btn btn-primary">🎥 Начать трансляцию экрана</button>
-                    <button id="stopScreenShareBtn" class="btn btn-danger" style="display: none;">⏹ Остановить трансляцию</button>
-                    <button id="startCameraBtn" class="btn btn-success">🎥 Включить камеру</button>
-                    <button id="stopCameraBtn" class="btn btn-danger" style="display: none;">⏹ Выключить камеру</button>
+                    <button id="startScreenBtn" class="btn btn-primary">🎥 Начать трансляцию экрана</button>
+                    <button id="stopScreenBtn" class="btn btn-danger" style="display: none;">⏹ Остановить экран</button>
+                    <button id="startCameraBtn" class="btn btn-success">📷 Включить камеру</button>
+                    <button id="stopCameraBtn" class="btn btn-danger" style="display: none;">📷 Выключить камеру</button>
                     <button onclick="refreshQR()" class="btn btn-primary">🔄 Обновить QR-код</button>
                 </div>
                 
@@ -318,49 +312,34 @@
                     <div id="qrCodeImage"></div>
                     <div class="code-display" id="currentCode"></div>
                     <div class="timer" id="timerDisplay"></div>
-                    <p style="margin-top: 10px; font-size: 12px; color: #666;">Студенты сканируют QR-код или вводят код вручную</p>
                 </div>
                 
                 <div class="student-list" style="background: #f8f9fa; border-radius: 15px; padding: 15px; margin-top: 20px;">
                     <h3>✅ Подтверждённые студенты</h3>
-                    <div id="verifiedStudentsList">
-                        <em>Никого пока нет</em>
-                    </div>
+                    <div id="verifiedStudentsList"><em>Никого пока нет</em></div>
                 </div>
             </div>
 
             <div class="chat-and-camera">
                 <div class="translation-box">
                     <h3>📝 Текущий перевод речи</h3>
-                    <div id="currentTranslation">
-                        <em>Ожидание начала лекции...</em>
-                    </div>
-                    <div id="originalText" style="margin-top: 10px;"></div>
+                    <div id="currentTranslation"><em>Ожидание начала лекции...</em></div>
+                    <div id="originalText"></div>
                 </div>
 
                 <div class="history-box">
                     <h3>📜 История перевода</h3>
-                    <div id="historyList">
-                        <em>История будет здесь...</em>
-                    </div>
+                    <div id="historyList"><em>История будет здесь...</em></div>
                 </div>
 
                 <div class="stats-panel">
-                    <div class="stat-card">
-                        <div class="stat-number" id="verifiedCount">0</div>
-                        <div>Студентов</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="historyCount">0</div>
-                        <div>Записей</div>
-                    </div>
+                    <div class="stat-card"><div class="stat-number" id="verifiedCount">0</div><div>Студентов</div></div>
+                    <div class="stat-card"><div class="stat-number" id="historyCount">0</div><div>Записей</div></div>
                 </div>
 
                 <div class="chat-panel">
                     <h3>💬 Чат (автоперевод)</h3>
-                    <div class="chat-messages" id="chatMessages">
-                        <div style="color:#999; text-align:center;">Сообщения будут здесь</div>
-                    </div>
+                    <div class="chat-messages" id="chatMessages"><div style="color:#999; text-align:center;">Сообщения будут здесь</div></div>
                     <div class="chat-input-area">
                         <input type="text" id="chatInput" placeholder="Введите сообщение..." autocomplete="off">
                         <button onclick="sendChatMessage()" class="btn btn-primary">Отправить</button>
@@ -374,224 +353,138 @@
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script>
         const socket = io();
-        let localStream = null;
+        let screenStream = null;
         let cameraStream = null;
-        let peerConnections = {};
-        let isSharing = false;
+        let screenPeerConnections = {};
+        let cameraPeerConnections = {};
+        let isScreenSharing = false;
         let isCameraOn = false;
         let history = [];
-        let pendingIceCandidates = {};
 
-        const configuration = {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
-            ]
-        };
+        const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
 
         // DOM элементы
-        const startBtn = document.getElementById('startScreenShareBtn');
-        const stopBtn = document.getElementById('stopScreenShareBtn');
+        const startScreenBtn = document.getElementById('startScreenBtn');
+        const stopScreenBtn = document.getElementById('stopScreenBtn');
         const startCameraBtn = document.getElementById('startCameraBtn');
         const stopCameraBtn = document.getElementById('stopCameraBtn');
-        const localVideo = document.getElementById('localVideo');
+        const localScreenVideo = document.getElementById('localScreenVideo');
         const localCameraVideo = document.getElementById('localCameraVideo');
-        const currentTranslationDiv = document.getElementById('currentTranslation');
-        const originalTextDiv = document.getElementById('originalText');
-        const historyListDiv = document.getElementById('historyList');
-        const phraseCountSpan = document.getElementById('phraseCount');
-        const clientCountSpan = document.getElementById('clientCount');
-        const verifiedCountSpan = document.getElementById('verifiedCount');
-        const verifiedStudentsList = document.getElementById('verifiedStudentsList');
-        const currentCodeSpan = document.getElementById('currentCode');
-        const timerDisplay = document.getElementById('timerDisplay');
-        const qrCodeImage = document.getElementById('qrCodeImage');
 
-        function updateStatus(connected) {
-            const statusEl = document.getElementById('connectionStatus');
+        // Обновление статусов
+        function updateConnectionStatus(connected) {
+            const el = document.getElementById('connectionStatus');
             if (connected) {
-                statusEl.innerHTML = '🟢 Подключено к серверу';
-                statusEl.className = 'status-badge status-online';
+                el.innerHTML = '🟢 Подключено';
+                el.className = 'status-badge status-online';
             } else {
-                statusEl.innerHTML = '🔴 Отключено';
-                statusEl.className = 'status-badge status-offline';
+                el.innerHTML = '🔴 Отключено';
+                el.className = 'status-badge status-offline';
             }
         }
 
-        function updateStreamStatus(active) {
-            const streamStatus = document.getElementById('streamStatus');
+        function updateScreenStatus(active) {
+            const el = document.getElementById('screenStatus');
             if (active) {
-                streamStatus.innerHTML = '🔴 Трансляция активна';
-                streamStatus.style.background = '#d4edda';
-                streamStatus.style.color = '#155724';
+                el.innerHTML = '📺 Экран: вкл';
+                el.style.background = '#d4edda';
+                el.style.color = '#155724';
             } else {
-                streamStatus.innerHTML = '📺 Не в трансляции';
-                streamStatus.style.background = '#f8f9fa';
-                streamStatus.style.color = '#333';
+                el.innerHTML = '📺 Экран: выкл';
+                el.style.background = '#f8f9fa';
+                el.style.color = '#333';
             }
         }
 
-        function addToHistory(translation, original) {
-            const time = new Date().toLocaleTimeString();
-            history.unshift({ time, translation, original });
-            if (history.length > 20) history.pop();
-            historyListDiv.innerHTML = history.map(item => `
-                <div class="history-item">
-                    <div class="history-time">${item.time}</div>
-                    <div class="history-translation">${item.translation}</div>
-                    <div class="history-original">${item.original || ''}</div>
-                </div>
-            `).join('');
-            document.getElementById('historyCount').innerText = history.length;
-        }
-
-        function updateVerifiedStudents(students) {
-            verifiedCountSpan.innerText = students.length;
-            if (students.length > 0) {
-                verifiedStudentsList.innerHTML = students.map(s => `
-                    <div class="student-item">✅ ${s.name || 'Student'} (${s.id}) - ${s.time}</div>
-                `).join('');
+        function updateCameraStatus(active) {
+            const el = document.getElementById('cameraStatus');
+            if (active) {
+                el.innerHTML = '📷 Камера: вкл';
+                el.style.background = '#d4edda';
+                el.style.color = '#155724';
             } else {
-                verifiedStudentsList.innerHTML = '<em>Никого пока нет</em>';
+                el.innerHTML = '📷 Камера: выкл';
+                el.style.background = '#f8f9fa';
+                el.style.color = '#333';
             }
         }
 
-        async function fetchCurrentCode() {
-            try {
-                const resp = await fetch('/api/current_code');
-                const data = await resp.json();
-                updateQRCode(data.code);
-                startTimer(data.expires_in);
-            } catch (e) {
-                console.error('Failed to fetch code:', e);
-            }
-        }
-
-        function updateQRCode(code) {
-            currentCodeSpan.innerText = code;
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/student?code=' + code)}`;
-            qrCodeImage.innerHTML = `<img src="${qrUrl}" width="150" height="150" alt="QR Code">`;
-        }
-
-        function startTimer(expiresIn) {
-            let timeLeft = expiresIn;
-            const interval = setInterval(() => {
-                timeLeft--;
-                if (timeLeft <= 0) {
-                    clearInterval(interval);
-                    timerDisplay.innerText = 'Код обновляется...';
-                    fetchCurrentCode();
-                } else {
-                    timerDisplay.innerText = `Код действителен: ${timeLeft} сек`;
-                }
-            }, 1000);
-        }
-
-        async function fetchVerifiedStudents() {
-            try {
-                const resp = await fetch('/api/verified_students');
-                const data = await resp.json();
-                updateVerifiedStudents(data.students);
-            } catch (e) {
-                console.error('Failed to fetch students:', e);
-            }
-        }
-
-        function refreshQR() {
-            fetchCurrentCode();
-        }
-
-        function createPeerConnection(studentId) {
+        // Peer Connections
+        function createScreenPeerConnection(studentId) {
             const pc = new RTCPeerConnection(configuration);
-            pendingIceCandidates[studentId] = [];
-            
-            // Добавляем видео треки (экран и камера), если они есть
-            if (localStream) {
-                localStream.getTracks().forEach(track => {
-                    pc.addTrack(track, localStream);
-                });
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => pc.addTrack(track, screenStream));
             }
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => {
-                    pc.addTrack(track, cameraStream);
-                });
-            }
-            
             pc.onicecandidate = (event) => {
                 if (event.candidate) {
-                    if (pc.remoteDescription) {
-                        socket.emit('webrtc_ice_candidate', {
-                            studentId: studentId,
-                            candidate: event.candidate,
-                            target: 'student'
-                        });
-                    } else {
-                        pendingIceCandidates[studentId].push(event.candidate);
-                    }
+                    socket.emit('webrtc_ice_candidate', { studentId: studentId, candidate: event.candidate, target: 'student', type: 'screen' });
                 }
             };
-            
-            pc.oniceconnectionstatechange = () => {
-                console.log(`ICE для ${studentId}:`, pc.iceConnectionState);
-            };
-            
             return pc;
         }
 
-        async function sendOfferToStudent(studentId) {
-            let pc = peerConnections[studentId];
-            if (!pc) {
-                pc = createPeerConnection(studentId);
-                peerConnections[studentId] = pc;
+        function createCameraPeerConnection(studentId) {
+            const pc = new RTCPeerConnection(configuration);
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => pc.addTrack(track, cameraStream));
             }
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit('webrtc_offer', { studentId: studentId, offer: pc.localDescription });
-            console.log(`📺 Offer отправлен студенту ${studentId}`);
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc_ice_candidate', { studentId: studentId, candidate: event.candidate, target: 'student', type: 'camera' });
+                }
+            };
+            return pc;
         }
 
+        async function sendOfferToStudent(studentId, pc, type) {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            socket.emit('webrtc_offer', { studentId: studentId, offer: pc.localDescription, type: type });
+        }
+
+        // Запуск трансляции экрана
         async function startScreenShare() {
             try {
-                localStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 15 } },
-                    audio: false
-                });
-                localVideo.srcObject = localStream;
-                localVideo.play();
+                screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+                localScreenVideo.srcObject = screenStream;
+                localScreenVideo.play();
                 
-                // Обновить все существующие peer connections
-                for (const studentId in peerConnections) {
-                    const pc = peerConnections[studentId];
-                    if (pc && localStream) {
-                        localStream.getTracks().forEach(track => {
-                            if (!pc.getSenders().find(s => s.track === track)) {
-                                pc.addTrack(track, localStream);
-                            }
-                        });
-                        await sendOfferToStudent(studentId);
-                    }
-                }
-                
-                // Отправить offer всем уже верифицированным студентам
                 const students = await fetch('/api/verified_students').then(r => r.json());
                 for (const student of students.students) {
-                    await sendOfferToStudent(student.id);
+                    const pc = createScreenPeerConnection(student.id);
+                    screenPeerConnections[student.id] = pc;
+                    await sendOfferToStudent(student.id, pc, 'screen');
                 }
                 
-                startBtn.style.display = 'none';
-                stopBtn.style.display = 'inline-block';
-                isSharing = true;
-                updateStreamStatus(true);
+                startScreenBtn.style.display = 'none';
+                stopScreenBtn.style.display = 'inline-block';
+                isScreenSharing = true;
+                updateScreenStatus(true);
                 socket.emit('start_screen_share');
                 
-                localStream.getVideoTracks()[0].onended = () => stopScreenShare();
+                screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
             } catch (err) {
                 console.error(err);
                 alert('Не удалось начать трансляцию экрана');
             }
         }
 
+        function stopScreenShare() {
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+            }
+            localScreenVideo.srcObject = null;
+            Object.values(screenPeerConnections).forEach(pc => pc.close());
+            screenPeerConnections = {};
+            startScreenBtn.style.display = 'inline-block';
+            stopScreenBtn.style.display = 'none';
+            isScreenSharing = false;
+            updateScreenStatus(false);
+            socket.emit('stop_screen_share');
+        }
+
+        // Запуск камеры (независимо от экрана)
         async function startCamera() {
             try {
                 cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
@@ -600,48 +493,34 @@
                 startCameraBtn.style.display = 'none';
                 stopCameraBtn.style.display = 'inline-block';
                 isCameraOn = true;
+                updateCameraStatus(true);
                 
-                // Добавить видео трек во все peer connections
-                for (const studentId in peerConnections) {
-                    const pc = peerConnections[studentId];
-                    if (pc && cameraStream) {
-                        cameraStream.getTracks().forEach(track => {
-                            if (!pc.getSenders().find(s => s.track === track)) {
-                                pc.addTrack(track, cameraStream);
-                            }
-                        });
-                        await sendOfferToStudent(studentId);
-                    }
+                const students = await fetch('/api/verified_students').then(r => r.json());
+                for (const student of students.students) {
+                    const pc = createCameraPeerConnection(student.id);
+                    cameraPeerConnections[student.id] = pc;
+                    await sendOfferToStudent(student.id, pc, 'camera');
                 }
                 socket.emit('camera_toggled', { enabled: true });
             } catch (err) {
-                console.error('Camera error:', err);
-                alert('Не удалось включить камеру. Проверьте разрешения.');
+                console.error(err);
+                alert('Не удалось включить камеру');
             }
-        }
-
-        function stopScreenShare() {
-            isSharing = false;
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-            localVideo.srcObject = null;
-            startBtn.style.display = 'inline-block';
-            stopBtn.style.display = 'none';
-            updateStreamStatus(false);
-            socket.emit('stop_screen_share');
         }
 
         function stopCamera() {
-            isCameraOn = false;
             if (cameraStream) {
                 cameraStream.getTracks().forEach(track => track.stop());
                 cameraStream = null;
             }
+            localCameraVideo.srcObject = null;
             localCameraVideo.style.display = 'none';
+            Object.values(cameraPeerConnections).forEach(pc => pc.close());
+            cameraPeerConnections = {};
             startCameraBtn.style.display = 'inline-block';
             stopCameraBtn.style.display = 'none';
+            isCameraOn = false;
+            updateCameraStatus(false);
             socket.emit('camera_toggled', { enabled: false });
         }
 
@@ -660,8 +539,23 @@
             }
         }
 
+        function addToHistory(translation, original) {
+            const time = new Date().toLocaleTimeString();
+            history.unshift({ time, translation, original });
+            if (history.length > 20) history.pop();
+            document.getElementById('historyList').innerHTML = history.map(item => `
+                <div class="history-item">
+                    <div class="history-time">${item.time}</div>
+                    <div class="history-translation">${item.translation}</div>
+                    <div class="history-original">${item.original || ''}</div>
+                </div>
+            `).join('');
+            document.getElementById('historyCount').innerText = history.length;
+        }
+
+        // Socket события
         socket.on('connect', () => {
-            updateStatus(true);
+            updateConnectionStatus(true);
             fetchCurrentCode();
             fetchVerifiedStudents();
             setInterval(fetchVerifiedStudents, 5000);
@@ -670,74 +564,106 @@
             socket.emit('set_language', { lang: savedLang });
         });
 
-        socket.on('disconnect', () => updateStatus(false));
+        socket.on('disconnect', () => updateConnectionStatus(false));
 
         socket.on('stats', (data) => {
-            phraseCountSpan.innerText = data.phrases;
-            clientCountSpan.innerText = data.connected;
+            document.getElementById('phraseCount').innerText = data.phrases;
+            document.getElementById('clientCount').innerText = data.connected;
         });
 
         socket.on('new_translation', (data) => {
-            currentTranslationDiv.innerHTML = `<strong>${data.translation}</strong>`;
-            if (data.original) {
-                originalTextDiv.innerHTML = `<i>Оригинал: "${data.original}"</i>`;
-            }
-            if (data.is_final) {
-                addToHistory(data.translation, data.original);
-            }
+            document.getElementById('currentTranslation').innerHTML = `<strong>${data.translation}</strong>`;
+            if (data.original) document.getElementById('originalText').innerHTML = `<i>Оригинал: "${data.original}"</i>`;
+            if (data.is_final) addToHistory(data.translation, data.original);
         });
 
         socket.on('chat_message', (data) => {
             const chatDiv = document.getElementById('chatMessages');
-            const sender = data.sender === 'me' ? 'Я' : data.sender;
-            const msgDiv = document.createElement('div');
-            msgDiv.style.marginBottom = '8px';
-            msgDiv.innerHTML = `<strong>${sender}:</strong> ${data.translated}<br><small style="color:gray">${data.original}</small>`;
-            chatDiv.appendChild(msgDiv);
+            if (chatDiv.children[0]?.innerText.includes('Сообщения будут здесь')) chatDiv.innerHTML = '';
+            chatDiv.innerHTML += `<div><strong>${data.sender === 'me' ? 'Я' : data.sender}:</strong> ${data.translated}<br><small>${data.original}</small></div>`;
             chatDiv.scrollTop = chatDiv.scrollHeight;
-            if (chatDiv.children.length === 1 && chatDiv.children[0].innerText.includes('Сообщения будут здесь')) {
-                chatDiv.innerHTML = '';
-            }
         });
 
         socket.on('webrtc_answer', async (data) => {
-            const pc = peerConnections[data.studentId];
+            let pc = data.type === 'screen' ? screenPeerConnections[data.studentId] : cameraPeerConnections[data.studentId];
             if (pc && data.answer) {
                 await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
             }
         });
 
         socket.on('webrtc_ice_candidate', (data) => {
-            const pc = peerConnections[data.studentId];
+            let pc = data.type === 'screen' ? screenPeerConnections[data.studentId] : cameraPeerConnections[data.studentId];
             if (pc && data.candidate) {
                 pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.error(e));
             }
         });
 
         socket.on('student_joined', async (data) => {
-            if (isSharing || isCameraOn) {
-                await sendOfferToStudent(data.studentId);
+            if (isScreenSharing && screenStream) {
+                const pc = createScreenPeerConnection(data.studentId);
+                screenPeerConnections[data.studentId] = pc;
+                await sendOfferToStudent(data.studentId, pc, 'screen');
+            }
+            if (isCameraOn && cameraStream) {
+                const pc = createCameraPeerConnection(data.studentId);
+                cameraPeerConnections[data.studentId] = pc;
+                await sendOfferToStudent(data.studentId, pc, 'camera');
             }
         });
 
         socket.on('request_webrtc_restart', async (data) => {
-            await sendOfferToStudent(data.studentId);
+            if (isScreenSharing && screenStream && screenPeerConnections[data.studentId]) {
+                await sendOfferToStudent(data.studentId, screenPeerConnections[data.studentId], 'screen');
+            }
+            if (isCameraOn && cameraStream && cameraPeerConnections[data.studentId]) {
+                await sendOfferToStudent(data.studentId, cameraPeerConnections[data.studentId], 'camera');
+            }
         });
 
         document.getElementById('myLanguage').addEventListener('change', (e) => {
-            const lang = e.target.value;
-            localStorage.setItem('teacher_lang', lang);
-            socket.emit('set_language', { lang: lang });
+            localStorage.setItem('teacher_lang', e.target.value);
+            socket.emit('set_language', { lang: e.target.value });
         });
 
-        startBtn.addEventListener('click', startScreenShare);
-        stopBtn.addEventListener('click', stopScreenShare);
+        startScreenBtn.addEventListener('click', startScreenShare);
+        stopScreenBtn.addEventListener('click', stopScreenShare);
         startCameraBtn.addEventListener('click', startCamera);
         stopCameraBtn.addEventListener('click', stopCamera);
+        socket.emit('join_teacher_room', {});
 
-        socket.emit('join_teacher_room', { teacherId: 'teacher1' });
+        // QR и студенты
+        async function fetchCurrentCode() {
+            const resp = await fetch('/api/current_code');
+            const data = await resp.json();
+            document.getElementById('currentCode').innerText = data.code;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/student?code=' + data.code)}`;
+            document.getElementById('qrCodeImage').innerHTML = `<img src="${qrUrl}" width="150" height="150">`;
+            startTimer(data.expires_in);
+        }
+
+        function startTimer(expiresIn) {
+            let t = expiresIn;
+            const interval = setInterval(() => {
+                t--;
+                document.getElementById('timerDisplay').innerText = `Код действителен: ${t} сек`;
+                if (t <= 0) { clearInterval(interval); fetchCurrentCode(); }
+            }, 1000);
+        }
+
+        async function fetchVerifiedStudents() {
+            const resp = await fetch('/api/verified_students');
+            const data = await resp.json();
+            document.getElementById('verifiedCount').innerText = data.count;
+            if (data.students.length) {
+                document.getElementById('verifiedStudentsList').innerHTML = data.students.map(s => `<div class="student-item">✅ ${s.id} - ${s.time}</div>`).join('');
+            }
+        }
+
+        function refreshQR() { fetchCurrentCode(); }
+
         fetchCurrentCode();
-        setInterval(fetchVerifiedStudents, 10000);
+        fetchVerifiedStudents();
+        setInterval(fetchVerifiedStudents, 5000);
     </script>
 </body>
 </html>
