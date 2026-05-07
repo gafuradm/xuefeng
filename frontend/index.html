@@ -1,10 +1,9 @@
-<!-- frontend/index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal AI Teacher - Персональный ИИ учитель</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Universal AI Teacher — Персональный ИИ учитель</title>
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
@@ -18,222 +17,247 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎓 Universal AI Teacher</h1>
-            <p>Персональный ИИ учитель для подготовки к любым экзаменам</p>
-            <button id="showTestCreatorBtn" class="btn-secondary" style="position: absolute; top: 20px; right: 20px;" onclick="showTestCreator()">✏️ Свой тест</button>
-            <div style="margin-top: 15px;">
-                <button onclick="window.open('http://localhost:8000/student', '_blank')" 
-                        style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; 
-                               padding: 8px 20px; border-radius: 25px; cursor: pointer; margin-right: 10px;">
-                    🎥 Присоединиться к лекции
-                </button>
-                <button onclick="window.open('http://localhost:8000/teacher', '_blank')" 
-                        style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; 
-                               padding: 8px 20px; border-radius: 25px; cursor: pointer;">
-                    👨‍🏫 Начать лекцию (учитель)
-                </button>
-            </div>
-            <!-- Вкладка для видео -->
-<div id="videoTab" class="step">
-    <h2>🎥 Извлечь и перевести текст из видео</h2>
-    <div class="form-group">
-        <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео">
-        <select id="targetLang">
-            <option value="ru">Русский</option>
-            <option value="en">Английский</option>
-            <option value="kk">Казахский</option>
-            <option value="zh">Китайский</option>
-        </select>
-        <button onclick="processVideo()" class="btn-primary">Обработать</button>
-    </div>
-    <div id="videoResult" style="margin-top: 20px;"></div>
-</div>
-        </header>
-
-        <main>
-            <!-- Шаг 1: Регистрация -->
-            <div id="step1" class="step">
-                <h2>Начните обучение</h2>
-                <div class="form-group">
-                    <input type="text" id="userName" placeholder="Ваше имя" required>
-                    <input type="email" id="userEmail" placeholder="Email" required>
-                    <input type="text" id="examName" placeholder="Что изучаем? (например: математика для гаокао)" required>
-                    <button onclick="startLearning()" class="btn-primary">Начать</button>
-                </div>
-                <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
-            </div>
-
-            <!-- Шаг 2: Тестирование -->
-            <div id="step2" class="step" style="display:none">
-                <h2>📝 Начальное тестирование</h2>
-                <div id="testQuestions"></div>
-                <button onclick="submitTest()" class="btn-primary">Отправить ответы</button>
-            </div>
-
-            <!-- Шаг 3: Результаты теста и время -->
-            <div id="step3" class="step" style="display:none">
-                <h2>📊 Результаты тестирования</h2>
-                <div id="testResults"></div>
-                <div class="form-group">
-                    <label>Сколько дней у вас есть на подготовку?</label>
-                    <input type="number" id="daysAvailable" placeholder="Количество дней">
-                    <button onclick="setTimeAndPlan()" class="btn-primary">Создать план</button>
-                </div>
-            </div>
-
-            <!-- Шаг 4: План обучения -->
-            <div id="step4" class="step" style="display:none">
-                <h2>📚 Ваш план обучения</h2>
-                <div id="studyPlan"></div>
-                <button id="startLearningBtn" class="btn-primary">Начать обучение</button>
-            </div>
-
-            <!-- Шаг 5: Режим обучения -->
-            <div id="step5" class="step" style="display:none">
-                <div class="learning-header">
-                    <h2>📖 Обучение</h2>
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill"></div>
+    <div class="app-wrapper">
+        <div class="main-container">
+            <!-- Улучшенный хедер с градиентом и эффектом стекла -->
+            <header class="hero-section">
+                <div class="hero-content">
+                    <h1 class="hero-title">🎓 Universal AI Teacher</h1>
+                    <p class="hero-subtitle">Персональный ИИ-учитель для подготовки к любым экзаменам</p>
+                    <div class="hero-buttons">
+                        <button id="showTestCreatorBtn" class="btn btn-outline-light" onclick="showTestCreator()">✏️ Свой тест</button>
+                        <button onclick="window.open('http://localhost:8000/student', '_blank')" class="btn btn-outline-light">🎥 Присоединиться к лекции</button>
+                        <button onclick="window.open('http://localhost:8000/teacher', '_blank')" class="btn btn-outline-light">👨‍🏫 Начать лекцию (учитель)</button>
                     </div>
-                    <div id="progressStats"></div>
                 </div>
-                <div id="lessonContent"></div>
-                <div id="testContent" style="display:none"></div>
-            </div>
+                <div class="hero-wave"></div>
+            </header>
 
-            <!-- Шаг 6: Создание пользовательского теста -->
-            <div id="step6" class="step" style="display:none">
-                <h2>📝 Создать свой тест</h2>
-                <div class="form-group">
-                    <label>Название теста:</label>
-                    <input type="text" id="customTestName" placeholder="например: Моя контрольная по тригонометрии">
+            <main class="content-panel">
+                <!-- Шаг 1: Регистрация -->
+                <div id="step1" class="step animated-step">
+                    <div class="step-card">
+                        <h2>🚀 Начните обучение</h2>
+                        <div class="form-group">
+                            <input type="text" id="userName" placeholder="Ваше имя" class="modern-input" required>
+                            <input type="email" id="userEmail" placeholder="Email" class="modern-input" required>
+                            <input type="text" id="examName" placeholder="Что изучаем? (например: ЕНТ математика, SAT, IELTS)" class="modern-input" required>
+                            <button onclick="startLearning()" class="btn btn-primary btn-block">Начать</button>
+                        </div>
+                        <div id="errorMessage" class="error-message"></div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Описание (необязательно):</label>
-                    <textarea id="customTestDesc" rows="2" placeholder="Краткое описание теста"></textarea>
+
+                <!-- Шаг 2: Тестирование -->
+                <div id="step2" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📝 Начальное тестирование</h2>
+                        <div id="testQuestions"></div>
+                        <button onclick="submitTest()" class="btn btn-primary">Отправить ответы</button>
+                    </div>
                 </div>
-                <div id="questionsList"></div>
-                <button onclick="addQuestionField()" class="btn-secondary">➕ Добавить вопрос</button>
-                <button onclick="saveCustomTest()" class="btn-primary">💾 Сохранить тест</button>
-                <button onclick="trainCustomTest()" class="btn-primary">🤖 Обучить ИИ</button>
-                <button onclick="showCustomTestsList()" class="btn-secondary">📋 Мои тесты</button>
-                <button onclick="backToMainMenu()" class="btn-secondary">← Главное меню</button>
-            </div>
 
-            <!-- Шаг 7: Список пользовательских тестов -->
-            <div id="step7" class="step" style="display:none">
-                <h2>📋 Мои тесты</h2>
-                <div id="customTestsList"></div>
-                <button onclick="showTestCreator()" class="btn-secondary">➕ Создать новый</button>
-                <button onclick="backToMainMenu()" class="btn-secondary">← Главное меню</button>
-            </div>
+                <!-- Шаг 3: Результаты теста и время -->
+                <div id="step3" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📊 Результаты тестирования</h2>
+                        <div id="testResults" class="results-container"></div>
+                        <div class="form-group">
+                            <label>Сколько дней у вас есть на подготовку?</label>
+                            <input type="number" id="daysAvailable" placeholder="Количество дней" class="modern-input">
+                            <button onclick="setTimeAndPlan()" class="btn btn-primary">Создать план</button>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Шаг 8: Прохождение пользовательского теста -->
-            <div id="step8" class="step" style="display:none">
-                <h2 id="takingTestName"></h2>
-                <div id="takingTestQuestions"></div>
-                <button onclick="submitCustomTest()" class="btn-primary">Отправить ответы</button>
-                <button onclick="showCustomTestsList()" class="btn-secondary">← К списку тестов</button>
-            </div>
+                <!-- Шаг 4: План обучения -->
+                <div id="step4" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📚 Ваш план обучения</h2>
+                        <div id="studyPlan"></div>
+                        <button id="startLearningBtn" class="btn btn-primary">Начать обучение</button>
+                    </div>
+                </div>
 
-            <!-- Шаг 9: Результаты пользовательского теста -->
-            <div id="step9" class="step" style="display:none">
-                <h2>📊 Результаты теста</h2>
-                <div id="customTestResults"></div>
-                <button onclick="showCustomTestsList()" class="btn-secondary">← К списку тестов</button>
-            </div>
+                <!-- Шаг 5: Режим обучения -->
+                <div id="step5" class="step animated-step" style="display:none">
+                    <div class="learning-header">
+                        <h2>📖 Обучение</h2>
+                        <div class="progress-wrapper">
+                            <div class="progress-bar">
+                                <div id="progressFill" class="progress-fill"></div>
+                            </div>
+                            <div id="progressStats" class="progress-stats"></div>
+                        </div>
+                    </div>
+                    <div id="lessonContent"></div>
+                    <div id="testContent" style="display:none"></div>
+                </div>
 
-            <!-- В main, после step9 добавить: -->
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="showCreateCourse()" class="btn-secondary">📚 Создать курс</button>
-                <button onclick="showCreateLesson()" class="btn-secondary">📖 Создать урок</button>
-            </div>
+                <!-- Шаг 6: Создание пользовательского теста -->
+                <div id="step6" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📝 Создать свой тест</h2>
+                        <div class="form-group">
+                            <label>Название теста:</label>
+                            <input type="text" id="customTestName" placeholder="например: Моя контрольная по тригонометрии" class="modern-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание (необязательно):</label>
+                            <textarea id="customTestDesc" rows="2" placeholder="Краткое описание теста" class="modern-input"></textarea>
+                        </div>
+                        <div id="questionsList" class="questions-list"></div>
+                        <div class="button-group">
+                            <button onclick="addQuestionField()" class="btn btn-secondary">➕ Добавить вопрос</button>
+                            <button onclick="saveCustomTest()" class="btn btn-primary">💾 Сохранить тест</button>
+                            <button onclick="trainCustomTest()" class="btn btn-primary">🤖 Обучить ИИ</button>
+                            <button onclick="showCustomTestsList()" class="btn btn-secondary">📋 Мои тесты</button>
+                            <button onclick="backToMainMenu()" class="btn btn-outline">← Главное меню</button>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- frontend/index.html - добавить после step9 -->
+                <!-- Шаг 7: Список пользовательских тестов -->
+                <div id="step7" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📋 Мои тесты</h2>
+                        <div id="customTestsList" class="tests-grid"></div>
+                        <div class="button-group">
+                            <button onclick="showTestCreator()" class="btn btn-secondary">➕ Создать новый</button>
+                            <button onclick="backToMainMenu()" class="btn btn-outline">← Главное меню</button>
+                        </div>
+                    </div>
+                </div>
 
-<!-- Шаг 10: Список пользовательских курсов -->
-<div id="step10" class="step" style="display:none">
-    <h2>📚 Мои курсы</h2>
-    <div id="userCoursesList"></div>
-    <button onclick="showMainMenu()" class="btn-secondary">← Главное меню</button>
-    <button onclick="showCreateCourseForm()" class="btn-secondary">➕ Создать новый курс</button>
-</div>
+                <!-- Шаг 8: Прохождение пользовательского теста -->
+                <div id="step8" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2 id="takingTestName"></h2>
+                        <div id="takingTestQuestions"></div>
+                        <div class="button-group">
+                            <button onclick="submitCustomTest()" class="btn btn-primary">Отправить ответы</button>
+                            <button onclick="showCustomTestsList()" class="btn btn-outline">← К списку тестов</button>
+                        </div>
+                    </div>
+                </div>
 
-<!-- Шаг 11: Просмотр курса (модули и уроки) -->
-<div id="step11" class="step" style="display:none">
-    <h2 id="courseViewTitle"></h2>
-    <p id="courseViewDescription"></p>
-    <p><strong>Критерии успеха:</strong> <span id="courseViewCriteria"></span></p>
-    <div id="courseModulesList"></div>
-    <button onclick="showCoursesList()" class="btn-secondary">← К списку курсов</button>
-    <button onclick="generateAllLessonsContent()" class="btn-primary">✨ Сгенерировать всё содержание</button>
-</div>
+                <!-- Шаг 9: Результаты пользовательского теста -->
+                <div id="step9" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📊 Результаты теста</h2>
+                        <div id="customTestResults"></div>
+                        <button onclick="showCustomTestsList()" class="btn btn-outline">← К списку тестов</button>
+                    </div>
+                </div>
 
-<!-- Шаг 12: Просмотр урока -->
-<div id="step12" class="step" style="display:none">
-    <h2 id="lessonViewTitle"></h2>
-    <p><strong>Предмет:</strong> <span id="lessonViewSubject"></span></p>
-    <div class="lesson-view-content" id="lessonViewContent"></div>
-    <div id="lessonViewHomework"></div>
-    <div id="lessonViewYoutube"></div>
-    <button onclick="generatePresentation()" class="btn-primary">📊 Скачать презентацию</button>
-    <button onclick="backToLessonsList()" class="btn-secondary">← К списку уроков</button>
-</div>
+                <!-- Шаг 10: Список курсов -->
+                <div id="step10" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📚 Мои курсы</h2>
+                        <div id="userCoursesList" class="courses-grid"></div>
+                        <div class="button-group">
+                            <button onclick="showCreateCourseForm()" class="btn btn-secondary">➕ Создать новый курс</button>
+                            <button onclick="showMainMenu()" class="btn btn-outline">← Главное меню</button>
+                        </div>
+                    </div>
+                </div>
 
-<!-- Шаг 13: Создание курса (форма) -->
-<div id="step13" class="step" style="display:none">
-    <h2>📚 Создать новый курс</h2>
-    <div class="form-group">
-        <label>Название курса:</label>
-        <input type="text" id="newCourseName" placeholder="например: Python для начинающих">
-    </div>
-    <div class="form-group">
-        <label>Описание:</label>
-        <textarea id="newCourseDesc" rows="3" placeholder="Краткое описание курса"></textarea>
-    </div>
-    <div class="form-group">
-        <label>Критерии успеха (необязательно):</label>
-        <textarea id="newCourseCriteria" rows="2" placeholder="Что должен знать и уметь студент после курса"></textarea>
-    </div>
-    <button onclick="createCourse()" class="btn-primary">🚀 Создать курс</button>
-    <button onclick="showCoursesList()" class="btn-secondary">← Отмена</button>
-</div>
+                <!-- Шаг 11: Просмотр курса -->
+                <div id="step11" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2 id="courseViewTitle"></h2>
+                        <p id="courseViewDescription" class="course-description"></p>
+                        <p><strong>Критерии успеха:</strong> <span id="courseViewCriteria"></span></p>
+                        <div id="courseModulesList" class="modules-list"></div>
+                        <div class="button-group">
+                            <button onclick="showCoursesList()" class="btn btn-outline">← К списку курсов</button>
+                            <button onclick="generateAllLessonsContent()" class="btn btn-primary">✨ Сгенерировать всё содержание</button>
+                        </div>
+                    </div>
+                </div>
 
-<!-- Шаг 14: Список пользовательских уроков -->
-<div id="step14" class="step" style="display:none">
-    <h2>📖 Мои уроки</h2>
-    <div id="userLessonsList"></div>
-    <button onclick="showMainMenu()" class="btn-secondary">← Главное меню</button>
-    <button onclick="showCreateLessonForm()" class="btn-secondary">➕ Создать новый урок</button>
-</div>
+                <!-- Шаг 12: Просмотр урока -->
+                <div id="step12" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2 id="lessonViewTitle"></h2>
+                        <p><strong>Предмет:</strong> <span id="lessonViewSubject"></span></p>
+                        <div id="lessonViewContent" class="lesson-view-content markdown-body"></div>
+                        <div id="lessonViewHomework"></div>
+                        <div id="lessonViewYoutube"></div>
+                        <div class="button-group">
+                            <button onclick="generatePresentation()" class="btn btn-primary">📊 Скачать презентацию</button>
+                            <button onclick="backToLessonsList()" class="btn btn-outline">← К списку уроков</button>
+                        </div>
+                    </div>
+                </div>
 
-<!-- Шаг 15: Создание урока (форма) -->
-<div id="step15" class="step" style="display:none">
-    <h2>📖 Создать новый урок</h2>
-    <div class="form-group">
-        <label>Название урока:</label>
-        <input type="text" id="newLessonTitle" placeholder="например: Введение в переменные">
-    </div>
-    <div class="form-group">
-        <label>Предмет:</label>
-        <input type="text" id="newLessonSubject" placeholder="например: Программирование">
-    </div>
-    <div class="form-group">
-        <label>Описание (необязательно):</label>
-        <textarea id="newLessonDesc" rows="3" placeholder="Дополнительные требования"></textarea>
-    </div>
-    <button onclick="createLesson()" class="btn-primary">🚀 Создать урок</button>
-    <button onclick="showLessonsList()" class="btn-secondary">← Отмена</button>
-</div>
-<div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
-    <button onclick="showCoursesList()" class="btn-secondary">📚 Мои курсы</button>
-    <button onclick="showLessonsList()" class="btn-secondary">📖 Мои уроки</button>
-    <button onclick="showCreateCourseForm()" class="btn-secondary">➕ Создать курс</button>
-    <button onclick="showCreateLessonForm()" class="btn-secondary">➕ Создать урок</button>
-</div>
-        </main>
+                <!-- Шаг 13: Создание курса -->
+                <div id="step13" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📚 Создать новый курс</h2>
+                        <div class="form-group">
+                            <label>Название курса:</label>
+                            <input type="text" id="newCourseName" placeholder="например: Python для начинающих" class="modern-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание:</label>
+                            <textarea id="newCourseDesc" rows="3" placeholder="Краткое описание курса" class="modern-input"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Критерии успеха (необязательно):</label>
+                            <textarea id="newCourseCriteria" rows="2" placeholder="Что должен знать и уметь студент после курса" class="modern-input"></textarea>
+                        </div>
+                        <div class="button-group">
+                            <button onclick="createCourse()" class="btn btn-primary">🚀 Создать курс</button>
+                            <button onclick="showCoursesList()" class="btn btn-outline">← Отмена</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Шаг 14: Список уроков -->
+                <div id="step14" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📖 Мои уроки</h2>
+                        <div id="userLessonsList" class="lessons-grid"></div>
+                        <div class="button-group">
+                            <button onclick="showCreateLessonForm()" class="btn btn-secondary">➕ Создать новый урок</button>
+                            <button onclick="showMainMenu()" class="btn btn-outline">← Главное меню</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Шаг 15: Создание урока -->
+                <div id="step15" class="step animated-step" style="display:none">
+                    <div class="step-card">
+                        <h2>📖 Создать новый урок</h2>
+                        <div class="form-group">
+                            <label>Название урока:</label>
+                            <input type="text" id="newLessonTitle" placeholder="например: Введение в переменные" class="modern-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Предмет:</label>
+                            <input type="text" id="newLessonSubject" placeholder="например: Программирование" class="modern-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание (необязательно):</label>
+                            <textarea id="newLessonDesc" rows="3" placeholder="Дополнительные требования" class="modern-input"></textarea>
+                        </div>
+                        <div class="button-group">
+                            <button onclick="createLesson()" class="btn btn-primary">🚀 Создать урок</button>
+                            <button onclick="showLessonsList()" class="btn btn-outline">← Отмена</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Блок быстрых действий (плавает внизу или в сайдбаре) -->
+                <div class="quick-actions">
+                    <button onclick="showCoursesList()" class="btn btn-icon">📚 Мои курсы</button>
+                    <button onclick="showLessonsList()" class="btn btn-icon">📖 Мои уроки</button>
+                    <button onclick="showCreateCourseForm()" class="btn btn-icon">➕ Создать курс</button>
+                    <button onclick="showCreateLessonForm()" class="btn btn-icon">➕ Создать урок</button>
+                </div>
+            </main>
+        </div>
     </div>
 
     <script src="/script.js"></script>
