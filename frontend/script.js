@@ -4,6 +4,12 @@ const API_URL = "http://localhost:8080";
 let currentSessionId = null;
 let currentUserId = null;
 let currentQuestions = [];
+let currentUserRole = 'student';
+
+// Таймеры для отслеживания времени
+let lessonStartTime = null;
+let taskStartTimes = {};
+let currentLessonId = null;
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function escapeHtml(str) {
@@ -13,8 +19,6 @@ function escapeHtml(str) {
         if (m === '<') return '&lt;';
         if (m === '>') return '&gt;';
         return m;
-    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-        return c;
     });
 }
 
@@ -26,40 +30,139 @@ function renderMath() {
     }
 }
 
+function showModal(content) {
+    const oldModals = document.querySelectorAll('.custom-modal');
+    oldModals.forEach(modal => modal.remove());
+    const oldOverlays = document.querySelectorAll('.modal-overlay');
+    oldOverlays.forEach(overlay => overlay.remove());
+
+    const modalHtml = `
+        <div class="custom-modal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                    background: white; padding: 30px; border-radius: 20px; 
+                    max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 1001;">
+            <button onclick="this.closest('.custom-modal').remove(); document.querySelector('.modal-overlay')?.remove();" 
+                    style="float: right; background: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">✕</button>
+            <div style="clear: both;"></div>
+            ${content}
+        </div>
+    `;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.background = 'rgba(0,0,0,0.5)';
+    overlay.style.zIndex = '1000';
+    overlay.onclick = () => {
+        overlay.remove();
+        const modal = document.querySelector('.custom-modal');
+        if (modal) modal.remove();
+    };
+
+    const modalDiv = document.createElement('div');
+    modalDiv.innerHTML = modalHtml;
+    document.body.appendChild(overlay);
+    document.body.appendChild(modalDiv);
+}
+
+// ========== ФУНКЦИИ ТАЙМЕРОВ ==========
+function startLessonTimer() {
+    lessonStartTime = Date.now();
+    taskStartTimes = {};
+    console.log("Lesson timer started");
+}
+
+function startTaskTimer(taskId) {
+    taskStartTimes[taskId] = Date.now();
+    console.log(`Task ${taskId} timer started`);
+}
+
+function stopTaskTimer(taskId) {
+    if (taskStartTimes[taskId]) {
+        const spent = (Date.now() - taskStartTimes[taskId]) / 1000;
+        if (!window.taskTimes) window.taskTimes = {};
+        window.taskTimes[taskId] = (window.taskTimes[taskId] || 0) + spent;
+        delete taskStartTimes[taskId];
+        console.log(`Task ${taskId} time: ${spent.toFixed(1)}s, total: ${window.taskTimes[taskId].toFixed(1)}s`);
+    }
+}
+
+function getTotalLessonTime() {
+    if (lessonStartTime) {
+        return (Date.now() - lessonStartTime) / 1000;
+    }
+    return 0;
+}
+
+// ========== ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ onchange СЕЛЕКТОРА ==========
+window.setRole = function(role) {
+    currentUserRole = role;
+    const teacherPanel = document.getElementById('teacherPanel');
+    if (teacherPanel) {
+        if (role === 'teacher' && currentUserId) {
+            teacherPanel.style.display = 'block';
+        } else {
+            teacherPanel.style.display = 'none';
+        }
+    }
+};
+
 // ========== ОСНОВНЫЕ ФУНКЦИИ ОБУЧЕНИЯ ==========
 async function startLearning() {
     const name = document.getElementById('userName').value;
     const email = document.getElementById('userEmail').value;
     const exam = document.getElementById('examName').value;
-    
+
     if (!name || !email || !exam) {
         alert('Пожалуйста, заполните все поля');
         return;
     }
-    
+
     try {
-        console.log("1. Создаём пользователя...");
-        const userRes = await fetch(`${API_URL}/api/users`, {
+        const role = document.getElementById('userRole') ? document.getElementById('userRole').value : 'student';
+        console.log("1. Создаём пользователя с ролью:", role);
+
+        const userRes = await fetch(`${API_URL}/api/users?role=${role}`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({name, email})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email })
         });
         if (!userRes.ok) throw new Error(`HTTP ${userRes.status}: ${await userRes.text()}`);
         const user = await userRes.json();
         currentUserId = user.id;
+
         console.log("Пользователь создан:", user);
-        
+
+        if (role === 'teacher') {
+            currentUserRole = 'teacher';
+            alert(`Добро пожаловать, учитель ${name}!`);
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('teacherPanel').style.display = 'block';
+            document.getElementById('studentPanel').style.display = 'none';
+            return;
+        }
+
+        currentUserRole = 'student';
+        alert(`Добро пожаловать, ${name}! Вы можете вступить в школу через кнопку "Вступить в школу" или продолжить обучение.`);
+
+        document.getElementById('teacherPanel').style.display = 'none';
+        document.getElementById('studentPanel').style.display = 'block';
+
         console.log("2. Создаём сессию...");
         const sessionRes = await fetch(`${API_URL}/api/sessions?user_id=${currentUserId}`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({exam_name: exam})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ exam_name: exam })
         });
         if (!sessionRes.ok) throw new Error(`HTTP ${sessionRes.status}: ${await sessionRes.text()}`);
         const session = await sessionRes.json();
         currentSessionId = session.id;
         console.log("Сессия создана:", session);
-        
+
         console.log("3. Получаем тест...");
         const testRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`);
         if (!testRes.ok) throw new Error(`HTTP ${testRes.status}: ${await testRes.text()}`);
@@ -68,10 +171,11 @@ async function startLearning() {
         const testResult = sessionData.test_results[0];
         currentQuestions = testResult.questions;
         console.log(`Загружено ${currentQuestions.length} вопросов`);
-        
+
         displayTest(currentQuestions);
         document.getElementById('step1').style.display = 'none';
         document.getElementById('step2').style.display = 'block';
+
     } catch (error) {
         console.error('Error:', error);
         alert('Ошибка: ' + error.message);
@@ -108,8 +212,8 @@ async function submitTest() {
     try {
         const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/submit_test`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({answers})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers })
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
         const result = await response.json();
@@ -149,8 +253,8 @@ async function setTimeAndPlan() {
     try {
         const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/set_time`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({days})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ days })
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
         const plan = await response.json();
@@ -198,28 +302,28 @@ async function startLearningMode() {
 async function loadNextLesson() {
     console.log("===== loadNextLesson вызвана =====");
     console.log("sessionId:", currentSessionId);
-    
+
     if (!currentSessionId) {
         console.error("Нет sessionId!");
         document.getElementById('lessonContent').innerHTML = '<p style="color:red;">Ошибка: сессия не найдена</p>';
         return;
     }
-    
+
     try {
         const url = `${API_URL}/api/sessions/${currentSessionId}/next_lesson`;
         console.log("Запрос:", url);
         const response = await fetch(url);
         console.log("Статус ответа:", response.status);
-        
+
         if (!response.ok) {
             const errorText = await response.text();
             console.error("Ошибка сервера:", errorText);
             throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
-        
+
         const data = await response.json();
         console.log("Данные урока:", data);
-        
+
         if (data.status === 'completed') {
             showCompletionMessage(data.message);
         } else if (data.status === 'test_needed') {
@@ -229,13 +333,14 @@ async function loadNextLesson() {
         } else if (data.status === 'lesson') {
             console.log("Урок получен, тема:", data.topic);
             displayLesson(data);
+            startLessonTimer();
         } else {
             console.warn("Неизвестный статус:", data);
             document.getElementById('lessonContent').innerHTML = `<p>Статус: ${data.status}. Сообщение: ${data.message || 'нет'}</p>`;
         }
-        
+
         await updateProgress();
-        
+
     } catch (error) {
         console.error('Ошибка при загрузке урока:', error);
         document.getElementById('lessonContent').innerHTML = `<p style="color:red;">Ошибка: ${error.message}</p>`;
@@ -246,38 +351,40 @@ function displayLesson(lessonData) {
     console.log("Отображение урока:", lessonData);
     const container = document.getElementById('lessonContent');
     const content = lessonData.content || {};
-    
+    currentLessonId = lessonData.lesson_id;
+
     let theoryText = content.theory || 'Нет теории';
     theoryText = theoryText.replace(/\\\\\(/g, '\\(').replace(/\\\\\)/g, '\\)');
-    
+
     let examplesHtml = '';
     if (content.examples && content.examples.length) {
-        examplesHtml = '<h3>📝 Примеры:</h3>' + content.examples.map(ex => `
+        examplesHtml = '<h3>📝 Примеры:</h3>' + content.examples.map((ex, idx) => `
             <div class="example">
                 <strong>Задача:</strong> ${ex.problem}<br>
                 <strong>Решение:</strong> ${ex.solution}
             </div>
         `).join('');
     }
-    
+
     let tasksHtml = '';
     if (content.tasks && content.tasks.length) {
-        tasksHtml = '<h3>✍️ Задачи для самостоятельного решения:</h3>' + 
-            content.tasks.map((task, idx) => `
-                <div class="task">
-                    <p><strong>Задача ${idx+1}:</strong> ${task.task}</p>
-                    <input type="text" id="task_${idx}" placeholder="Ваш ответ" class="answer-input">
-                </div>
-            `).join('') + 
-            `<button onclick="submitLesson(${lessonData.lesson_id})" class="btn-primary">Отправить ответы</button>`;
+        tasksHtml = '<h3>✍️ Задачи для самостоятельного решения:</h3>';
+        tasksHtml += '<div id="tasks-container">';
+        tasksHtml += content.tasks.map((task, idx) => `
+            <div class="task" data-task-idx="${idx}">
+                <p><strong>Задача ${idx + 1}:</strong> ${task.task}</p>
+                <input type="text" id="task_${idx}" placeholder="Ваш ответ" class="answer-input" onfocus="startTaskTimer(${idx})" onblur="stopTaskTimer(${idx})">
+            </div>
+        `).join('');
+        tasksHtml += '</div>';
+        tasksHtml += `<button onclick="submitLesson(${lessonData.lesson_id})" class="btn-primary">Отправить ответы</button>`;
     }
-    
+
     let tipsHtml = '';
     if (content.tips && content.tips.length) {
         tipsHtml = '<div class="tips"><strong>💡 Советы:</strong><br>' + content.tips.map(tip => `• ${tip}<br>`).join('') + '</div>';
     }
-    
-    // ========== СБОРКА ОСНОВНОГО HTML ==========
+
     container.innerHTML = `
         <div class="lesson-card">
             <h2>${lessonData.topic || 'Новая тема'}</h2>
@@ -286,20 +393,10 @@ function displayLesson(lessonData) {
             ${tasksHtml}
             ${tipsHtml}
         </div>
-    `;
-    
-    // ========== НОВЫЙ БЛОК: ВИДЕО-УРОК ==========
-    const videoHtml = `
         <div class="video-section">
             <button onclick="generateVideo(${lessonData.lesson_id})" class="btn-secondary">🎬 Создать видео-урок</button>
             <div id="videoStatus_${lessonData.lesson_id}" style="margin-top: 10px;"></div>
         </div>
-    `;
-    container.innerHTML += videoHtml;
-    // ==========================================
-    
-    // Чат с ботом
-    const chatHtml = `
         <div class="bot-chat">
             <h3>🤖 Помощник ИИ</h3>
             <div id="chatMessages" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;"></div>
@@ -307,38 +404,64 @@ function displayLesson(lessonData) {
             <button onclick="askBot(${lessonData.lesson_id})">Спросить</button>
         </div>
     `;
-    container.innerHTML += chatHtml;
-    
+
     renderMath();
+    window.taskTimes = {};
 }
 
 async function submitLesson(lessonId) {
+    // Останавливаем все активные таймеры задач
+    for (let taskId in taskStartTimes) {
+        stopTaskTimer(parseInt(taskId));
+    }
+
+    const totalTime = getTotalLessonTime();
     const tasks = document.querySelectorAll('[id^="task_"]');
     const answers = {};
     tasks.forEach((task, idx) => { answers[idx] = task.value; });
+
+    console.log(`Submitting lesson ${lessonId}, time spent: ${totalTime.toFixed(1)}s, task times:`, window.taskTimes);
+
     try {
         const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/submit_lesson`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({lesson_id: lessonId, user_answers: answers})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                lesson_id: lessonId,
+                user_answers: answers,
+                time_spent_seconds: Math.round(totalTime),
+                task_times: window.taskTimes || {}
+            })
         });
         const result = await response.json();
+
         if (result.status === 'failed') {
-            let feedbackHtml = '<div class="feedback-errors"><h3>Ошибки в задачах:</h3><ul>';
+            let feedbackHtml = '<div class="feedback-errors"><h3>❌ Ошибки в задачах:</h3><ul>';
             for (let r of result.results) {
                 if (!r.correct) {
-                    feedbackHtml += `<li>Задача ${r.task_index+1}: ${r.hint}</li>`;
+                    feedbackHtml += `<li>
+                        <strong>Задача ${r.task_index + 1}:</strong><br>
+                        Ваш ответ: "${r.user_answer || '(пусто)'}"<br>
+                        Правильный ответ: "${r.correct_answer}"<br>
+                        <span style="color: #666;">${r.hint || 'Проверьте решение'}</span>
+                    </li>`;
                 }
             }
             feedbackHtml += '</ul><p>Исправьте ответы и отправьте снова.</p></div>';
-            document.getElementById('lessonContent').insertAdjacentHTML('beforeend', feedbackHtml);
+            const lessonContent = document.getElementById('lessonContent');
+            const existingFeedback = document.querySelector('.feedback-errors');
+            if (existingFeedback) existingFeedback.remove();
+            lessonContent.insertAdjacentHTML('afterbegin', feedbackHtml);
         } else if (result.status === 'success') {
-            alert(`Урок завершен! Результат: ${result.score}%`);
+            alert(`✅ Урок завершен! Результат: ${result.score}%`);
+            window.taskTimes = {};
+            lessonStartTime = null;
             await loadNextLesson();
+            await updateProgress();
         }
     } catch (error) {
         console.error(error);
-        alert('Ошибка при отправке ответов');
+        alert('Ошибка при отправке ответов: ' + error.message);
     }
 }
 
@@ -351,8 +474,8 @@ async function askBot(lessonId) {
     try {
         const response = await fetch(`${API_URL}/api/lessons/${lessonId}/chat`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({session_id: currentSessionId, question: question})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: currentSessionId, question: question })
         });
         const data = await response.json();
         chatMessages.innerHTML += `<div><b>Бот:</b> ${data.answer}</div>`;
@@ -364,7 +487,7 @@ async function askBot(lessonId) {
 
 async function loadProgressTest() {
     try {
-        const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/progress_test`, {method: 'POST'});
+        const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/progress_test`, { method: 'POST' });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
         const data = await response.json();
         displayTest(data.questions);
@@ -382,10 +505,10 @@ async function updateProgress() {
         if (!response.ok) return;
         const history = await response.json();
         if (history && history.length) {
-            const lastProgress = history[history.length-1];
+            const lastProgress = history[history.length - 1];
             const profile = lastProgress.profile_snapshot || {};
             const values = Object.values(profile);
-            const avgProgress = values.length ? values.reduce((a,b)=>a+b,0)/values.length : 0;
+            const avgProgress = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
             const fill = document.getElementById('progressFill');
             if (fill) {
                 fill.style.width = `${avgProgress}%`;
@@ -393,7 +516,7 @@ async function updateProgress() {
             }
             document.getElementById('progressStats').innerHTML = `<p>Общий прогресс: ${Math.round(avgProgress)}%</p><p>Изучено тем: ${Object.keys(profile).length}</p>`;
         }
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
 }
 
 function showCompletionMessage(message) {
@@ -416,7 +539,6 @@ function showTestCreator() {
     document.getElementById('customTestDesc').value = '';
     document.getElementById('questionsList').innerHTML = '';
     addQuestionField();
-    
     document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
     document.getElementById('step6').style.display = 'block';
 }
@@ -451,48 +573,36 @@ async function saveCustomTest() {
         alert('Введите название теста');
         return;
     }
-    
+
     const questionDivs = document.querySelectorAll('#questionsList .question-card');
     const questions = [];
     for (let div of questionDivs) {
         const textarea = div.querySelector('textarea');
         const answerInput = div.querySelector('input[type="text"]');
         const hintTextarea = div.querySelectorAll('textarea')[1];
-        
         const text = textarea?.value.trim();
         const answer = answerInput?.value.trim();
         const hint = hintTextarea?.value.trim();
-        
         if (!text || !answer) {
             alert('Заполните текст вопроса и правильный ответ для всех вопросов');
             return;
         }
-        
-        questions.push({
-            text: text,
-            correct_answer: answer,
-            explanation: hint || ''
-        });
+        questions.push({ text: text, correct_answer: answer, explanation: hint || '' });
     }
-    
+
     if (questions.length === 0) {
         alert('Добавьте хотя бы один вопрос');
         return;
     }
-    
+
     const description = document.getElementById('customTestDesc').value.trim();
-    
+
     try {
         const response = await fetch(`${API_URL}/api/custom_tests?user_id=${currentUserId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: name,
-                description: description,
-                questions: questions
-            })
+            body: JSON.stringify({ name: name, description: description, questions: questions })
         });
-        
         if (!response.ok) throw new Error(await response.text());
         const data = await response.json();
         alert(`Тест "${data.name}" сохранён! ID: ${data.id}`);
@@ -503,40 +613,12 @@ async function saveCustomTest() {
     }
 }
 
-async function trainCustomTest() {
-    const name = document.getElementById('customTestName').value.trim();
-    if (!name) {
-        alert('Сначала сохраните тест');
-        return;
-    }
-    
-    await saveCustomTest();
-    
-    try {
-        const response = await fetch(`${API_URL}/api/custom_tests?user_id=${currentUserId}`);
-        const tests = await response.json();
-        const test = tests.find(t => t.name === name);
-        if (!test) throw new Error('Тест не найден');
-        
-        const trainRes = await fetch(`${API_URL}/api/custom_tests/${test.id}/train`, {
-            method: 'POST'
-        });
-        const result = await trainRes.json();
-        alert(result.message);
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка обучения ИИ: ' + error.message);
-    }
-}
-
 async function showCustomTestsList() {
     try {
         const response = await fetch(`${API_URL}/api/custom_tests?user_id=${currentUserId}`);
         const tests = await response.json();
-        
         const container = document.getElementById('customTestsList');
         container.innerHTML = '';
-        
         if (tests.length === 0) {
             container.innerHTML = '<p>У вас пока нет созданных тестов.</p>';
         } else {
@@ -557,7 +639,6 @@ async function showCustomTestsList() {
                 container.appendChild(testDiv);
             }
         }
-        
         document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
         document.getElementById('step7').style.display = 'block';
     } catch (error) {
@@ -569,9 +650,7 @@ async function showCustomTestsList() {
 async function deleteCustomTest(testId) {
     if (!confirm('Удалить этот тест?')) return;
     try {
-        const response = await fetch(`${API_URL}/api/custom_tests/${testId}?user_id=${currentUserId}`, {
-            method: 'DELETE'
-        });
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}?user_id=${currentUserId}`, { method: 'DELETE' });
         if (!response.ok) throw new Error(await response.text());
         alert('Тест удалён');
         showCustomTestsList();
@@ -583,9 +662,7 @@ async function deleteCustomTest(testId) {
 
 async function trainExistingTest(testId, testName) {
     try {
-        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/train`, {
-            method: 'POST'
-        });
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/train`, { method: 'POST' });
         const result = await response.json();
         alert(`Тест "${testName}" обучен!\n${result.message}`);
     } catch (error) {
@@ -598,18 +675,14 @@ async function startCustomTest(testId) {
     try {
         const response = await fetch(`${API_URL}/api/custom_tests/${testId}`);
         const test = await response.json();
-        
         currentCustomTestId = test.id;
         currentCustomQuestions = test.questions;
-        
         document.getElementById('takingTestName').textContent = test.name;
-        
         const container = document.getElementById('takingTestQuestions');
         container.innerHTML = '';
-        
         test.questions.forEach((q, idx) => {
-            const questionHtml = `
-                <div class="question-card" data-qidx="${idx}">
+            container.innerHTML += `
+                <div class="question-card">
                     <h3>Вопрос ${idx + 1}</h3>
                     <p>${escapeHtml(q.text)}</p>
                     <div class="answer-input">
@@ -617,9 +690,7 @@ async function startCustomTest(testId) {
                     </div>
                 </div>
             `;
-            container.innerHTML += questionHtml;
         });
-        
         document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
         document.getElementById('step8').style.display = 'block';
     } catch (error) {
@@ -634,20 +705,13 @@ async function submitCustomTest() {
         const input = document.getElementById(`custom_answer_${i}`);
         if (input) answers[i] = input.value;
     }
-    
     try {
         const response = await fetch(`${API_URL}/api/custom_tests/${currentCustomTestId}/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                test_id: currentCustomTestId,
-                answers: answers
-            })
+            body: JSON.stringify({ test_id: currentCustomTestId, answers: answers })
         });
-        
         const result = await response.json();
-        
-        const container = document.getElementById('customTestResults');
         let resultsHtml = `
             <div class="lesson-card">
                 <h3>${escapeHtml(result.test_name)}</h3>
@@ -655,13 +719,12 @@ async function submitCustomTest() {
                 <p><strong>Оценка:</strong> ${result.grade}</p>
                 <h4>Разбор ответов:</h4>
         `;
-        
         for (let i = 0; i < result.results.length; i++) {
             const r = result.results[i];
             const icon = r.is_correct ? '✅' : '❌';
             resultsHtml += `
                 <div class="question-card" style="${r.is_correct ? 'border-left-color: green;' : 'border-left-color: red;'}">
-                    <h4>${icon} Вопрос ${i+1}</h4>
+                    <h4>${icon} Вопрос ${i + 1}</h4>
                     <p><strong>Вопрос:</strong> ${escapeHtml(r.question)}</p>
                     <p><strong>Ваш ответ:</strong> ${escapeHtml(r.user_answer) || '(пусто)'}</p>
                     <p><strong>Правильный ответ:</strong> ${escapeHtml(r.correct_answer)}</p>
@@ -670,11 +733,9 @@ async function submitCustomTest() {
             `;
         }
         resultsHtml += `</div>`;
-        container.innerHTML = resultsHtml;
-        
+        document.getElementById('customTestResults').innerHTML = resultsHtml;
         document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
         document.getElementById('step9').style.display = 'block';
-        
     } catch (error) {
         console.error(error);
         alert('Ошибка отправки ответов: ' + error.message);
@@ -684,65 +745,647 @@ async function submitCustomTest() {
 async function generateSimilar(testId, testName) {
     const num = prompt('Сколько вопросов сгенерировать?', 5);
     if (!num) return;
-    
     try {
-        // Важно: используем GET (как у вас) или POST? Проверим оба варианта
-        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/generate_similar?num_questions=${num}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        
-        // Проверяем статус ответа
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/generate_similar?num_questions=${num}`, { method: 'POST' });
+        if (!response.ok) throw new Error(await response.text());
         const data = await response.json();
-        
-        // Проверяем наличие ошибки в данных
         if (data.error) {
             alert('Ошибка: ' + data.error);
             return;
         }
-        
-        // Проверяем, что data.questions существует и является массивом
         if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
             alert('Не удалось сгенерировать вопросы. Попробуйте ещё раз.');
             return;
         }
-        
         let msg = `Сгенерировано ${data.questions.length} вопросов по образцу "${testName}":\n\n`;
         data.questions.forEach((q, i) => {
-            msg += `${i+1}. ${q.question}\n   Ответ: ${q.correct_answer}\n\n`;
+            msg += `${i + 1}. ${q.question}\n   Ответ: ${q.correct_answer}\n\n`;
         });
         alert(msg);
-        
         if (confirm('Хотите создать новый тест из этих вопросов?')) {
             document.getElementById('customTestName').value = `${testName} (копия)`;
             document.getElementById('customTestDesc').value = `Сгенерировано на основе теста "${testName}"`;
-            
             const container = document.getElementById('questionsList');
             container.innerHTML = '';
             for (let q of data.questions) {
                 const questionId = Date.now() + Math.random();
-                const questionHtml = `
+                container.insertAdjacentHTML('beforeend', `
                     <div id="question_${questionId}" class="question-card">
                         <h4>Вопрос</h4>
-                        <textarea id="q_text_${questionId}" placeholder="Текст вопроса" rows="3" style="width:100%">${escapeHtml(q.question)}</textarea>
-                        <input type="text" id="q_answer_${questionId}" placeholder="Правильный ответ" value="${escapeHtml(q.correct_answer)}">
-                        <textarea id="q_hint_${questionId}" placeholder="Пояснение (необязательно)" rows="2" style="width:100%">${escapeHtml(q.explanation || '')}</textarea>
+                        <textarea id="q_text_${questionId}" rows="3" style="width:100%">${escapeHtml(q.question)}</textarea>
+                        <input type="text" id="q_answer_${questionId}" value="${escapeHtml(q.correct_answer)}">
+                        <textarea id="q_hint_${questionId}" rows="2" style="width:100%">${escapeHtml(q.explanation || '')}</textarea>
                         <button onclick="removeQuestionField(${questionId})" class="remove-question">Удалить вопрос</button>
                     </div>
-                `;
-                container.insertAdjacentHTML('beforeend', questionHtml);
+                `);
             }
             showTestCreator();
         }
-        
     } catch (error) {
         console.error('Ошибка генерации:', error);
         alert('Ошибка генерации: ' + error.message);
+    }
+}
+
+// ========== КУРСЫ И УРОКИ ==========
+async function showCoursesList() {
+    if (!currentUserId) { alert('Сначала создайте пользователя'); return; }
+    try {
+        const response = await fetch(`${API_URL}/api/courses?user_id=${currentUserId}`);
+        const courses = await response.json();
+        const container = document.getElementById('userCoursesList');
+        container.innerHTML = '';
+        if (courses.length === 0) {
+            container.innerHTML = '<p>У вас пока нет созданных курсов.</p>';
+        } else {
+            for (let course of courses) {
+                container.innerHTML += `
+                    <div class="test-item">
+                        <h3>${escapeHtml(course.name)}</h3>
+                        <p>${escapeHtml(course.description || 'Без описания')}</p>
+                        <p><strong>Статус:</strong> ${course.status}</p>
+                        <div class="test-buttons">
+                            <button onclick="viewCourse(${course.id})">👁️ Просмотр</button>
+                            <button onclick="deleteCourse(${course.id})">🗑 Удалить</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step10').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки курсов: ' + error.message);
+    }
+}
+
+async function viewCourse(courseId) {
+    try {
+        const response = await fetch(`${API_URL}/api/courses/${courseId}`);
+        const course = await response.json();
+        window.currentCourseId = courseId;
+        document.getElementById('courseViewTitle').textContent = course.name;
+        document.getElementById('courseViewDescription').textContent = course.description || 'Нет описания';
+        document.getElementById('courseViewCriteria').textContent = course.success_criteria || 'Не указаны';
+        const modulesContainer = document.getElementById('courseModulesList');
+        modulesContainer.innerHTML = '';
+        for (let module of course.modules) {
+            modulesContainer.innerHTML += `
+                <div class="lesson-card">
+                    <h3>📁 ${escapeHtml(module.title)}</h3>
+                    <p>${escapeHtml(module.description || '')}</p>
+                    <div style="margin-left: 20px;">
+                        ${module.lessons.map(lesson => `
+                            <div class="test-item" style="margin: 10px 0; cursor: pointer;" onclick="viewCourseLesson(${courseId}, ${lesson.id}, '${escapeHtml(lesson.title)}')">
+                                <strong>📖 ${escapeHtml(lesson.title)}</strong>
+                                <button class="btn-secondary" style="margin-left: 10px;" onclick="event.stopPropagation(); generateLessonContent(${courseId}, ${lesson.id})">✨ Сгенерировать содержание</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step10')?.setAttribute('step', 'step11');
+        document.getElementById('step11').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки курса: ' + error.message);
+    }
+}
+
+async function deleteCourse(courseId) {
+    if (!confirm('Удалить этот курс?')) return;
+    try {
+        const response = await fetch(`${API_URL}/api/courses/${courseId}?user_id=${currentUserId}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error(await response.text());
+        alert('Курс удалён');
+        showCoursesList();
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка удаления: ' + error.message);
+    }
+}
+
+function showCreateCourseForm() {
+    document.getElementById('newCourseName').value = '';
+    document.getElementById('newCourseDesc').value = '';
+    document.getElementById('newCourseCriteria').value = '';
+    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+    document.getElementById('step13').style.display = 'block';
+}
+
+async function createCourse() {
+    if (!currentUserId) { alert('Сначала создайте пользователя'); return; }
+    const name = document.getElementById('newCourseName').value.trim();
+    if (!name) { alert('Введите название курса'); return; }
+    const description = document.getElementById('newCourseDesc').value.trim();
+    const successCriteria = document.getElementById('newCourseCriteria').value.trim();
+    try {
+        const response = await fetch(`${API_URL}/api/courses/generate?user_id=${currentUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description, success_criteria: successCriteria })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const course = await response.json();
+        alert(`Курс "${course.name}" создан!`);
+        showCoursesList();
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function showLessonsList() {
+    if (!currentUserId) { alert('Сначала создайте пользователя'); return; }
+    try {
+        const response = await fetch(`${API_URL}/api/lessons?user_id=${currentUserId}`);
+        const lessons = await response.json();
+        const container = document.getElementById('userLessonsList');
+        container.innerHTML = '';
+        if (lessons.length === 0) {
+            container.innerHTML = '<p>У вас пока нет созданных уроков.</p>';
+        } else {
+            for (let lesson of lessons) {
+                container.innerHTML += `
+                    <div class="test-item">
+                        <h3>${escapeHtml(lesson.title)}</h3>
+                        <p><strong>Предмет:</strong> ${escapeHtml(lesson.subject)}</p>
+                        <p>${escapeHtml(lesson.description || 'Без описания')}</p>
+                        <div class="test-buttons">
+                            <button onclick="viewLesson(${lesson.id})">👁️ Просмотр</button>
+                            <button onclick="deleteLesson(${lesson.id})">🗑 Удалить</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step14').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки уроков: ' + error.message);
+    }
+}
+
+async function viewLesson(lessonId) {
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}`);
+        const lesson = await response.json();
+        document.getElementById('lessonViewTitle').textContent = lesson.title;
+        document.getElementById('lessonViewSubject').textContent = lesson.subject;
+        const content = lesson.content;
+        let contentHtml = `
+            <div class="lesson-card">
+                <h3>📖 Теория</h3>
+                <div class="theory">${marked.parse(content.theory || 'Теория не сгенерирована')}</div>
+            </div>
+            <div class="lesson-card">
+                <h3>✍️ Практические задания</h3>
+                ${(content.practice || []).map((p, i) => `
+                    <div class="task">
+                        <p><strong>Задача ${i + 1}:</strong> ${p.task}</p>
+                        <p><em>Ответ: ${p.answer}</em></p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        document.getElementById('lessonViewContent').innerHTML = contentHtml;
+        document.getElementById('lessonViewHomework').innerHTML = `
+            <div class="lesson-card">
+                <h3>🏠 Домашнее задание</h3>
+                ${(content.homework || []).map((h, i) => `
+                    <div class="task">
+                        <p><strong>Задача ${i + 1}:</strong> ${h.task}</p>
+                        <p><em>Ответ: ${h.answer}</em></p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        document.getElementById('lessonViewYoutube').innerHTML = `
+            <div class="lesson-card">
+                <h3>🎥 Видео по теме</h3>
+                ${(lesson.youtube_urls || []).map(url => `<div><a href="${url}" target="_blank">${url}</a></div>`).join('')}
+                ${lesson.youtube_urls?.length === 0 ? '<p>Нет видео</p>' : ''}
+            </div>
+        `;
+        window.currentLessonId = lessonId;
+        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+        document.getElementById('step12').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки урока: ' + error.message);
+    }
+}
+
+async function deleteLesson(lessonId) {
+    if (!confirm('Удалить этот урок?')) return;
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}?user_id=${currentUserId}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error(await response.text());
+        alert('Урок удалён');
+        showLessonsList();
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка удаления: ' + error.message);
+    }
+}
+
+function showCreateLessonForm() {
+    document.getElementById('newLessonTitle').value = '';
+    document.getElementById('newLessonSubject').value = '';
+    document.getElementById('newLessonDesc').value = '';
+    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+    document.getElementById('step15').style.display = 'block';
+}
+
+async function createLesson() {
+    if (!currentUserId) { alert('Сначала создайте пользователя'); return; }
+    const title = document.getElementById('newLessonTitle').value.trim();
+    if (!title) { alert('Введите название урока'); return; }
+    const subject = document.getElementById('newLessonSubject').value.trim();
+    if (!subject) { alert('Введите предмет'); return; }
+    const description = document.getElementById('newLessonDesc').value.trim();
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/generate?user_id=${currentUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, subject, description })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const lesson = await response.json();
+        alert(`Урок "${lesson.title}" создан!`);
+        showLessonsList();
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function generatePresentation() {
+    if (!window.currentLessonId) return;
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/${window.currentLessonId}/generate_presentation`, { method: 'POST' });
+        const data = await response.json();
+        if (data.presentation_url) window.open(data.presentation_url, '_blank');
+        else alert('Ошибка генерации презентации');
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function generateVideo(lessonId) {
+    const statusDiv = document.getElementById(`videoStatus_${lessonId}`);
+    if (!statusDiv) return;
+    statusDiv.innerHTML = '⏳ Генерация видео... (20-40 секунд)';
+    try {
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}/generate_video`, { method: 'POST' });
+        const data = await response.json();
+        if (data.video_url) statusDiv.innerHTML = `<a href="${data.video_url}" target="_blank">▶ Смотреть видео-урок</a>`;
+        else statusDiv.innerHTML = data.message;
+    } catch (error) {
+        statusDiv.innerHTML = '❌ Ошибка: ' + error.message;
+    }
+}
+
+// ========== УЧИТЕЛЬСКИЕ ФУНКЦИИ ==========
+async function showCreateSchoolForm() {
+    const name = prompt("Название школы:");
+    if (!name) return;
+    const description = prompt("Описание школы (необязательно):");
+    const response = await fetch(`${API_URL}/api/schools/create?user_id=${currentUserId}&name=${encodeURIComponent(name)}&description=${encodeURIComponent(description || '')}`, { method: 'POST' });
+    const result = await response.json();
+    if (response.ok) alert(`Школа "${result.name}" создана! Код: ${result.invite_code}`);
+    else alert("Ошибка: " + result.detail);
+}
+
+async function showJoinSchoolForm() {
+    const inviteCode = prompt("Введите код приглашения:");
+    if (!inviteCode) return;
+    const response = await fetch(`${API_URL}/api/schools/join?user_id=${currentUserId}&invite_code=${inviteCode}`, { method: 'POST' });
+    const result = await response.json();
+    if (response.ok) alert(`Вы присоединились к школе "${result.school_name}" как ${result.role}`);
+    else alert("Ошибка: " + result.detail);
+}
+
+async function showSchoolStats() {
+    const schoolId = prompt("Введите ID школы:");
+    if (!schoolId) return;
+    
+    if (!currentUserId) {
+        alert("Сначала создайте пользователя");
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}/stats?teacher_id=${currentUserId}`);
+        if (!response.ok) throw new Error(await response.text());
+        
+        const data = await response.json();
+        
+        let html = `<h3>📊 ${escapeHtml(data.school_name)}</h3>`;
+        html += `<p>👥 Всего учеников: ${data.total_students}</p>`;
+        
+        // Используем data.students (не leaderboard)
+        if (data.students && data.students.length > 0) {
+            html += '<table style="width:100%; border-collapse: collapse;">';
+            html += '<tr style="background: #667eea; color: white;"><th style="padding: 10px;">ID</th><th style="padding: 10px;">Имя</th><th style="padding: 10px;">Средний уровень</th><th style="padding: 10px;">Время (ч)</th><th style="padding: 10px;">Действия</th></tr>';
+            
+            data.students.forEach((student) => {
+                const avgMastery = student.average_mastery || 0;
+                const totalTime = student.total_time_spent_hours || 0;
+                html += `<tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 10px;">${student.user_id}</td>
+                            <td style="padding: 10px;">${escapeHtml(student.name)}</td>
+                            <td style="padding: 10px;">${avgMastery.toFixed(1)}%</td>
+                            <td style="padding: 10px;">${totalTime.toFixed(1)} ч</td>
+                            <td style="padding: 10px;"><button onclick="viewStudentGraphs(${student.user_id}, ${schoolId})">📈 Графы</button></td>
+                          </tr>`;
+            });
+            html += '</table>';
+        } else {
+            html += '<p>Нет учеников в школе</p>';
+        }
+        
+        showModal(html);
+        
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function showTeacherGraphs() {
+    const schoolId = prompt("Введите ID школы:");
+    if (!schoolId) return;
+    
+    if (!currentUserId) {
+        alert("Сначала создайте пользователя");
+        return;
+    }
+    
+    try {
+        // Получаем список учеников школы
+        const statsResponse = await fetch(`${API_URL}/api/schools/${schoolId}/stats?teacher_id=${currentUserId}`);
+        if (!statsResponse.ok) throw new Error(await statsResponse.text());
+        const statsData = await statsResponse.json();
+        
+        if (!statsData.students || statsData.students.length === 0) {
+            alert("В этой школе нет учеников.");
+            return;
+        }
+        
+        let studentList = "Выберите ученика:\n";
+        statsData.students.forEach(s => {
+            studentList += `${s.user_id} - ${s.name}\n`;
+        });
+        const studentId = prompt(studentList + "\nВведите ID ученика:");
+        if (!studentId) return;
+        
+        await viewStudentGraphs(parseInt(studentId), parseInt(schoolId));
+        
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function viewStudentGraphs(studentId, schoolId) {
+    try {
+        const response = await fetch(`${API_URL}/api/users/${studentId}/learning_graphs?school_id=${schoolId}`);
+        if (!response.ok) throw new Error(await response.text());
+        
+        const data = await response.json();
+        
+        let html = `<h3>📊 Графы знаний ученика ID ${studentId}</h3>`;
+        
+        // Целевой граф
+        html += '<h4>🎯 Целевой граф (экзамен)</h4>';
+        if (data.target_graph && data.target_graph.length > 0) {
+            html += '<ul>';
+            for (let t of data.target_graph) {
+                const value = t.value || 0;
+                const hours = t.hours || 0;
+                const difficulty = t.difficulty || 'средний';
+                html += `<li><strong>${escapeHtml(t.topic)}</strong>: вес ${value}%, ${hours} часов, сложность ${difficulty}</li>`;
+            }
+            html += '</ul>';
+        } else {
+            html += '<p>Нет данных. Постройте целевой граф для этого ученика.</p>';
+        }
+        
+        // Текущий граф
+        html += '<h4>📈 Текущий граф (прогресс)</h4>';
+        if (data.current_graph && data.current_graph.length > 0) {
+            html += '<ul>';
+            for (let t of data.current_graph) {
+                const value = t.value || 0;
+                html += `<li><strong>${escapeHtml(t.topic)}</strong>: ${value.toFixed(1)}%</li>`;
+            }
+            html += '</ul>';
+        } else {
+            html += '<p>Нет данных о прогрессе.</p>';
+        }
+        
+        // Коэффициент успеваемости
+        const coefRes = await fetch(`${API_URL}/api/users/${studentId}/coefficient?school_id=${schoolId}`);
+        if (coefRes.ok) {
+            const coefData = await coefRes.json();
+            if (coefData && coefData.coefficient !== undefined) {
+                html += `<h4>📐 Коэффициент успеваемости: ${coefData.coefficient.toFixed(1)}%</h4>`;
+                html += `<p>${coefData.recommendation || ''}</p>`;
+            }
+        }
+        
+        showModal(html);
+        
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function buildTargetGraph() {
+    const examName = document.getElementById('examName').value;
+    if (!examName) {
+        alert("Введите название экзамена");
+        return;
+    }
+    const studentId = prompt("Для какого ученика построить целевой граф? (введите ID ученика):");
+    if (!studentId) return;
+    const schoolId = prompt("Введите ID школы, в которой состоит ученик:");
+    if (!schoolId) return;
+    
+    const response = await fetch(`${API_URL}/api/users/${studentId}/build_target_graph?exam_name=${encodeURIComponent(examName)}&school_id=${schoolId}`, {
+        method: 'POST'
+    });
+    const data = await response.json();
+    
+    if (response.ok) {
+        alert(`Целевой граф для ученика ${studentId} (школа ${schoolId}) построен! Рекомендуемое время: ${data.total_days} дней`);
+        if (confirm("Показать графы этого ученика?")) {
+            viewStudentGraphs(parseInt(studentId), parseInt(schoolId));
+        }
+    } else {
+        alert("Ошибка: " + data.detail);
+    }
+}
+
+// ========== ФУНКЦИИ ДЛЯ УЧЕНИКА ==========
+async function showStudentGraphs() {
+    if (!currentUserId) { alert("Сначала создайте пользователя"); return; }
+    try {
+        const perfResponse = await fetch(`${API_URL}/api/user/detailed_stats?user_id=${currentUserId}`);
+        if (!perfResponse.ok) throw new Error(await perfResponse.text());
+        const stats = await perfResponse.json();
+        if (!stats.topics_detail?.length) {
+            alert("Нет данных. Пройдите несколько уроков.");
+            return;
+        }
+        let html = '<h3>📊 Моя успеваемость</h3>';
+        for (let item of stats.topics_detail) {
+            const mastery = item.mastery_level || 0;
+            const color = mastery >= 70 ? '#28a745' : (mastery >= 40 ? '#ffc107' : '#dc3545');
+            const status = mastery >= 70 ? '✅ Освоено' : (mastery >= 40 ? '⚠️ В процессе' : '❌ Требует внимания');
+            html += `
+                <div style="margin:15px 0;padding:15px;background:#f8f9fa;border-radius:10px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                        <strong>${escapeHtml(item.topic)}</strong>
+                        <span style="color:${color}">${status}</span>
+                    </div>
+                    <div style="background:#e0e0e0;height:25px;border-radius:12px;overflow:hidden">
+                        <div style="background:${color};width:${mastery}%;height:25px;text-align:center;color:white;font-size:12px;line-height:25px">${mastery.toFixed(0)}%</div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:#666">
+                        <span>✅ ${item.correct_count}/${item.total_count}</span>
+                        <span>⏱️ ${item.total_time_spent_minutes?.toFixed(1) || 0} мин</span>
+                    </div>
+                </div>
+            `;
+        }
+        const avgLevel = stats.average_mastery || 0;
+        html += `
+            <div style="margin-top:20px;padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;color:white;text-align:center">
+                <h4>📈 Общий прогресс</h4>
+                <div style="font-size:36px;font-weight:bold">${avgLevel.toFixed(0)}%</div>
+                <div style="background:rgba(255,255,255,0.3);height:10px;border-radius:5px;margin-top:10px">
+                    <div style="background:white;width:${avgLevel}%;height:10px;border-radius:5px"></div>
+                </div>
+                <p>Изучено тем: ${stats.total_topics}</p>
+            </div>
+        `;
+        showModal(html);
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function joinSchool() {
+    if (!currentUserId) { alert("Сначала создайте пользователя"); return; }
+    const inviteCode = prompt("Введите код приглашения:");
+    if (!inviteCode) return;
+    try {
+        const response = await fetch(`${API_URL}/api/schools/join?user_id=${currentUserId}&invite_code=${inviteCode}`, { method: 'POST' });
+        if (!response.ok) throw new Error(await response.text());
+        const result = await response.json();
+        alert(`✅ Вы присоединились к школе "${result.school_name}"!`);
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function showMySchools() {
+    if (!currentUserId) { alert("Сначала создайте пользователя"); return; }
+    try {
+        const response = await fetch(`${API_URL}/api/schools/my?user_id=${currentUserId}`);
+        if (!response.ok) throw new Error(await response.text());
+        const schools = await response.json();
+        let html = '<h3>🏫 Мои школы</h3>';
+        if (schools.length === 0) html += '<p>Вы не состоите ни в одной школе</p>';
+        else {
+            for (let school of schools) {
+                html += `
+                    <div style="border:1px solid #ddd;border-radius:10px;padding:15px;margin:10px 0">
+                        <h4>${escapeHtml(school.name)} ${school.is_owner ? '👑' : ''}</h4>
+                        <p>${escapeHtml(school.description || '')}</p>
+                        <p><strong>👥 Учеников:</strong> ${school.students_count}</p>
+                        <p><strong>🔑 Код:</strong> <code>${school.invite_code}</code></p>
+                        <button onclick="viewSchoolDetails(${school.id})" class="btn-secondary">📋 Подробнее</button>
+                        ${!school.is_owner ? `<button onclick="leaveSchool(${school.id})" style="background:#dc3545;margin-left:10px">🚪 Покинуть</button>` : ''}
+                    </div>
+                `;
+            }
+        }
+        showModal(html);
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function viewSchoolDetails(schoolId) {
+    try {
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}?user_id=${currentUserId}`);
+        if (!response.ok) throw new Error(await response.text());
+        const school = await response.json();
+        let html = `<h3>🏫 ${escapeHtml(school.name)}</h3>
+            <p><strong>Описание:</strong> ${escapeHtml(school.description || 'Нет')}</p>
+            <p><strong>Владелец:</strong> ${school.is_owner ? 'Вы' : 'Учитель'}</p>
+            <p><strong>Код:</strong> <code>${school.invite_code}</code></p>
+            <h4>👥 Участники (${school.total_members})</h4>
+            <table style="width:100%"><tr><th>Имя</th><th>Роль</th></tr>`;
+        for (let member of school.members) {
+            html += `<tr><td>${escapeHtml(member.name)}</td><td>${member.role === 'teacher' ? '👨‍🏫 Учитель' : '🎓 Ученик'}</td></tr>`;
+        }
+        html += `</table><button onclick="closeModal()" class="btn-secondary">Закрыть</button>`;
+        showModal(html);
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function leaveSchool(schoolId) {
+    if (!confirm('Покинуть школу?')) return;
+    try {
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}?user_id=${currentUserId}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error(await response.text());
+        alert('Вы покинули школу');
+        showMySchools();
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function deleteSchool(schoolId) {
+    if (!confirm('Удалить школу? Это необратимо.')) return;
+    try {
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}/delete?user_id=${currentUserId}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error(await response.text());
+        alert('Школа удалена');
+        showMySchools();
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function processVideo() {
+    const url = document.getElementById('videoUrl').value;
+    const language = document.getElementById('targetLang').value;
+    if (!url) { alert('Введите URL видео'); return; }
+    const resultDiv = document.getElementById('videoResult');
+    resultDiv.innerHTML = '<p>Обработка видео...</p>';
+    try {
+        const response = await fetch(`${API_URL}/api/video/transcribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, language })
+        });
+        const data = await response.json();
+        resultDiv.innerHTML = `<div class="lesson-card"><h3>Оригинал</h3><p>${data.original_text}</p><h3>Перевод</h3><p>${data.translated_text}</p></div>`;
+    } catch (error) {
+        resultDiv.innerHTML = `<p style="color:red">Ошибка: ${error.message}</p>`;
     }
 }
 
@@ -756,731 +1399,27 @@ function backToMainMenu() {
     }
 }
 
+function backToLessonsList() { showLessonsList(); }
+function closeModal() {
+    document.querySelectorAll('.custom-modal').forEach(m => m.remove());
+    document.querySelectorAll('.modal-overlay').forEach(o => o.remove());
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Кнопка "Начать обучение"
     const startLearningBtn = document.getElementById('startLearningBtn');
     if (startLearningBtn) {
-        startLearningBtn.addEventListener('click', function(e) {
-            console.log("Клик по кнопке 'Начать обучение'");
-            startLearningMode();
-        });
-        console.log("Обработчик для кнопки 'Начать обучение' добавлен");
-    } else {
-        console.error("Кнопка 'Начать обучение' не найдена");
+        startLearningBtn.addEventListener('click', function(e) { startLearningMode(); });
     }
-    
-    // КНОПКА "СВОЙ ТЕСТ" (ДОБАВИТЬ ЭТОТ БЛОК)
     const showTestCreatorBtn = document.getElementById('showTestCreatorBtn');
     if (showTestCreatorBtn) {
         showTestCreatorBtn.addEventListener('click', function(e) {
-            console.log("Клик по кнопке 'Свой тест'");
-            if (currentUserId) {
-                showTestCreator();
-            } else {
-                alert('Сначала зарегистрируйтесь');
-                document.getElementById('step1').style.display = 'block';
-                document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-                document.getElementById('step1').style.display = 'block';
-            }
+            if (currentUserId) showTestCreator();
+            else alert('Сначала зарегистрируйтесь');
         });
-        console.log("Обработчик для кнопки 'Свой тест' добавлен");
-    } else {
-        console.error("Кнопка 'Свой тест' не найдена");
+    }
+    const roleSelect = document.getElementById('userRole');
+    if (roleSelect) {
+        setRole(roleSelect.value);
+        roleSelect.addEventListener('change', function(e) { setRole(e.target.value); });
     }
 });
-
-async function generateVideo(lessonId) {
-    const statusDiv = document.getElementById(`videoStatus_${lessonId}`);
-    if (!statusDiv) return;
-    statusDiv.innerHTML = '⏳ Генерация видео... (20-40 секунд)';
-    
-    try {
-        const response = await fetch(`${API_URL}/api/lessons/${lessonId}/generate_video`, {
-            method: 'POST'
-        });
-        const data = await response.json();
-        
-        if (data.video_url) {
-            statusDiv.innerHTML = `<a href="${data.video_url}" target="_blank">▶ Смотреть видео-урок</a>`;
-        } else {
-            statusDiv.innerHTML = data.message;
-            setTimeout(() => checkVideoStatus(lessonId, statusDiv), 25000);
-        }
-    } catch (error) {
-        statusDiv.innerHTML = '❌ Ошибка: ' + error.message;
-    }
-}
-
-async function checkVideoStatus(lessonId, statusDiv) {
-    try {
-        const response = await fetch(`${API_URL}/api/lessons/${lessonId}/generate_video`, {
-            method: 'POST'
-        });
-        const data = await response.json();
-        if (data.video_url) {
-            statusDiv.innerHTML = `<a href="${data.video_url}" target="_blank">▶ Смотреть видео-урок</a>`;
-        } else {
-            statusDiv.innerHTML = data.message;
-            if (data.status === 'generating') {
-                setTimeout(() => checkVideoStatus(lessonId, statusDiv), 20000);
-            }
-        }
-    } catch (error) {
-        statusDiv.innerHTML = '❌ Ошибка проверки: ' + error.message;
-    }
-}
-
-// ========== СОЗДАНИЕ КУРСА ==========
-async function showCreateCourse() {
-    const name = prompt("Введите название курса:");
-    if (!name) return;
-    const description = prompt("Введите описание курса (необязательно):");
-    const successCriteria = prompt("Введите критерии успеха (или оставьте пустым, ИИ сам придумает):");
-    
-    try {
-        const response = await fetch(`${API_URL}/api/courses/generate?user_id=${currentUserId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: name,
-                description: description || "",
-                success_criteria: successCriteria || ""
-            })
-        });
-        if (!response.ok) throw new Error(await response.text());
-        const course = await response.json();
-        alert(`Курс "${course.name}" создан! ID: ${course.id}. Теперь можно генерировать уроки.`);
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка: ' + error.message);
-    }
-}
-
-// ========== СОЗДАНИЕ УРОКА ==========
-async function showCreateLesson() {
-    const title = prompt("Введите название урока:");
-    if (!title) return;
-    const subject = prompt("Введите предмет (например, математика):");
-    const description = prompt("Введите описание урока (необязательно):");
-    
-    try {
-        const response = await fetch(`${API_URL}/api/lessons/generate?user_id=${currentUserId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: title,
-                subject: subject,
-                description: description || ""
-            })
-        });
-        if (!response.ok) throw new Error(await response.text());
-        const lesson = await response.json();
-        alert(`Урок "${lesson.title}" создан! ID: ${lesson.id}.`);
-        
-        // Предложить сгенерировать презентацию
-        if (confirm('Сгенерировать презентацию?')) {
-            const presRes = await fetch(`${API_URL}/api/lessons/${lesson.id}/generate_presentation`, {
-                method: 'POST'
-            });
-            const presData = await presRes.json();
-            alert(`Презентация доступна по ссылке: ${presData.presentation_url}`);
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка: ' + error.message);
-    }
-}
-
-// ========== КУРСЫ ==========
-async function showCoursesList() {
-    if (!currentUserId) {
-        alert('Сначала создайте пользователя');
-        return;
-    }
-    try {
-        const response = await fetch(`${API_URL}/api/courses?user_id=${currentUserId}`);
-        const courses = await response.json();
-        
-        const container = document.getElementById('userCoursesList');
-        container.innerHTML = '';
-        
-        if (courses.length === 0) {
-            container.innerHTML = '<p>У вас пока нет созданных курсов.</p>';
-        } else {
-            for (let course of courses) {
-                const courseDiv = document.createElement('div');
-                courseDiv.className = 'test-item';
-                courseDiv.innerHTML = `
-                    <h3>${escapeHtml(course.name)}</h3>
-                    <p>${escapeHtml(course.description || 'Без описания')}</p>
-                    <p><strong>Статус:</strong> ${course.status}</p>
-                    <div class="test-buttons">
-                        <button onclick="viewCourse(${course.id})">👁️ Просмотр</button>
-                        <button onclick="deleteCourse(${course.id})">🗑 Удалить</button>
-                    </div>
-                `;
-                container.appendChild(courseDiv);
-            }
-        }
-        
-        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-        document.getElementById('step10').style.display = 'block';
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка загрузки курсов: ' + error.message);
-    }
-}
-
-async function viewCourse(courseId) {
-    try {
-        const response = await fetch(`${API_URL}/api/courses/${courseId}`);
-        const course = await response.json();
-
-        window.currentCourseId = courseId;
-        
-        document.getElementById('courseViewTitle').textContent = course.name;
-        document.getElementById('courseViewDescription').textContent = course.description || 'Нет описания';
-        document.getElementById('courseViewCriteria').textContent = course.success_criteria || 'Не указаны';
-        
-        const modulesContainer = document.getElementById('courseModulesList');
-        modulesContainer.innerHTML = '';
-        
-        for (let module of course.modules) {
-            const moduleDiv = document.createElement('div');
-            moduleDiv.className = 'lesson-card';
-            moduleDiv.innerHTML = `
-                <h3>📁 ${escapeHtml(module.title)}</h3>
-                <p>${escapeHtml(module.description || '')}</p>
-                <div style="margin-left: 20px;">
-                    ${module.lessons.map(lesson => `
-                        <div class="test-item" style="margin: 10px 0; cursor: pointer;" onclick="viewCourseLesson(${courseId}, ${lesson.id}, '${escapeHtml(lesson.title)}')">
-                            <strong>📖 ${escapeHtml(lesson.title)}</strong>
-                            <button class="btn-secondary" style="margin-left: 10px;" onclick="event.stopPropagation(); generateLessonContent(${courseId}, ${lesson.id})">✨ Сгенерировать содержание</button>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            modulesContainer.appendChild(moduleDiv);
-        }
-        
-        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-        document.getElementById('step11').style.display = 'block';
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка загрузки курса: ' + error.message);
-    }
-}
-
-async function viewCourseLesson(courseId, lessonId, lessonTitle) {
-    try {
-        // Получаем данные урока из API (нужно добавить эндпоинт)
-        const response = await fetch(`${API_URL}/api/course_lessons/${lessonId}`);
-        if (!response.ok) throw new Error(await response.text());
-        const lesson = await response.json();
-        
-        // Показываем урок в том же формате, что и обычный урок
-        document.getElementById('lessonViewTitle').textContent = lesson.title;
-        document.getElementById('lessonViewSubject').textContent = 'Курс: ' + lessonTitle;
-        
-        const content = lesson.content || {};
-        const theory = content.theory || 'Теория не сгенерирована';
-        const practice = content.practice || [];
-        const homework = content.homework || [];
-        const youtubeUrls = lesson.youtube_urls || [];
-        
-        let contentHtml = `
-            <div class="lesson-card">
-                <h3>📖 Теория</h3>
-                <div class="theory">${marked.parse(theory)}</div>
-            </div>
-            <div class="lesson-card">
-                <h3>✍️ Практические задания</h3>
-                ${practice.map((p, i) => `
-                    <div class="task">
-                        <p><strong>Задача ${i+1}:</strong> ${p.task}</p>
-                        <p><em>Ответ: ${p.answer}</em></p>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        
-        document.getElementById('lessonViewContent').innerHTML = contentHtml;
-        
-        document.getElementById('lessonViewHomework').innerHTML = `
-            <div class="lesson-card">
-                <h3>🏠 Домашнее задание</h3>
-                ${homework.map((h, i) => `
-                    <div class="task">
-                        <p><strong>Задача ${i+1}:</strong> ${h.task}</p>
-                        <p><em>Ответ: ${h.answer}</em></p>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        
-        document.getElementById('lessonViewYoutube').innerHTML = `
-            <div class="lesson-card">
-                <h3>🎥 Видео по теме</h3>
-                ${youtubeUrls.map(url => `
-                    <div><a href="${url}" target="_blank">${url}</a></div>
-                `).join('')}
-                ${youtubeUrls.length === 0 ? '<p>Нет видео</p>' : ''}
-            </div>
-        `;
-        
-        window.currentLessonId = lessonId;
-        
-        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-        document.getElementById('step12').style.display = 'block';
-        
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка загрузки урока: ' + error.message);
-    }
-}
-
-async function generateLessonContent(courseId, lessonId) {
-    try {
-        const response = await fetch(`${API_URL}/api/courses/${courseId}/generate_lesson_content/${lessonId}`, {
-            method: 'POST'
-        });
-        const result = await response.json();
-        alert(result.message);
-        viewCourse(courseId); // обновляем страницу курса
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка генерации: ' + error.message);
-    }
-}
-
-async function deleteCourse(courseId) {
-    if (!confirm('Удалить этот курс? Все модули и уроки внутри будут также удалены. Это действие нельзя отменить.')) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/api/courses/${courseId}?user_id=${currentUserId}`, {
-            method: 'DELETE'
-        });
-        
-        if (!response.ok) throw new Error(await response.text());
-        
-        alert('Курс успешно удалён');
-        showCoursesList(); // обновляем список курсов
-        
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка удаления: ' + error.message);
-    }
-}
-
-function showCreateCourseForm() {
-    document.getElementById('newCourseName').value = '';
-    document.getElementById('newCourseDesc').value = '';
-    document.getElementById('newCourseCriteria').value = '';
-    
-    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-    document.getElementById('step13').style.display = 'block';
-}
-
-async function createCourse() {
-    if (!currentUserId) {
-        alert('Сначала создайте пользователя');
-        return;
-    }
-    const name = document.getElementById('newCourseName').value.trim();
-    if (!name) {
-        alert('Введите название курса');
-        return;
-    }
-    const description = document.getElementById('newCourseDesc').value.trim();
-    const successCriteria = document.getElementById('newCourseCriteria').value.trim();
-    
-    try {
-        const response = await fetch(`${API_URL}/api/courses/generate?user_id=${currentUserId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: name,
-                description: description,
-                success_criteria: successCriteria
-            })
-        });
-        if (!response.ok) throw new Error(await response.text());
-        const course = await response.json();
-        alert(`Курс "${course.name}" создан!`);
-        showCoursesList();
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка: ' + error.message);
-    }
-}
-
-// ========== УРОКИ ==========
-async function showLessonsList() {
-    if (!currentUserId) {
-        alert('Сначала создайте пользователя');
-        return;
-    }
-    try {
-        const response = await fetch(`${API_URL}/api/lessons?user_id=${currentUserId}`);
-        const lessons = await response.json();
-        
-        const container = document.getElementById('userLessonsList');
-        container.innerHTML = '';
-        
-        if (lessons.length === 0) {
-            container.innerHTML = '<p>У вас пока нет созданных уроков.</p>';
-        } else {
-            for (let lesson of lessons) {
-                const lessonDiv = document.createElement('div');
-                lessonDiv.className = 'test-item';
-                lessonDiv.innerHTML = `
-                    <h3>${escapeHtml(lesson.title)}</h3>
-                    <p><strong>Предмет:</strong> ${escapeHtml(lesson.subject)}</p>
-                    <p>${escapeHtml(lesson.description || 'Без описания')}</p>
-                    <div class="test-buttons">
-                        <button onclick="viewLesson(${lesson.id})">👁️ Просмотр</button>
-                        <button onclick="deleteLesson(${lesson.id})">🗑 Удалить</button>
-                    </div>
-                `;
-                container.appendChild(lessonDiv);
-            }
-        }
-        
-        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-        document.getElementById('step14').style.display = 'block';
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка загрузки уроков: ' + error.message);
-    }
-}
-
-async function viewLesson(lessonId) {
-    try {
-        const response = await fetch(`${API_URL}/api/lessons/${lessonId}`);
-        const lesson = await response.json();
-        
-        document.getElementById('lessonViewTitle').textContent = lesson.title;
-        document.getElementById('lessonViewSubject').textContent = lesson.subject;
-        
-        const content = lesson.content;
-        const theory = content.theory || 'Теория не сгенерирована';
-        const practice = content.practice || [];
-        const homework = content.homework || [];
-        const youtubeUrls = lesson.youtube_urls || [];
-        
-        let contentHtml = `
-            <div class="lesson-card">
-                <h3>📖 Теория</h3>
-                <div class="theory">${marked.parse(theory)}</div>
-            </div>
-            <div class="lesson-card">
-                <h3>✍️ Практические задания</h3>
-                ${practice.map((p, i) => `
-                    <div class="task">
-                        <p><strong>Задача ${i+1}:</strong> ${p.task}</p>
-                        <p><em>Ответ: ${p.answer}</em></p>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        
-        document.getElementById('lessonViewContent').innerHTML = contentHtml;
-        
-        document.getElementById('lessonViewHomework').innerHTML = `
-            <div class="lesson-card">
-                <h3>🏠 Домашнее задание</h3>
-                ${homework.map((h, i) => `
-                    <div class="task">
-                        <p><strong>Задача ${i+1}:</strong> ${h.task}</p>
-                        <p><em>Ответ: ${h.answer}</em></p>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        
-        document.getElementById('lessonViewYoutube').innerHTML = `
-            <div class="lesson-card">
-                <h3>🎥 Видео по теме</h3>
-                ${youtubeUrls.map(url => `
-                    <div><a href="${url}" target="_blank">${url}</a></div>
-                `).join('')}
-                ${youtubeUrls.length === 0 ? '<p>Нет видео</p>' : ''}
-            </div>
-        `;
-        
-        window.currentLessonId = lessonId;
-        
-        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-        document.getElementById('step12').style.display = 'block';
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка загрузки урока: ' + error.message);
-    }
-}
-
-async function generatePresentation() {
-    if (!window.currentLessonId) return;
-    try {
-        const response = await fetch(`${API_URL}/api/lessons/${window.currentLessonId}/generate_presentation`, {
-            method: 'POST'
-        });
-        const data = await response.json();
-        if (data.presentation_url) {
-            window.open(data.presentation_url, '_blank');
-        } else {
-            alert('Ошибка генерации презентации');
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка: ' + error.message);
-    }
-}
-
-async function deleteLesson(lessonId) {
-    if (!confirm('Удалить этот урок? Это действие нельзя отменить.')) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/api/lessons/${lessonId}?user_id=${currentUserId}`, {
-            method: 'DELETE'
-        });
-        
-        if (!response.ok) throw new Error(await response.text());
-        
-        alert('Урок успешно удалён');
-        showLessonsList(); // обновляем список уроков
-        
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка удаления: ' + error.message);
-    }
-}
-
-function showCreateLessonForm() {
-    document.getElementById('newLessonTitle').value = '';
-    document.getElementById('newLessonSubject').value = '';
-    document.getElementById('newLessonDesc').value = '';
-    
-    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-    document.getElementById('step15').style.display = 'block';
-}
-
-async function createLesson() {
-    if (!currentUserId) {
-        alert('Сначала создайте пользователя');
-        return;
-    }
-    const title = document.getElementById('newLessonTitle').value.trim();
-    if (!title) {
-        alert('Введите название урока');
-        return;
-    }
-    const subject = document.getElementById('newLessonSubject').value.trim();
-    if (!subject) {
-        alert('Введите предмет');
-        return;
-    }
-    const description = document.getElementById('newLessonDesc').value.trim();
-    
-    try {
-        const response = await fetch(`${API_URL}/api/lessons/generate?user_id=${currentUserId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: title,
-                subject: subject,
-                description: description
-            })
-        });
-        if (!response.ok) throw new Error(await response.text());
-        const lesson = await response.json();
-        alert(`Урок "${lesson.title}" создан!`);
-        showLessonsList();
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка: ' + error.message);
-    }
-}
-
-function backToLessonsList() {
-    showLessonsList();
-}
-
-function showMainMenu() {
-    if (currentSessionId) {
-        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-        document.getElementById('step5').style.display = 'block';
-    } else {
-        document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-        document.getElementById('step1').style.display = 'block';
-    }
-}
-
-async function generateAllLessonsContent() {
-    // Получаем ID текущего курса (нужно сохранять при просмотре курса)
-    if (!window.currentCourseId) {
-        alert('Ошибка: ID курса не найден');
-        return;
-    }
-    
-    if (!confirm('Сгенерировать содержание для ВСЕХ уроков этого курса? Это может занять несколько минут.')) {
-        return;
-    }
-    
-    try {
-        // Показываем индикатор загрузки
-        const btn = event.target;
-        const originalText = btn.textContent;
-        btn.textContent = '⏳ Генерация...';
-        btn.disabled = true;
-        
-        const response = await fetch(`${API_URL}/api/courses/${window.currentCourseId}/generate_all_lessons_content`, {
-            method: 'POST'
-        });
-        
-        const result = await response.json();
-        
-        btn.textContent = originalText;
-        btn.disabled = false;
-        
-        if (result.status === 'ok') {
-            alert(`Содержание сгенерировано для ${result.generated_count} уроков`);
-            // Обновляем страницу курса
-            viewCourse(window.currentCourseId);
-        } else {
-            alert('Ошибка: ' + (result.message || 'Неизвестная ошибка'));
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка генерации: ' + error.message);
-    }
-}
-
-// frontend/script.js - добавить функцию showUserPerformance
-
-async function processVideo() {
-    const url = document.getElementById('videoUrl').value;
-    const language = document.getElementById('targetLang').value;
-    if (!url) {
-        alert('Введите URL видео');
-        return;
-    }
-    const resultDiv = document.getElementById('videoResult');
-    resultDiv.innerHTML = '<p>Обработка видео, пожалуйста, подождите...</p>';
-    try {
-        const response = await fetch(`${API_URL}/api/video/transcribe`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({url, language})
-        });
-        const data = await response.json();
-        resultDiv.innerHTML = `
-            <div class="lesson-card">
-                <h3>Оригинальный текст (распознанный)</h3>
-                <p>${data.original_text}</p>
-                <h3>Перевод на ${language}</h3>
-                <p>${data.translated_text}</p>
-            </div>
-        `;
-    } catch (error) {
-        resultDiv.innerHTML = `<p style="color:red;">Ошибка: ${error.message}</p>`;
-    }
-}
-
-async function showUserPerformance() {
-    if (!currentUserId) {
-        alert('Сначала создайте пользователя (начните обучение)');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}/api/user/performance?user_id=${currentUserId}`);
-        if (!response.ok) throw new Error(await response.text());
-        
-        const data = await response.json();
-        
-        if (data.length === 0) {
-            alert('Нет данных об успеваемости. Пройдите несколько уроков или тестов.');
-            return;
-        }
-        
-        // Формируем HTML для отображения статистики
-        let html = `
-            <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                        background: white; padding: 30px; border-radius: 20px; 
-                        max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
-                        box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 1000;">
-                <h2>📊 Моя успеваемость</h2>
-                <button onclick="this.parentElement.remove()" style="float: right; background: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">✕ Закрыть</button>
-                <div style="clear: both;"></div>
-        `;
-        
-        // Сортируем по уровню mastery (сначала слабые)
-        data.sort((a, b) => a.mastery_level - b.mastery_level);
-        
-        for (let item of data) {
-            const level = item.mastery_level;
-            const color = level >= 70 ? '#28a745' : (level >= 40 ? '#ffc107' : '#dc3545');
-            const status = level >= 70 ? '✅ Освоено' : (level >= 40 ? '⚠️ В процессе' : '❌ Требует внимания');
-            
-            html += `
-                <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <strong>${escapeHtml(item.topic)}</strong>
-                        <span style="color: ${color}; font-weight: bold;">${status}</span>
-                    </div>
-                    <div style="background: #e0e0e0; height: 25px; border-radius: 12px; overflow: hidden;">
-                        <div style="background: ${color}; width: ${level}%; height: 25px; text-align: center; color: white; font-size: 12px; line-height: 25px;">
-                            ${level.toFixed(0)}%
-                        </div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #666;">
-                        <span>✅ Правильно: ${item.correct_count}</span>
-                        <span>📝 Всего: ${item.total_count}</span>
-                        <span>📅 ${new Date(item.last_attempt).toLocaleDateString()}</span>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Средний уровень
-        const avgLevel = data.reduce((sum, item) => sum + item.mastery_level, 0) / data.length;
-        const avgColor = avgLevel >= 70 ? '#28a745' : (avgLevel >= 40 ? '#ffc107' : '#dc3545');
-        
-        html += `
-            <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; text-align: center;">
-                <h3>📈 Общий прогресс</h3>
-                <div style="font-size: 36px; font-weight: bold;">${avgLevel.toFixed(0)}%</div>
-                <div style="background: rgba(255,255,255,0.3); height: 10px; border-radius: 5px; margin-top: 10px;">
-                    <div style="background: white; width: ${avgLevel}%; height: 10px; border-radius: 5px;"></div>
-                </div>
-                <p style="margin-top: 10px;">Изучено тем: ${data.length}</p>
-            </div>
-        `;
-        
-        html += `</div>`;
-        
-        // Добавляем overlay
-        const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.background = 'rgba(0,0,0,0.5)';
-        overlay.style.zIndex = '999';
-        overlay.onclick = () => {
-            overlay.remove();
-            perfDiv.remove();
-        };
-        
-        const perfDiv = document.createElement('div');
-        perfDiv.innerHTML = html;
-        
-        document.body.appendChild(overlay);
-        document.body.appendChild(perfDiv);
-        
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка загрузки статистики: ' + error.message);
-    }
-}

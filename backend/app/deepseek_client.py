@@ -534,6 +534,82 @@ class DeepSeekClient:
             return []
         except:
             return []
+        
+    async def evaluate_answers_batch(self, questions_and_answers: List[Dict]) -> List[Dict]:
+        """Пакетная проверка нескольких ответов за один запрос"""
+        prompt = "Оцени следующие ответы ученика. Верни JSON массив с результатами.\n\n"
+        for i, item in enumerate(questions_and_answers):
+            prompt += f"""
+    Вопрос {i+1}: {item['question']}
+    Правильный ответ: {item['correct_answer']}
+    Ответ ученика: {item['user_answer']}
+    Тема: {item['topic']}
+
+    """
+        
+        prompt += """
+    Для каждого вопроса верни объект:
+    {"is_correct": true/false, "confidence": 0.0-1.0, "reason": "объяснение"}
+
+    Верни ТОЛЬКО JSON массив.
+    """
+        
+        response = await self.chat_completion([
+            {"role": "system", "content": "Ты эксперт по проверке ответов. Отвечай только JSON массивом."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=2000)
+        
+        try:
+            import re
+            json_match = re.search(r'\[.*\]', response, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            return []
+        except:
+            return []
+        
+    async def evaluate_answer_flexible(self, question: str, user_answer: str, correct_answer: str, topic: str) -> Dict[str, Any]:
+        """Гибкая проверка ответа с помощью ИИ"""
+        prompt = f"""
+    Ты – эксперт по проверке учебных заданий. Оцени, правильный ли ответ дал ученик.
+
+    Тема: {topic}
+    Вопрос: {question}
+    Правильный ответ: {correct_answer}
+    Ответ ученика: {user_answer}
+
+    Правила оценки:
+    1. Учитывай разные форматы записи (например, "12" и "12 см" - это одно и то же)
+    2. Учитывай синонимы ("нет решений" = "∅" = "пустое множество")
+    3. Для неравенств учитывай разные формы записи:
+    - "x ∈ (−3, 3)" = "-3 < x < 3" = "x > -3 and x < 3"
+    - "x ∈ [3, +∞)" = "x ≥ 3" = "x >= 3"
+    4. Для множеств: "{-2, 1, 3}" = "-2, 1, 3" = "−2,1,3"
+    5. Если ответ - число, допустима погрешность 0.01
+    6. Если ответ округлён, проверь, соответствует ли он правильному с reasonable точностью
+
+    Верни ТОЛЬКО JSON:
+    {{
+        "is_correct": true/false,
+        "confidence": 0.0-1.0,
+        "reason": "краткое объяснение почему правильно или нет",
+        "normalized_user_answer": "нормализованная версия ответа ученика",
+        "normalized_correct_answer": "нормализованная версия правильного ответа"
+    }}
+    """
+        response = await self.chat_completion([
+            {"role": "system", "content": "Ты эксперт по проверке ответов. Отвечай только JSON."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=500)
+        
+        try:
+            import re
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            return {"is_correct": False, "confidence": 0, "reason": "Ошибка парсинга"}
+        except:
+            return {"is_correct": False, "confidence": 0, "reason": "Ошибка оценки"}
     
     # --- Ремонт задачи (очистка мусора) ---
     async def repair_task(self, task_text: str) -> str:

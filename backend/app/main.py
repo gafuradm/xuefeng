@@ -1,8 +1,8 @@
 # backend/app/main.py
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"  # Отключаем предупреждения tokenizers
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Query
+from fastapi import FastAPI, Depends, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -13,16 +13,13 @@ from datetime import datetime
 import asyncio
 from fastapi.responses import RedirectResponse
 
-# backend/app/main.py - добавьте импорты в начало файла
-
-from .models import (
-    User, Session as SessionModel, TestResult, Lesson, ProgressHistory,
-    UserCourse, CourseModule, CourseLesson, UserLesson,
-    UserInteraction, UserPerformance  # <--- ВАЖНО: добавить эти две модели
-)
-
 from .database import engine, get_db
-from .models import Base, User, CustomTest
+from .models import (
+    Base, User, Session as SessionModel, TestResult, Lesson, ProgressHistory,
+    UserCourse, CourseModule, CourseLesson, UserLesson,
+    UserInteraction, UserPerformance, CustomTest,
+    School, SchoolMember, LessonVideo
+)
 from .deepseek_client import deepseek_client
 from .schemas import *
 from .services import AITeacherService
@@ -56,7 +53,6 @@ ai_service = AITeacherService()
 
 @app.on_event("startup")
 async def startup_event():
-    """Загрузка данных при старте"""
     print("🚀 Запуск Universal AI Teacher...")
     if ai_service.rag_available:
         print("✅ RAG система готова")
@@ -65,17 +61,21 @@ async def startup_event():
 async def root():
     return {"message": "Universal AI Teacher API", "status": "running"}
 
+# ========== ПОЛЬЗОВАТЕЛИ ==========
 @app.post("/api/users", response_model=UserResponse)
-async def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    """Создание нового пользователя"""
+async def create_user(user: UserCreate, role: str = "student", db: Session = Depends(get_db)):
     try:
-        return await ai_service.create_user(db, user.email, user.name)
+        user_obj = await ai_service.create_user(db, user.email, user.name)
+        user_obj.role = role
+        db.commit()
+        db.refresh(user_obj)
+        return user_obj
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+# ========== СЕССИИ И ТЕСТЫ ==========
 @app.post("/api/sessions", response_model=SessionResponse)
 async def create_session(user_id: int, session_data: SessionCreate, db: Session = Depends(get_db)):
-    """Создание новой учебной сессии"""
     try:
         return await ai_service.create_session(db, user_id, session_data.exam_name)
     except Exception as e:
@@ -83,7 +83,6 @@ async def create_session(user_id: int, session_data: SessionCreate, db: Session 
 
 @app.post("/api/sessions/{session_id}/submit_test")
 async def submit_test(session_id: int, test_data: TestSubmit, db: Session = Depends(get_db)):
-    """Отправка ответов на начальный тест"""
     try:
         result = await ai_service.submit_test(db, session_id, test_data.answers)
         return result
@@ -92,7 +91,6 @@ async def submit_test(session_id: int, test_data: TestSubmit, db: Session = Depe
 
 @app.post("/api/sessions/{session_id}/set_time")
 async def set_time(session_id: int, time_data: TimeSet, db: Session = Depends(get_db)):
-    """Установка времени подготовки и создание плана"""
     try:
         plan = await ai_service.set_time_and_plan(db, session_id, time_data.days)
         return plan
@@ -101,7 +99,6 @@ async def set_time(session_id: int, time_data: TimeSet, db: Session = Depends(ge
 
 @app.get("/api/sessions/{session_id}/next_lesson")
 async def get_next_lesson(session_id: int, db: Session = Depends(get_db)):
-    """Получение следующего урока"""
     try:
         return await ai_service.get_next_lesson(db, session_id)
     except Exception as e:
@@ -112,48 +109,33 @@ async def submit_lesson(session_id: int, lesson_data: LessonAnswer, db: Session 
     """Отправка ответов на урок"""
     try:
         result = await ai_service.submit_lesson(
-            db, session_id, lesson_data.lesson_id, lesson_data.user_answers
+            db, session_id, lesson_data.lesson_id, lesson_data.user_answers,
+            lesson_data.time_spent_seconds, lesson_data.task_times   # ← добавить эти два
         )
         return result
     except Exception as e:
+        print(f"Error in submit_lesson endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
-
+    
 @app.post("/api/sessions/{session_id}/progress_test")
 async def create_progress_test(session_id: int, db: Session = Depends(get_db)):
-    """Создание промежуточного теста"""
     try:
         questions = await ai_service.generate_progress_test(db, session_id)
         return {"questions": questions}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/api/lessons/{lesson_id}/chat")
-async def lesson_chat(lesson_id: int, request: Request, db: Session = Depends(get_db)):
-    data = await request.json()
-    session_id = data.get("session_id")
-    question = data.get("question")
-    if not session_id or not question:
-        raise HTTPException(status_code=400, detail="session_id and question required")
-    answer = await ai_service.chat_with_bot(db, session_id, lesson_id, question)
-    return {"answer": answer}
-
 @app.get("/api/sessions/{session_id}")
 async def get_session(session_id: int, db: Session = Depends(get_db)):
-    """Получение информации о сессии с тестами"""
-    from .models import Session as SessionModel
-    from .models import TestResult
-    
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
-    # Получаем тесты для этой сессии
-    test_results = db.query(TestResult).filter(
-        TestResult.session_id == session_id
-    ).all()
+    test_results = db.query(TestResult).filter(TestResult.session_id == session_id).all()
     
-    # Преобразуем в словарь
-    result = {
+    return {
         "id": session.id,
         "user_id": session.user_id,
         "exam_name": session.exam_name,
@@ -173,35 +155,86 @@ async def get_session(session_id: int, db: Session = Depends(get_db)):
                 "answers": t.answers,
                 "evaluation": t.evaluation,
                 "score": t.score,
-                "created_at": t.created_at
+                "created_at": t.created_at,
+                "time_spent_seconds": t.time_spent_seconds,
+                "question_times": t.question_times
             }
             for t in test_results
         ]
     }
-    
-    return result
 
 @app.get("/api/sessions/{session_id}/progress")
 async def get_progress(session_id: int, db: Session = Depends(get_db)):
-    """Получение истории прогресса"""
-    from .models import ProgressHistory
     history = db.query(ProgressHistory).filter(
         ProgressHistory.session_id == session_id
     ).order_by(ProgressHistory.timestamp).all()
     return history
 
-# RAG эндпоинты
+# ========== СТАТИСТИКА ПОЛЬЗОВАТЕЛЯ ==========
+@app.get("/api/user/statistics")
+async def get_user_statistics(user_id: int, db: Session = Depends(get_db)):
+    stats = await ai_service.get_user_statistics(db, user_id)
+    return stats
 
+@app.get("/api/user/performance")
+async def get_user_performance(user_id: int, db: Session = Depends(get_db)):
+    performances = db.query(UserPerformance).filter(UserPerformance.user_id == user_id).all()
+    return [
+        {
+            "topic": p.topic,
+            "correct_count": p.correct_count,
+            "total_count": p.total_count,
+            "mastery_level": p.mastery_level,
+            "total_time_spent": p.total_time_spent,
+            "last_attempt": p.last_attempt
+        }
+        for p in performances
+    ]
+
+@app.get("/api/user/detailed_stats")
+async def get_detailed_stats(user_id: int, db: Session = Depends(get_db)):
+    """Детальная статистика пользователя с временем по темам"""
+    stats = await ai_service.get_user_statistics(db, user_id)
+    return stats
+
+@app.get("/api/user/interactions")
+async def get_user_interactions(user_id: int, limit: int = 50, db: Session = Depends(get_db)):
+    interactions = db.query(UserInteraction).filter(
+        UserInteraction.user_id == user_id
+    ).order_by(UserInteraction.created_at.desc()).limit(limit).all()
+    
+    return [
+        {
+            "type": i.interaction_type,
+            "user_input": i.user_input,
+            "ai_response": i.ai_response,
+            "topic": i.topic,
+            "created_at": i.created_at
+        }
+        for i in interactions
+    ]
+
+# ========== ЧАТ ==========
+@app.post("/api/lessons/{lesson_id}/chat")
+async def lesson_chat(lesson_id: int, request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    session_id = data.get("session_id")
+    question = data.get("question")
+    if not session_id or not question:
+        raise HTTPException(status_code=400, detail="session_id and question required")
+    answer = await ai_service.chat_with_bot(db, session_id, lesson_id, question)
+    return {"answer": answer}
+
+# ========== RAG ЭНДПОИНТЫ ==========
 @app.get("/api/exams/{exam_type}/search")
 async def search_problems(
     exam_type: str,
     query: str = Query(..., description="Поисковый запрос"),
-    k: int = Query(5, ge=1, le=50, description="Количество результатов"),
-    year: Optional[int] = Query(None, description="Год"),
-    topic: Optional[str] = Query(None, description="Тема"),
-    subject: Optional[str] = Query(None, description="Предмет (физика, химия, биология...)")
+    k: int = Query(5, ge=1, le=50),
+    year: Optional[int] = Query(None),
+    topic: Optional[str] = Query(None),
+    subject: Optional[str] = Query(None)
 ):
-    """Поиск задач в векторной базе с фильтрацией по предмету"""
     try:
         filters = {}
         if year:
@@ -214,9 +247,7 @@ async def search_problems(
         if exam_type not in ai_service.exam_manager.active_exams:
             return {"results": [], "message": f"Экзамен {exam_type} не найден"}
         
-        results = ai_service.exam_manager.search_problems(
-            exam_type, query, k, filters
-        )
+        results = ai_service.exam_manager.search_problems(exam_type, query, k, filters)
         
         clean_results = []
         for r in results:
@@ -232,19 +263,13 @@ async def search_problems(
             }
             clean_results.append(clean)
         
-        return {
-            "query": query,
-            "count": len(clean_results),
-            "results": clean_results
-        }
-        
+        return {"query": query, "count": len(clean_results), "results": clean_results}
     except Exception as e:
         print(f"Ошибка поиска: {e}")
         raise HTTPException(status_code=400, detail=str(e))
-    
+
 @app.get("/api/exams/{exam_type}/stats")
 async def get_exam_stats(exam_type: str):
-    """Статистика по экзамену"""
     try:
         if exam_type not in ai_service.exam_manager.active_exams:
             return {"error": f"Экзамен {exam_type} не найден"}
@@ -252,62 +277,93 @@ async def get_exam_stats(exam_type: str):
         store = ai_service.exam_manager.active_exams[exam_type]
         metadata = store.get('metadata', [])
         
-        stats = {
-            "total_problems": len(metadata),
-            "topics": {},
-            "years": {},
-            "difficulties": {}
-        }
+        stats = {"total_problems": len(metadata), "topics": {}, "years": {}, "difficulties": {}}
         
         for p in metadata:
             topic = p.get('topic', 'unknown')
             stats['topics'][topic] = stats['topics'].get(topic, 0) + 1
-            
             year = p.get('year')
             if year:
                 stats['years'][str(year)] = stats['years'].get(str(year), 0) + 1
-            
             diff = p.get('difficulty', 'unknown')
             stats['difficulties'][diff] = stats['difficulties'].get(diff, 0) + 1
         
         return stats
-        
     except Exception as e:
         print(f"Ошибка статистики: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/test/search")
 async def test_search(query: str = "тригонометрия", k: int = 3):
-    """Тестовый эндпоинт для отладки поиска"""
     try:
         results = ai_service.exam_manager.search_problems('gaokao', query, k)
-        return {
-            "query": query,
-            "count": len(results),
-            "results": results[:k]
-        }
+        return {"query": query, "count": len(results), "results": results[:k]}
     except Exception as e:
         return {"error": str(e)}
+
+# ========== ВИДЕО ==========
+@app.post("/api/lessons/{lesson_id}/generate_video")
+async def generate_video_for_lesson(lesson_id: int, db: Session = Depends(get_db)):
+    from .video_generator import VideoGenerator
     
-@app.post("/api/exams/custom")
-async def add_custom_exam(exam_data: dict, db: Session = Depends(get_db)):
-    """Сохраняет пользовательский экзамен (JSON с темами)"""
-    from .subject_topics import save_custom_exam
-    exam_name = exam_data.get("name")
-    if not exam_name:
-        raise HTTPException(400, "Не указано название экзамена")
-    save_custom_exam(exam_name, exam_data)
-    return {"status": "ok", "message": f"Экзамен '{exam_name}' сохранён"}
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден")
+    
+    existing = db.query(LessonVideo).filter(LessonVideo.lesson_id == lesson_id).first()
+    if existing and os.path.exists(existing.video_path):
+        return {"video_url": f"/static/videos/{os.path.basename(existing.video_path)}"}
+    
+    try:
+        content = json.loads(lesson.content) if lesson.content else {}
+    except:
+        content = {}
+    
+    theory = content.get("theory", f"Изучение темы {lesson.topic}")
+    examples = content.get("examples", [])
+    tasks = content.get("tasks", [])
+    
+    tasks_with_solutions = []
+    for idx, task in enumerate(tasks[:5]):
+        problem = task.get('task', '')
+        answer = task.get('answer', '')
+        if problem and answer:
+            steps = await deepseek_client.get_step_by_step_solution(problem, subject="математика")
+            tasks_with_solutions.append({"problem": problem, "steps": steps, "answer": answer})
+    
+    vg = VideoGenerator()
+    filename = f"lesson_{lesson_id}_{int(datetime.now().timestamp())}.mp4"
+    
+    def sync_gen():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(vg.generate_video(
+            lesson.topic, theory, examples, tasks_with_solutions, filename
+        ))
+    
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(sync_gen)
+        path = future.result()
+    
+    lesson_video = LessonVideo(lesson_id=lesson.id, video_path=path)
+    db.add(lesson_video)
+    db.commit()
+    
+    return {"video_url": f"/static/videos/{filename}"}
 
-# ========== ПОЛЬЗОВАТЕЛЬСКИЕ ТЕСТЫ (Custom Tests) ==========
+@app.post("/api/video/transcribe")
+async def transcribe_video(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    url = data.get("url")
+    target_language = data.get("language", "ru")
+    if not url:
+        raise HTTPException(400, "URL видео не указан")
+    result = await ai_service.process_video(url, target_language)
+    return result
 
+# ========== ПОЛЬЗОВАТЕЛЬСКИЕ ТЕСТЫ ==========
 @app.post("/api/custom_tests")
-async def create_custom_test(
-    test_data: CustomTestCreate,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """Создать новый пользовательский тест"""
+async def create_custom_test(test_data: CustomTestCreate, user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден")
@@ -324,32 +380,19 @@ async def create_custom_test(
     return new_test
 
 @app.get("/api/custom_tests")
-async def get_user_tests(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """Получить все тесты пользователя"""
+async def get_user_tests(user_id: int, db: Session = Depends(get_db)):
     tests = db.query(CustomTest).filter(CustomTest.user_id == user_id).all()
     return tests
 
 @app.get("/api/custom_tests/{test_id}")
-async def get_custom_test(
-    test_id: int,
-    db: Session = Depends(get_db)
-):
-    """Получить тест по ID"""
+async def get_custom_test(test_id: int, db: Session = Depends(get_db)):
     test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден")
     return test
 
 @app.delete("/api/custom_tests/{test_id}")
-async def delete_custom_test(
-    test_id: int,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """Удалить тест (только владелец)"""
+async def delete_custom_test(test_id: int, user_id: int, db: Session = Depends(get_db)):
     test = db.query(CustomTest).filter(CustomTest.id == test_id, CustomTest.user_id == user_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден или не принадлежит вам")
@@ -358,21 +401,13 @@ async def delete_custom_test(
     return {"status": "ok", "message": "Тест удалён"}
 
 @app.post("/api/custom_tests/{test_id}/train")
-async def train_ai_on_custom_test(
-    test_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Обучить ИИ на основе пользовательского теста.
-    DeepSeek сохранит структуру теста и сможет генерировать похожие вопросы.
-    """
+async def train_ai_on_custom_test(test_id: int, db: Session = Depends(get_db)):
     test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден")
     
-    # Формируем промпт для обучения ИИ
     prompt = f"""
-Ты – ИИ учитель. Пользователь создал тест с названием "{test.name}" и хочет, чтобы ты запомнил его структуру и стиль вопросов.
+Ты – ИИ учитель. Пользователь создал тест с названием "{test.name}" и хочет, чтобы ты запомнил его структуру.
 
 Вот тест:
 ОПИСАНИЕ: {test.description or 'нет описания'}
@@ -380,23 +415,13 @@ async def train_ai_on_custom_test(
 ВОПРОСЫ:
 """
     for i, q in enumerate(test.questions, 1):
-        prompt += f"\n{i}. {q['text']}\n   Правильный ответ: {q['correct_answer']}\n   Пояснение: {q.get('explanation', 'нет')}\n"
-    
-    prompt += """
-Пожалуйста, проанализируй этот тест и запомни его формат, сложность, стиль формулировок. В будущих запросах, когда я попрошу сгенерировать похожие вопросы, используй этот тест как референс.
-Ответь коротко: "Тест запомнен. Готов генерировать похожие задачи."
-"""
+        prompt += f"\n{i}. {q['text']}\n   Правильный ответ: {q['correct_answer']}\n"
     
     response = await ai_service._custom_train(prompt)
     return {"status": "trained", "message": response, "test_id": test_id}
 
 @app.post("/api/custom_tests/{test_id}/submit")
-async def submit_custom_test(
-    test_id: int,
-    submission: CustomTestSubmit,
-    db: Session = Depends(get_db)
-):
-    """Пройти тест и получить оценку"""
+async def submit_custom_test(test_id: int, submission: CustomTestSubmit, db: Session = Depends(get_db)):
     test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден")
@@ -422,7 +447,6 @@ async def submit_custom_test(
     percentage = (score / total) * 100
     grade = "Отлично!" if percentage >= 80 else "Хорошо" if percentage >= 60 else "Нужно повторить"
     
-    # Сохраняем историю прохождения (можно создать таблицу)
     return {
         "test_name": test.name,
         "total": total,
@@ -433,142 +457,33 @@ async def submit_custom_test(
     }
 
 @app.post("/api/custom_tests/{test_id}/generate_similar")
-async def generate_similar_questions(
-    test_id: int,
-    num_questions: int = 5,
-    db: Session = Depends(get_db)
-):
-    """
-    Генерирует новые вопросы, похожие на стиль и сложность пользовательского теста.
-    """
+async def generate_similar_questions(test_id: int, num_questions: int = 5, db: Session = Depends(get_db)):
     test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден")
     
-    # Берём первые 3 вопроса как примеры
     examples = test.questions[:3]
     examples_text = "\n".join([f"{i+1}. {q['text']} -> {q['correct_answer']}" for i, q in enumerate(examples)])
     
-    prompt = f"""
-Ты – генератор тестов. Пользователь предоставил примеры своих вопросов:
-
-{examples_text}
-
-На основе этих примеров, сгенерируй {num_questions} НОВЫХ вопросов в ТОМ ЖЕ СТИЛЕ и ТОЙ ЖЕ СЛОЖНОСТИ.
-Каждый вопрос должен быть оригинальным, но похожим по структуре, формулировкам и сложности.
-Для каждого вопроса укажи текст, правильный ответ и пояснение.
-
-Верни ТОЛЬКО JSON массив:
-[
-  {{"question": "текст вопроса", "correct_answer": "ответ", "explanation": "пояснение"}}
-]
-"""
-    response = await deepseek_client.chat_completion([
-        {"role": "system", "content": "Ты генератор тестов. Отвечай только JSON массивом."},
-        {"role": "user", "content": prompt}
-    ], max_tokens=3000)
-    
+    response = await ai_service._generate_similar_from_custom(examples_text, num_questions)
     try:
-        import re
-        json_match = re.search(r'\[.*\]', response, re.DOTALL)
-        if json_match:
-            questions = json.loads(json_match.group())
-            return {"questions": questions, "count": len(questions)}
-        else:
-            return {"error": "Не удалось распарсить ответ", "raw": response}
-    except Exception as e:
-        return {"error": str(e)}
-
-# ========== ЭНДПОИНТ ГЕНЕРАЦИИ ВИДЕО ==========
-@app.post("/api/lessons/{lesson_id}/generate_video")
-async def generate_video_for_lesson(lesson_id: int, db: Session = Depends(get_db)):
-    from .models import Lesson, LessonVideo
-    from .video_generator import VideoGenerator
-    
-    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
-    if not lesson:
-        raise HTTPException(404, "Урок не найден")
-    
-    # Проверяем, есть ли уже видео
-    existing = db.query(LessonVideo).filter(LessonVideo.lesson_id == lesson_id).first()
-    if existing and os.path.exists(existing.video_path):
-        return {"video_url": f"/static/videos/{os.path.basename(existing.video_path)}"}
-    
-    try:
-        content = json.loads(lesson.content) if lesson.content else {}
+        questions = json.loads(response)
+        return {"questions": questions, "count": len(questions)}
     except:
-        content = {}
-    
-    theory = content.get("theory", f"Изучение темы {lesson.topic}")
-    examples = content.get("examples", [])
-    tasks = content.get("tasks", [])
-    
-    # Для каждой задачи генерируем пошаговое решение через DeepSeek
-    print(f"Генерация пошаговых решений для {len(tasks)} задач...")
-    tasks_with_solutions = []
-    for idx, task in enumerate(tasks[:5]):
-        problem = task.get('task', '')
-        answer = task.get('answer', '')
-        if problem and answer:
-            print(f"  Задача {idx+1}: {problem[:50]}...")
-            steps = await deepseek_client.get_step_by_step_solution(problem, subject="математика")
-            tasks_with_solutions.append({
-                "problem": problem,
-                "steps": steps,
-                "answer": answer
-            })
-    
-    vg = VideoGenerator()
-    filename = f"lesson_{lesson_id}_{int(datetime.now().timestamp())}.mp4"
-    
-    def sync_gen():
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(vg.generate_video(
-            lesson.topic, theory, examples, tasks_with_solutions, filename
-        ))
-    
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(sync_gen)
-        path = future.result()
-    
-    lesson_video = LessonVideo(lesson_id=lesson.id, video_path=path)
-    db.add(lesson_video)
-    db.commit()
-    
-    return {"video_url": f"/static/videos/{filename}"}
-
-# backend/app/main.py (добавить новые эндпоинты)
-
-from .models import UserCourse, CourseModule, CourseLesson, UserLesson
-from .schemas import UserCourseCreate, UserCourseResponse, UserLessonCreate, UserLessonResponse
+        return {"error": "Не удалось распарсить ответ", "raw": response}
 
 # ========== ПОЛЬЗОВАТЕЛЬСКИЕ КУРСЫ ==========
-
-# backend/app/main.py - исправленный эндпоинт
-
-@app.post("/api/courses/generate")  # убрали response_model
-async def generate_course(
-    course_data: UserCourseCreate,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """Сгенерировать новый курс (структуру) на основе названия и описания"""
+@app.post("/api/courses/generate")
+async def generate_course(course_data: UserCourseCreate, user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден")
     
-    # Генерируем структуру через AI
-    structure = await ai_service.generate_course_structure(
-        course_data.name,
-        course_data.description,
-        course_data.success_criteria
-    )
+    structure = await ai_service.generate_course_structure(db, user_id, course_data.name, course_data.description, course_data.success_criteria)
     
     if "error" in structure:
         raise HTTPException(400, structure["error"])
     
-    # Создаём курс
     new_course = UserCourse(
         user_id=user_id,
         name=course_data.name,
@@ -580,7 +495,6 @@ async def generate_course(
     db.commit()
     db.refresh(new_course)
     
-    # Создаём модули и уроки
     modules_list = []
     for module_idx, module_data in enumerate(structure.get("modules", [])):
         new_module = CourseModule(
@@ -620,7 +534,6 @@ async def generate_course(
     
     db.commit()
     
-    # Возвращаем словарь вручную (без response_model)
     return {
         "id": new_course.id,
         "user_id": new_course.user_id,
@@ -634,24 +547,16 @@ async def generate_course(
     }
 
 @app.get("/api/courses")
-async def get_user_courses(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """Получить все курсы пользователя"""
+async def get_user_courses(user_id: int, db: Session = Depends(get_db)):
     courses = db.query(UserCourse).filter(UserCourse.user_id == user_id).all()
     return courses
 
 @app.get("/api/courses/{course_id}")
-async def get_course_details(
-    course_id: int,
-    db: Session = Depends(get_db)
-):
-    """Получить курс с модулями и уроками"""
+async def get_course_details(course_id: int, db: Session = Depends(get_db)):
     course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
     if not course:
         raise HTTPException(404, "Курс не найден")
-    # Подгружаем модули и уроки
+    
     result = {
         "id": course.id,
         "name": course.name,
@@ -670,63 +575,33 @@ async def get_course_details(
             "lessons": []
         }
         for lesson in module.lessons:
-            lesson_data = {
+            module_data["lessons"].append({
                 "id": lesson.id,
                 "title": lesson.title,
                 "order": lesson.order,
                 "content": lesson.content,
                 "success_criteria": lesson.success_criteria
-            }
-            module_data["lessons"].append(lesson_data)
+            })
         result["modules"].append(module_data)
     return result
 
-@app.post("/api/courses/{course_id}/generate_lesson_content/{lesson_id}")
-async def generate_lesson_content(
-    course_id: int,
-    lesson_id: int,
-    db: Session = Depends(get_db)
-):
-    """Сгенерировать полное содержание для конкретного урока курса"""
-    lesson = db.query(CourseLesson).filter(CourseLesson.id == lesson_id, CourseLesson.module.has(course_id=course_id)).first()
-    if not lesson:
-        raise HTTPException(404, "Урок не найден")
-    
-    # Получаем тему и описание из lesson.content
-    subject = "общий предмет"  # можно определить из контекста курса
-    title = lesson.title
-    description = lesson.content.get("description", "")
-    
-    content = await ai_service.generate_lesson_content(title, subject, description)
-    if "error" in content:
-        raise HTTPException(400, content["error"])
-    
-    lesson.content = content
-    lesson.success_criteria = content.get("success_criteria", "")
-    lesson.youtube_urls = content.get("youtube_urls", [])
-    # presentation_url можно сохранить отдельно (сгенерировать ссылку)
+@app.delete("/api/courses/{course_id}")
+async def delete_course(course_id: int, user_id: int, db: Session = Depends(get_db)):
+    course = db.query(UserCourse).filter(UserCourse.id == course_id, UserCourse.user_id == user_id).first()
+    if not course:
+        raise HTTPException(404, "Курс не найден")
+    db.delete(course)
     db.commit()
-    
-    return {"status": "ok", "message": "Содержание урока сгенерировано"}
+    return {"status": "ok"}
 
-# ========== ПОЛЬЗОВАТЕЛЬСКИЕ УРОКИ (отдельные) ==========
-
+# ========== ПОЛЬЗОВАТЕЛЬСКИЕ УРОКИ ==========
 @app.post("/api/lessons/generate", response_model=UserLessonResponse)
-async def generate_lesson(
-    lesson_data: UserLessonCreate,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """Сгенерировать отдельный урок (не в составе курса)"""
+async def generate_lesson(lesson_data: UserLessonCreate, user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден")
     
-    content = await ai_service.generate_lesson_content(
-        lesson_data.title,
-        lesson_data.subject,
-        lesson_data.description
-    )
+    content = await ai_service.generate_lesson_content(db, user_id, lesson_data.title, lesson_data.subject, lesson_data.description)
     if "error" in content:
         raise HTTPException(400, content["error"])
     
@@ -742,89 +617,64 @@ async def generate_lesson(
     db.add(new_lesson)
     db.commit()
     db.refresh(new_lesson)
-    
     return new_lesson
 
 @app.get("/api/lessons")
-async def get_user_lessons(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
+async def get_user_lessons(user_id: int, db: Session = Depends(get_db)):
     lessons = db.query(UserLesson).filter(UserLesson.user_id == user_id).all()
     return lessons
 
 @app.get("/api/lessons/{lesson_id}")
-async def get_lesson_details(
-    lesson_id: int,
-    db: Session = Depends(get_db)
-):
+async def get_lesson_details(lesson_id: int, db: Session = Depends(get_db)):
     lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден")
     return lesson
 
-# ========== ГЕНЕРАЦИЯ ПРЕЗЕНТАЦИИ ==========
+@app.delete("/api/lessons/{lesson_id}")
+async def delete_lesson(lesson_id: int, user_id: int, db: Session = Depends(get_db)):
+    lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id, UserLesson.user_id == user_id).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден или не принадлежит вам")
+    db.delete(lesson)
+    db.commit()
+    return {"status": "ok", "message": "Урок удалён"}
+
+# ========== ПРЕЗЕНТАЦИИ ==========
 @app.post("/api/lessons/{lesson_id}/generate_presentation")
-async def generate_presentation(
-    lesson_id: int,
-    db: Session = Depends(get_db)
-):
-    """Сгенерировать HTML-презентацию для урока и вернуть ссылку"""
+async def generate_presentation(lesson_id: int, db: Session = Depends(get_db)):
     lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден")
     
-    # Если презентация уже есть, вернуть существующую ссылку
     if lesson.presentation_url:
         return {"presentation_url": lesson.presentation_url}
     
-    # Генерируем HTML из content
     content = lesson.content
     theory = content.get("theory", "")
     practice = content.get("practice", [])
     homework = content.get("homework", [])
     
-    html = f"""
-<!DOCTYPE html>
+    html = f"""<!DOCTYPE html>
 <html>
-<head>
-    <title>{lesson.title}</title>
-    <meta charset="utf-8">
-    <style>
-        body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }}
-        .slide {{ margin-bottom: 40px; page-break-after: always; }}
-        h1 {{ color: #667eea; }}
-        .task {{ background: #f5f5f5; padding: 15px; border-radius: 10px; margin: 10px 0; }}
-        .answer {{ color: #2c3e50; font-weight: bold; }}
-    </style>
+<head><title>{lesson.title}</title><meta charset="utf-8">
+<style>
+    body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }}
+    .slide {{ margin-bottom: 40px; page-break-after: always; }}
+    h1 {{ color: #667eea; }}
+    .task {{ background: #f5f5f5; padding: 15px; border-radius: 10px; margin: 10px 0; }}
+    .answer {{ color: #2c3e50; font-weight: bold; }}
+</style>
 </head>
 <body>
-    <div class="slide">
-        <h1>{lesson.title}</h1>
-        <p><strong>Предмет:</strong> {lesson.subject}</p>
-        <p>{lesson.description or ''}</p>
-    </div>
-    <div class="slide">
-        <h2>📖 Теория</h2>
-        {theory}
-    </div>
-    <div class="slide">
-        <h2>✍️ Практические задания</h2>
-        {''.join(f'<div class="task"><strong>Задача {i+1}:</strong> {p["task"]}<br><span class="answer">Ответ: {p["answer"]}</span></div>' for i, p in enumerate(practice))}
-    </div>
-    <div class="slide">
-        <h2>🏠 Домашнее задание</h2>
-        {''.join(f'<div class="task"><strong>Задача {i+1}:</strong> {h["task"]}<br><span class="answer">Ответ: {h["answer"]}</span></div>' for i, h in enumerate(homework))}
-    </div>
-    <div class="slide">
-        <h2>🎯 Критерии успеха</h2>
-        <p>{lesson.success_criteria}</p>
-    </div>
+    <div class="slide"><h1>{lesson.title}</h1><p><strong>Предмет:</strong> {lesson.subject}</p><p>{lesson.description or ''}</p></div>
+    <div class="slide"><h2>📖 Теория</h2>{theory}</div>
+    <div class="slide"><h2>✍️ Практические задания</h2>{''.join(f'<div class="task"><strong>Задача {i+1}:</strong> {p["task"]}<br><span class="answer">Ответ: {p["answer"]}</span></div>' for i, p in enumerate(practice))}</div>
+    <div class="slide"><h2>🏠 Домашнее задание</h2>{''.join(f'<div class="task"><strong>Задача {i+1}:</strong> {h["task"]}<br><span class="answer">Ответ: {h["answer"]}</span></div>' for i, h in enumerate(homework))}</div>
+    <div class="slide"><h2>🎯 Критерии успеха</h2><p>{lesson.success_criteria}</p></div>
 </body>
-</html>
-    """
-    # Сохраняем HTML во временный файл и возвращаем ссылку
-    import os
+</html>"""
+    
     pres_dir = "static/presentations"
     os.makedirs(pres_dir, exist_ok=True)
     filename = f"lesson_{lesson_id}.html"
@@ -835,91 +685,169 @@ async def generate_presentation(
     presentation_url = f"/static/presentations/{filename}"
     lesson.presentation_url = presentation_url
     db.commit()
-    
     return {"presentation_url": presentation_url}
 
-# backend/app/main.py - добавить
+# ========== УПРАВЛЕНИЕ ШКОЛОЙ ==========
+@app.post("/api/schools/create")
+async def create_school_endpoint(name: str, description: str = None, user_id: int = Query(...), db: Session = Depends(get_db)):
+    try:
+        result = await ai_service.create_school(db, user_id, name, description)
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
-@app.delete("/api/courses/{course_id}")
-async def delete_course(
-    course_id: int,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    course = db.query(UserCourse).filter(UserCourse.id == course_id, UserCourse.user_id == user_id).first()
-    if not course:
-        raise HTTPException(404, "Курс не найден")
-    db.delete(course)
+@app.post("/api/schools/join")
+async def join_school_endpoint(invite_code: str, user_id: int = Query(...), db: Session = Depends(get_db)):
+    try:
+        result = await ai_service.join_school(db, user_id, invite_code)
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+@app.get("/api/schools/my")
+async def get_my_schools(user_id: int = Query(...), db: Session = Depends(get_db)):
+    schools = db.query(School).filter(
+        School.id.in_(db.query(SchoolMember.school_id).filter(SchoolMember.user_id == user_id))
+    ).all()
+    
+    result = []
+    for school in schools:
+        students_count = db.query(SchoolMember).filter(
+            SchoolMember.school_id == school.id, SchoolMember.role == 'student'
+        ).count()
+        result.append({
+            "id": school.id,
+            "name": school.name,
+            "description": school.description,
+            "invite_code": school.invite_code,
+            "created_at": school.created_at,
+            "is_owner": school.owner_id == user_id,
+            "students_count": students_count
+        })
+    return result
+
+@app.get("/api/schools/{school_id}")
+async def get_school_details(school_id: int, user_id: int = Query(...), db: Session = Depends(get_db)):
+    member = db.query(SchoolMember).filter(
+        SchoolMember.school_id == school_id, SchoolMember.user_id == user_id
+    ).first()
+    if not member:
+        raise HTTPException(403, "У вас нет доступа к этой школе")
+    
+    school = db.query(School).filter(School.id == school_id).first()
+    if not school:
+        raise HTTPException(404, "Школа не найдена")
+    
+    members = db.query(SchoolMember).filter(SchoolMember.school_id == school_id).all()
+    members_list = [{"id": m.user_id, "name": m.user.name, "role": m.role, "joined_at": m.joined_at} for m in members]
+    
+    return {
+        "id": school.id,
+        "name": school.name,
+        "description": school.description,
+        "invite_code": school.invite_code,
+        "created_at": school.created_at,
+        "is_owner": school.owner_id == user_id,
+        "members": members_list,
+        "total_members": len(members_list)
+    }
+
+@app.get("/api/schools/{school_id}/stats")
+async def get_school_stats_endpoint(school_id: int, teacher_id: int = Query(...), db: Session = Depends(get_db)):
+    try:
+        result = await ai_service.get_school_stats(db, school_id, teacher_id)
+        return result
+    except ValueError as e:
+        raise HTTPException(403, str(e))
+
+@app.delete("/api/schools/{school_id}")
+async def leave_school(school_id: int, user_id: int = Query(...), db: Session = Depends(get_db)):
+    school = db.query(School).filter(School.id == school_id).first()
+    if not school:
+        raise HTTPException(404, "Школа не найдена")
+    if school.owner_id == user_id:
+        raise HTTPException(400, "Владелец школы не может её покинуть")
+    
+    member = db.query(SchoolMember).filter(SchoolMember.school_id == school_id, SchoolMember.user_id == user_id).first()
+    if not member:
+        raise HTTPException(404, "Вы не состоите в этой школе")
+    db.delete(member)
     db.commit()
-    return {"status": "ok"}
+    return {"status": "ok", "message": "Вы покинули школу"}
 
-# backend/app/main.py - добавить эндпоинты
+@app.delete("/api/schools/{school_id}/delete")
+async def delete_school(school_id: int, user_id: int = Query(...), db: Session = Depends(get_db)):
+    school = db.query(School).filter(School.id == school_id, School.owner_id == user_id).first()
+    if not school:
+        raise HTTPException(404, "Школа не найдена или вы не являетесь владельцем")
+    
+    db.query(SchoolMember).filter(SchoolMember.school_id == school_id).delete()
+    db.delete(school)
+    db.commit()
+    return {"status": "ok", "message": "Школа удалена"}
 
-# Получить урок из курса по ID
-@app.get("/api/course_lessons/{lesson_id}")
-async def get_course_lesson(
-    lesson_id: int,
+# ========== ГРАФЫ ЗНАНИЙ ==========
+@app.post("/api/users/{user_id}/build_target_graph")
+async def build_target_graph_endpoint(
+    user_id: int,
+    exam_name: str,
+    school_id: int = Query(...),   # обязательно передавать ID школы
     db: Session = Depends(get_db)
 ):
+    try:
+        result = await ai_service.build_target_graph(db, user_id, school_id, exam_name)
+        return result
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+@app.post("/api/sync_performance")
+async def sync_performance_to_school(user_id: int, school_id: int, db: Session = Depends(get_db)):
+    try:
+        await ai_service.sync_student_performance(db, user_id, school_id)
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+@app.get("/api/users/{user_id}/coefficient")
+async def get_coefficient_endpoint(user_id: int, school_id: int = Query(...), db: Session = Depends(get_db)):
+    try:
+        result = await ai_service.get_coefficient(db, user_id, school_id)
+        return result
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+@app.get("/api/users/{user_id}/learning_graphs")
+async def get_learning_graphs_endpoint(user_id: int, school_id: int = Query(...), db: Session = Depends(get_db)):
+    try:
+        result = await ai_service.get_learning_graphs(db, user_id, school_id)
+        return result
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+# ========== КУРСЫ И УРОКИ (дополнительные эндпоинты) ==========
+@app.get("/api/course_lessons/{lesson_id}")
+async def get_course_lesson(lesson_id: int, db: Session = Depends(get_db)):
     lesson = db.query(CourseLesson).filter(CourseLesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден")
     return lesson
 
-# Удалить самостоятельный урок
-@app.delete("/api/lessons/{lesson_id}")
-async def delete_lesson(
-    lesson_id: int,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id, UserLesson.user_id == user_id).first()
-    if not lesson:
-        raise HTTPException(404, "Урок не найден или не принадлежит вам")
-    db.delete(lesson)
-    db.commit()
-    return {"status": "ok", "message": "Урок удалён"}
-
-# Удалить курс
-@app.delete("/api/courses/{course_id}")
-async def delete_course(
-    course_id: int,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    course = db.query(UserCourse).filter(UserCourse.id == course_id, UserCourse.user_id == user_id).first()
-    if not course:
-        raise HTTPException(404, "Курс не найден или не принадлежит вам")
-    db.delete(course)
-    db.commit()
-    return {"status": "ok", "message": "Курс удалён"}
-
-# Генерация содержания для урока курса (если ещё нет)
 @app.post("/api/courses/{course_id}/generate_lesson_content/{lesson_id}")
-async def generate_course_lesson_content(
-    course_id: int,
-    lesson_id: int,
-    db: Session = Depends(get_db)
-):
+async def generate_course_lesson_content(course_id: int, lesson_id: int, db: Session = Depends(get_db)):
     lesson = db.query(CourseLesson).filter(
-        CourseLesson.id == lesson_id,
-        CourseLesson.module.has(course_id=course_id)
+        CourseLesson.id == lesson_id, CourseLesson.module.has(course_id=course_id)
     ).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден")
     
-    # Если контент уже есть, не перезаписываем
     if lesson.content and lesson.content.get("theory"):
         return {"status": "already_exists", "message": "Контент уже сгенерирован"}
     
-    # Получаем контекст курса для лучшей генерации
     course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
-    subject = "общий предмет"
     title = lesson.title
     description = lesson.content.get("description", "") if lesson.content else ""
     
-    content = await ai_service.generate_lesson_content(title, subject, description)
-    
+    content = await ai_service.generate_lesson_content(db, course.user_id, title, "общий предмет", description)
     if "error" in content:
         raise HTTPException(400, content["error"])
     
@@ -927,15 +855,10 @@ async def generate_course_lesson_content(
     lesson.success_criteria = content.get("success_criteria", "")
     lesson.youtube_urls = content.get("youtube_urls", [])
     db.commit()
-    
     return {"status": "ok", "message": "Содержание урока сгенерировано"}
 
 @app.post("/api/courses/{course_id}/generate_all_lessons_content")
-async def generate_all_lessons_content(
-    course_id: int,
-    db: Session = Depends(get_db)
-):
-    """Сгенерировать содержание для всех уроков курса"""
+async def generate_all_lessons_content(course_id: int, db: Session = Depends(get_db)):
     course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
     if not course:
         raise HTTPException(404, "Курс не найден")
@@ -943,21 +866,14 @@ async def generate_all_lessons_content(
     generated_count = 0
     errors = []
     
-    # Проходим по всем модулям и урокам
     for module in course.modules:
         for lesson in module.lessons:
-            # Пропускаем, если контент уже есть
             if lesson.content and lesson.content.get("theory"):
                 continue
-            
             try:
-                # Получаем контекст
-                subject = "общий предмет"
                 title = lesson.title
                 description = lesson.content.get("description", "") if lesson.content else ""
-                
-                content = await ai_service.generate_lesson_content(title, subject, description)
-                
+                content = await ai_service.generate_lesson_content(db, course.user_id, title, "общий предмет", description)
                 if "error" not in content:
                     lesson.content = content
                     lesson.success_criteria = content.get("success_criteria", "")
@@ -969,64 +885,9 @@ async def generate_all_lessons_content(
                 errors.append(f"Урок '{title}': {str(e)}")
     
     db.commit()
-    
-    return {
-        "status": "ok",
-        "generated_count": generated_count,
-        "errors": errors
-    }
+    return {"status": "ok", "generated_count": generated_count, "errors": errors}
 
-# backend/app/main.py – добавить эндпоинты
-
-@app.get("/api/user/statistics")
-async def get_user_statistics(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """Получить статистику пользователя"""
-    stats = await ai_service.get_user_statistics(db, user_id)
-    return stats
-
-@app.get("/api/user/performance")
-async def get_user_performance(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """Получить статистику успеваемости пользователя"""
-    performances = db.query(UserPerformance).filter(UserPerformance.user_id == user_id).all()
-    return [
-        {
-            "topic": p.topic,
-            "correct_count": p.correct_count,
-            "total_count": p.total_count,
-            "mastery_level": p.mastery_level,
-            "last_attempt": p.last_attempt
-        }
-        for p in performances
-    ]
-
-@app.get("/api/user/interactions")
-async def get_user_interactions(
-    user_id: int,
-    limit: int = 50,
-    db: Session = Depends(get_db)
-):
-    """Получить историю взаимодействий с ИИ"""
-    interactions = db.query(UserInteraction).filter(
-        UserInteraction.user_id == user_id
-    ).order_by(UserInteraction.created_at.desc()).limit(limit).all()
-    
-    return [
-        {
-            "type": i.interaction_type,
-            "user_input": i.user_input,
-            "ai_response": i.ai_response,
-            "topic": i.topic,
-            "created_at": i.created_at
-        }
-        for i in interactions
-    ]
-
+# ========== КОНФЕРЕНЦИЯ ==========
 @app.get("/conference")
 async def conference_redirect():
     return RedirectResponse(url="http://localhost:8000")
@@ -1038,15 +899,3 @@ async def conference_teacher_redirect():
 @app.get("/conference/student")
 async def conference_student_redirect():
     return RedirectResponse(url="http://localhost:8000/student")
-
-# backend/app/main.py (добавить в конец)
-
-@app.post("/api/video/transcribe")
-async def transcribe_video(request: Request, db: Session = Depends(get_db)):
-    data = await request.json()
-    url = data.get("url")
-    target_language = data.get("language", "ru")
-    if not url:
-        raise HTTPException(400, "URL видео не указан")
-    result = await ai_service.process_video(url, target_language)
-    return result

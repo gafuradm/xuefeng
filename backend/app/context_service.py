@@ -1,6 +1,6 @@
 # backend/app/context_service.py
 from sqlalchemy.orm import Session
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .models import UserInteraction, UserPerformance, User
 from datetime import datetime, timedelta
 
@@ -36,7 +36,7 @@ class ContextService:
         topic: str,
         is_correct: bool
     ):
-        """Обновляет статистику успеваемости по теме"""
+        """Обновляет статистику успеваемости по теме (без времени)"""
         perf = db.query(UserPerformance).filter(
             UserPerformance.user_id == user_id,
             UserPerformance.topic == topic
@@ -46,13 +46,11 @@ class ContextService:
             perf = UserPerformance(user_id=user_id, topic=topic)
             db.add(perf)
         
-        perf.total_count += 1
+        perf.total_count = (perf.total_count or 0) + 1
         if is_correct:
-            perf.correct_count += 1
+            perf.correct_count = (perf.correct_count or 0) + 1
         
-        # Вычисляем уровень владения (на основе процента правильных ответов и количества попыток)
         percentage = (perf.correct_count / perf.total_count) * 100 if perf.total_count > 0 else 0
-        # Уровень владения растёт быстрее при большом количестве правильных ответов
         perf.mastery_level = min(100, percentage + (perf.correct_count * 0.5))
         perf.last_attempt = datetime.utcnow()
         db.commit()
@@ -64,13 +62,13 @@ class ContextService:
         limit: int = 20,
         current_topic: str = None
     ) -> str:
-        """Собирает контекст для промпта на основе истории"""
+        """Собирает контекст для промпта на основе истории и времени"""
         # Получаем последние взаимодействия
         interactions = db.query(UserInteraction).filter(
             UserInteraction.user_id == user_id
         ).order_by(UserInteraction.created_at.desc()).limit(limit).all()
         
-        # Получаем статистику по темам
+        # Получаем статистику по темам с временем
         performances = db.query(UserPerformance).filter(
             UserPerformance.user_id == user_id
         ).all()
@@ -86,6 +84,12 @@ class ContextService:
                 context_parts.append(f"Слабые темы ученика: {', '.join([p.topic for p in weak_topics[:5]])}")
             if strong_topics:
                 context_parts.append(f"Сильные темы ученика: {', '.join([p.topic for p in strong_topics[:5]])}")
+            
+            # Добавляем информацию о времени, если есть
+            for p in performances:
+                if p.total_time_spent and p.total_time_spent > 0:
+                    minutes = p.total_time_spent // 60
+                    context_parts.append(f"На тему '{p.topic}' потрачено времени: {minutes} минут")
         
         # Добавляем историю вопроса/ответа
         if interactions:
@@ -100,6 +104,9 @@ class ContextService:
             if topic_perf:
                 context_parts.append(f"\nУровень владения темой '{current_topic}': {topic_perf.mastery_level:.0f}%")
                 context_parts.append(f"Правильных ответов: {topic_perf.correct_count}/{topic_perf.total_count}")
+                if topic_perf.total_time_spent:
+                    minutes = topic_perf.total_time_spent // 60
+                    context_parts.append(f"Времени потрачено на тему: {minutes} минут")
         
         return "\n".join(context_parts) if context_parts else "Нет истории взаимодействий."
     

@@ -14,9 +14,34 @@ class User(Base):
     user_courses = relationship('UserCourse', back_populates='user', cascade='all, delete-orphan')
     user_lessons = relationship('UserLesson', back_populates='user', cascade='all, delete-orphan')
     sessions = relationship('Session', back_populates='user', cascade="all, delete-orphan")
-    custom_tests = relationship('CustomTest', back_populates='user', cascade="all, delete-orphan")  # НОВОЕ
+    custom_tests = relationship('CustomTest', back_populates='user', cascade="all, delete-orphan")
     interactions = relationship('UserInteraction', back_populates='user', cascade='all, delete-orphan')
     performances = relationship('UserPerformance', back_populates='user', cascade='all, delete-orphan')
+    topic_time_stats = relationship('TopicTimeStats', back_populates='user', cascade='all, delete-orphan')
+
+    role = Column(String, default='student')
+    school_members = relationship('SchoolMember', back_populates='user', cascade='all, delete-orphan')
+    owned_schools = relationship('School', foreign_keys='School.owner_id', cascade='all, delete-orphan')
+
+
+class StudentPerformance(Base):
+    """Расширенная статистика ученика с графами знаний"""
+    __tablename__ = 'student_performances'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    school_id = Column(Integer, ForeignKey('schools.id', ondelete='SET NULL'), nullable=True)
+    
+    target_graph = Column(JSON, default={})
+    current_graph = Column(JSON, default={})
+    topics_progress = Column(JSON, default={})
+    total_time_spent = Column(Integer, default=0)
+    average_score = Column(Float, default=0.0)
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship('User')
+    school = relationship('School')
+
 
 class Session(Base):
     __tablename__ = 'sessions'
@@ -29,7 +54,7 @@ class Session(Base):
     current_profile = Column(JSON, default={})
     time_available_days = Column(Integer)
     study_plan = Column(JSON, default={})
-    status = Column(String, default='init')  # init, testing, planning, learning, completed
+    status = Column(String, default='init')
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -38,19 +63,23 @@ class Session(Base):
     lessons = relationship('Lesson', back_populates='session', cascade="all, delete-orphan")
     progress_history = relationship('ProgressHistory', back_populates='session', cascade="all, delete-orphan")
 
+
 class TestResult(Base):
     __tablename__ = 'test_results'
     
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey('sessions.id', ondelete='CASCADE'))
-    test_type = Column(String)  # initial, progress, module_test, custom
+    test_type = Column(String)
     questions = Column(JSON, default=[])
     answers = Column(JSON, default={})
     evaluation = Column(JSON, default={})
     score = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
+    time_spent_seconds = Column(Integer, default=0)      # общее время на тест
+    question_times = Column(JSON, default={})            # {question_index: seconds}
     
     session = relationship('Session', back_populates='test_results')
+
 
 class Lesson(Base):
     __tablename__ = 'lessons'
@@ -64,11 +93,12 @@ class Lesson(Base):
     score = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime)
+    time_spent_seconds = Column(Integer, default=0)
+    task_times = Column(JSON, default={})
     video = relationship('LessonVideo', back_populates='lesson', uselist=False, cascade="all, delete-orphan")
     
     session = relationship('Session', back_populates='lessons')
 
-# backend/app/models.py (добавить после класса Lesson)
 
 class LessonVideo(Base):
     __tablename__ = 'lesson_videos'
@@ -80,6 +110,7 @@ class LessonVideo(Base):
     
     lesson = relationship('Lesson', back_populates='video')
 
+
 class ProgressHistory(Base):
     __tablename__ = 'progress_history'
     
@@ -90,7 +121,7 @@ class ProgressHistory(Base):
     
     session = relationship('Session', back_populates='progress_history')
 
-# ========== НОВАЯ МОДЕЛЬ: ПОЛЬЗОВАТЕЛЬСКИЕ ТЕСТЫ ==========
+
 class CustomTest(Base):
     __tablename__ = 'custom_tests'
     
@@ -98,32 +129,30 @@ class CustomTest(Base):
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    questions = Column(JSON, nullable=False)  # [{"text": "...", "correct_answer": "...", "explanation": "..."}]
+    questions = Column(JSON, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = relationship('User', back_populates='custom_tests')
 
-# backend/app/models.py (добавить в конец)
 
 class UserCourse(Base):
-    """Пользовательский курс"""
     __tablename__ = 'user_courses'
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    success_criteria = Column(Text, nullable=True)   # критерии успеха (текст или JSON)
-    status = Column(String, default='draft')        # draft, generating, ready, active
+    success_criteria = Column(Text, nullable=True)
+    status = Column(String, default='draft')
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = relationship('User', back_populates='user_courses')
     modules = relationship('CourseModule', back_populates='course', cascade='all, delete-orphan')
 
+
 class CourseModule(Base):
-    """Модуль курса"""
     __tablename__ = 'course_modules'
     
     id = Column(Integer, primary_key=True, index=True)
@@ -135,25 +164,25 @@ class CourseModule(Base):
     course = relationship('UserCourse', back_populates='modules')
     lessons = relationship('CourseLesson', back_populates='module', cascade='all, delete-orphan')
 
+
 class CourseLesson(Base):
-    """Урок внутри модуля"""
     __tablename__ = 'course_lessons'
     
     id = Column(Integer, primary_key=True, index=True)
     module_id = Column(Integer, ForeignKey('course_modules.id', ondelete='CASCADE'))
     title = Column(String, nullable=False)
     order = Column(Integer, default=0)
-    content = Column(JSON, default={})       # теория, примеры, задачи и т.д.
-    homework = Column(JSON, default=[])      # домашние задания
+    content = Column(JSON, default={})
+    homework = Column(JSON, default=[])
     success_criteria = Column(Text, nullable=True)
-    youtube_urls = Column(JSON, default=[])   # ссылки на видео
-    presentation_url = Column(String, nullable=True)  # ссылка на презентацию
+    youtube_urls = Column(JSON, default=[])
+    presentation_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     module = relationship('CourseModule', back_populates='lessons')
 
+
 class UserLesson(Base):
-    """Самостоятельный урок (не в составе курса)"""
     __tablename__ = 'user_lessons'
     
     id = Column(Integer, primary_key=True, index=True)
@@ -161,7 +190,7 @@ class UserLesson(Base):
     title = Column(String, nullable=False)
     subject = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    content = Column(JSON, default={})        # теория, практика, ДЗ
+    content = Column(JSON, default={})
     success_criteria = Column(Text, nullable=True)
     youtube_urls = Column(JSON, default=[])
     presentation_url = Column(String, nullable=True)
@@ -170,23 +199,22 @@ class UserLesson(Base):
     
     user = relationship('User', back_populates='user_lessons')
 
-# backend/app/models.py
 
 class UserInteraction(Base):
-    """История взаимодействий пользователя с ИИ"""
     __tablename__ = 'user_interactions'
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     session_id = Column(Integer, ForeignKey('sessions.id', ondelete='SET NULL'), nullable=True)
-    interaction_type = Column(String)  # 'question', 'lesson_generated', 'test_taken', 'course_created', 'lesson_created'
+    interaction_type = Column(String)
     topic = Column(String, nullable=True)
-    user_input = Column(Text, nullable=True)      # вопрос пользователя или его ответы
-    ai_response = Column(Text, nullable=True)     # ответ ИИ
-    feedback_score = Column(Integer, nullable=True)  # оценка качества от 1 до 5 (можно добавить позже)
+    user_input = Column(Text, nullable=True)
+    ai_response = Column(Text, nullable=True)
+    feedback_score = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship('User', back_populates='interactions')
+
 
 class UserPerformance(Base):
     """Статистика успеваемости пользователя по темам"""
@@ -195,9 +223,50 @@ class UserPerformance(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     topic = Column(String, nullable=False)
-    correct_count = Column(Integer, default=0)    # количество правильных ответов
-    total_count = Column(Integer, default=0)      # всего попыток
+    correct_count = Column(Integer, default=0)
+    total_count = Column(Integer, default=0)
     last_attempt = Column(DateTime, default=datetime.utcnow)
-    mastery_level = Column(Float, default=0.0)    # уровень владения (0-100)
+    mastery_level = Column(Float, default=0.0)
+    total_time_spent = Column(Integer, default=0)          # секунды, потраченные на эту тему
     
     user = relationship('User', back_populates='performances')
+
+
+class TopicTimeStats(Base):
+    """Детальная статистика времени по темам"""
+    __tablename__ = 'topic_time_stats'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    topic = Column(String, nullable=False)
+    total_seconds = Column(Integer, default=0)
+    sessions_count = Column(Integer, default=0)            # сколько раз занимался
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship('User', back_populates='topic_time_stats')
+
+
+class School(Base):
+    __tablename__ = 'schools'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    owner_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    invite_code = Column(String, unique=True, nullable=True)
+    owner = relationship('User', foreign_keys=[owner_id], back_populates='owned_schools')
+    members = relationship('SchoolMember', back_populates='school', cascade='all, delete-orphan')
+
+
+class SchoolMember(Base):
+    __tablename__ = 'school_members'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    school_id = Column(Integer, ForeignKey('schools.id', ondelete='CASCADE'))
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    role = Column(String, default='student')
+    joined_at = Column(DateTime, default=datetime.utcnow)
+    
+    school = relationship('School', back_populates='members')
+    user = relationship('User', back_populates='school_members')

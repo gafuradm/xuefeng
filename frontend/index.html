@@ -1,3 +1,4 @@
+<!-- frontend/index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -35,9 +36,31 @@
 
             <main class="content-panel">
                 <!-- Шаг 1: Регистрация -->
+                <div class="video-download-section step-card" style="margin-top: 30px;">
+                    <h2>🎥 Извлечь и перевести текст из видео</h2>
+                    <div class="form-group">
+                        <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео" class="modern-input">
+                        <select id="targetLang" class="modern-input">
+                            <option value="ru">Русский</option>
+                            <option value="en">Английский</option>
+                            <option value="kk">Казахский</option>
+                            <option value="zh">Китайский</option>
+                        </select>
+                        <button onclick="processVideo()" class="btn btn-primary">Обработать</button>
+                    </div>
+                    <div id="videoResult" class="video-result"></div>
+                </div>
+
                 <div id="step1" class="step animated-step">
                     <div class="step-card">
                         <h2>🚀 Начните обучение</h2>
+                        <div class="form-group">
+                            <label>Тип аккаунта:</label>
+                            <select id="userRole" onchange="setRole(this.value)">
+                                <option value="student">🎓 Студент (учусь)</option>
+                                <option value="teacher">👨‍🏫 Учитель (создаю школу)</option>
+                            </select>
+                        </div>
                         <div class="form-group">
                             <input type="text" id="userName" placeholder="Ваше имя" class="modern-input" required>
                             <input type="email" id="userEmail" placeholder="Email" class="modern-input" required>
@@ -249,12 +272,42 @@
                     </div>
                 </div>
 
-                <!-- Блок быстрых действий (плавает внизу или в сайдбаре) -->
+                <!-- Панель учителя (скрыта по умолчанию) -->
+                <div id="teacherPanel" style="display: none; margin-bottom: 20px;">
+                    <div class="step-card">
+                        <h3>👨‍🏫 Панель учителя</h3>
+                        <div class="button-group">
+                            <button onclick="showCreateSchoolForm()" class="btn btn-secondary">🏫 Создать школу</button>
+                            <button onclick="showJoinSchoolForm()" class="btn btn-secondary">🔗 Присоединиться к школе</button>
+                            <button onclick="showMySchools()" class="btn btn-secondary">📋 Мои школы</button>
+                            <button onclick="showSchoolStats()" class="btn btn-secondary">📊 Статистика школы</button>
+                            <button onclick="showTeacherGraphs()" class="btn btn-secondary">📈 Графы знаний</button>
+                            <button onclick="buildTargetGraph()" class="btn btn-primary">🎯 Построить целевой граф</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Панель ученика (показывается для студентов) -->
+                <div id="studentPanel" style="display: none; margin-bottom: 20px;">
+                    <div class="step-card">
+                        <h3>🎓 Панель ученика</h3>
+                        <div class="button-group">
+                            <button onclick="showMySchoolsStudent()" class="btn btn-secondary">🏫 Мои школы</button>
+                            <button onclick="joinSchool()" class="btn btn-secondary">🔗 Вступить в школу</button>
+                            <button onclick="showStudentGraphs()" class="btn btn-secondary">📊 Мой прогресс</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Блок быстрых действий -->
                 <div class="quick-actions">
                     <button onclick="showCoursesList()" class="btn btn-icon">📚 Мои курсы</button>
                     <button onclick="showLessonsList()" class="btn btn-icon">📖 Мои уроки</button>
                     <button onclick="showCreateCourseForm()" class="btn btn-icon">➕ Создать курс</button>
                     <button onclick="showCreateLessonForm()" class="btn btn-icon">➕ Создать урок</button>
+                    <button onclick="showMySchoolsStudent()" class="btn btn-icon">🏫 Мои школы</button>
+                    <button onclick="joinSchool()" class="btn btn-icon">🔗 Вступить в школу</button>
+                    <button onclick="showStudentGraphs()" class="btn btn-icon">📊 Мой прогресс</button>
                 </div>
             </main>
         </div>

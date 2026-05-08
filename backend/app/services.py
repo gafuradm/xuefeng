@@ -10,14 +10,16 @@ from .models import User, Session as SessionModel, TestResult, Lesson, ProgressH
 from .deepseek_client import deepseek_client
 from .config import settings
 import yt_dlp
+import re
+from .models import (
+    User, Session as SessionModel, TestResult, Lesson, ProgressHistory,
+    UserCourse, CourseModule, CourseLesson, UserLesson,
+    UserInteraction, UserPerformance,
+    School, SchoolMember, StudentPerformance, TopicTimeStats
+)
 import whisper
 from pathlib import Path
 import shutil
-from .models import (
-    User, Session as SessionModel, TestResult, Lesson, 
-    ProgressHistory, UserCourse, CourseModule, CourseLesson, 
-    UserLesson, UserInteraction, UserPerformance  # <-- добавить UserPerformance
-)
 from .subject_topics import (
     get_modules_for_subject, get_default_tasks,
     get_gaokao_modules, GAOKAO_TOPICS,
@@ -186,26 +188,14 @@ class AITeacherService:
             return 'india'
         return 'ent'
     
-    # backend/app/services.py (добавить в класс AITeacherService)
-
-    import os
-    import subprocess
-    import whisper
-    import yt_dlp
-    from pathlib import Path
-
     async def process_video(self, url: str, target_language: str) -> Dict[str, Any]:
         """Скачивает видео с YouTube, извлекает аудио, распознаёт речь, переводит текст."""
-        # Создаём временную папку
         temp_dir = Path("temp_video")
         temp_dir.mkdir(exist_ok=True)
         
         try:
-            # 1. Скачиваем аудио
             audio_path = await self._download_audio(url, temp_dir)
-            # 2. Распознаём речь
             transcript = await self._transcribe_audio(audio_path)
-            # 3. Переводим на целевой язык
             translation = await self._translate_text(transcript, target_language)
             return {
                 "original_text": transcript,
@@ -213,8 +203,6 @@ class AITeacherService:
                 "language": target_language
             }
         finally:
-            # Очищаем временные файлы
-            import shutil
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     async def _download_audio(self, url: str, output_dir: Path) -> Path:
@@ -231,10 +219,8 @@ class AITeacherService:
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            # Ищем созданный файл
             base = output_dir / info['title']
             audio_file = base.with_suffix('.mp3')
-            # Если файл не существует, ищем другой
             if not audio_file.exists():
                 for f in output_dir.glob("*"):
                     if f.suffix in ['.mp3', '.m4a', '.webm']:
@@ -244,7 +230,7 @@ class AITeacherService:
 
     async def _transcribe_audio(self, audio_path: Path) -> str:
         """Распознаёт речь через Whisper (локально)"""
-        model = whisper.load_model("base")  # можно "small", "medium" для качества
+        model = whisper.load_model("base")
         result = model.transcribe(str(audio_path), language="ru", task="transcribe")
         return result["text"]
 
@@ -260,7 +246,6 @@ class AITeacherService:
     def _get_subject(self, exam_name: str) -> str:
         exam_lower = exam_name.lower()
         
-        # GAOKAO
         if self._is_gaokao(exam_name):
             if "math" in exam_lower or "数学" in exam_lower:
                 return "математика"
@@ -283,7 +268,6 @@ class AITeacherService:
             else:
                 return "математика"
         
-        # ЕГЭ
         if self._is_ege(exam_name):
             if "русский" in exam_lower:
                 return "русский язык"
@@ -308,7 +292,6 @@ class AITeacherService:
             else:
                 return "математика"
         
-        # SAT
         if self._is_sat(exam_name):
             if "math" in exam_lower:
                 return "математика"
@@ -317,7 +300,6 @@ class AITeacherService:
             else:
                 return "математика"
         
-        # Узбекистан
         if self._is_uzbek(exam_name):
             if "matematika" in exam_lower or "математик" in exam_lower:
                 return "математика"
@@ -336,7 +318,6 @@ class AITeacherService:
             else:
                 return "математика"
         
-        # Индия
         if self._is_india(exam_name):
             if "math" in exam_lower:
                 return "математика"
@@ -349,7 +330,6 @@ class AITeacherService:
             else:
                 return "математика"
         
-        # ЕНТ (по умолчанию)
         if "математик" in exam_lower or "math" in exam_lower:
             return "математика"
         elif "физик" in exam_lower:
@@ -399,7 +379,6 @@ class AITeacherService:
         is_uzbek = self._is_uzbek(exam_name)
         is_india = self._is_india(exam_name)
         
-        # Генерация теста с использованием соответствующего RAG менеджера
         if is_gaokao and self.gaokao_manager is not None:
             questions = await self._generate_test_with_rag(exam_details, exam_type, num_questions=15, manager=self.gaokao_manager, store_key='gaokao')
         elif is_ege and self.ege_manager is not None:
@@ -575,9 +554,40 @@ class AITeacherService:
                         q['source'] = 'generated'
                         questions.append(q)
         return questions[:num_questions]
+    
+    def _normalize_answer(self, answer: str) -> str:
+        """Нормализует ответ для сравнения"""
+        if not answer:
+            return ""
+        
+        answer = answer.strip().lower()
+        
+        # Убираем единицы измерения
+        units = ['см', 'м', 'км', 'мм', 'кг', 'г', 'км/ч', 'м/с', 'сек', 'мин', 'час', 'руб', 'шт', 'раз', '%']
+        for unit in units:
+            answer = re.sub(rf'\s*{unit}\b', '', answer)
+        
+        # Убираем слова-подсказки
+        words_to_remove = ['ответ', 'равен', 'равно', 'получается', 'будет', 'это']
+        for word in words_to_remove:
+            answer = re.sub(rf'\b{word}\b', '', answer)
+        
+        # Убираем точки и запятые в конце
+        answer = answer.rstrip('.,!?')
+        
+        # Убираем лишние пробелы
+        answer = ' '.join(answer.split())
+        
+        # Пытаемся извлечь число
+        number_match = re.search(r'(\d+(?:[.,]\d+)?)', answer)
+        if number_match and len(answer) < 30:
+            number = number_match.group(1).replace(',', '.')
+            return number
+        
+        return answer
 
     @staticmethod
-    async def submit_test(db: Session, session_id: int, user_answers: Dict[str, str]) -> Dict[str, Any]:
+    async def submit_test(db: Session, session_id: int, user_answers: Dict[str, str], time_spent_seconds: int = 0, question_times: Dict[str, int] = None) -> Dict[str, Any]:
         session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
         if not session:
             raise ValueError("Session not found")
@@ -585,6 +595,9 @@ class AITeacherService:
         if not test:
             raise ValueError("Test not found")
         test.answers = user_answers
+        test.time_spent_seconds = time_spent_seconds
+        test.question_times = question_times or {}
+        
         evaluation = await deepseek_client.evaluate_answers(test.questions, user_answers, session.exam_details)
         test.evaluation = evaluation
         test.score = evaluation.get("overall_score", 0)
@@ -594,10 +607,32 @@ class AITeacherService:
         # Сохраняем результаты теста в статистику по темам
         topic_scores = evaluation.get("topic_scores", {})
         for topic, score in topic_scores.items():
-            # Для каждой темы считаем количество правильных ответов
-            # (упрощённо: если score > 60 считаем тему усвоенной)
-            is_correct = score >= 60
-            await ContextService.update_performance(db, session.user_id, topic, is_correct)
+            try:
+                is_correct = score >= 60
+                
+                performance = db.query(UserPerformance).filter(
+                    UserPerformance.user_id == session.user_id,
+                    UserPerformance.topic == topic
+                ).first()
+                
+                if not performance:
+                    performance = UserPerformance(
+                        user_id=session.user_id,
+                        topic=topic,
+                        correct_count=0,
+                        total_count=0,
+                        mastery_level=0
+                    )
+                    db.add(performance)
+                
+                if is_correct:
+                    performance.correct_count = (performance.correct_count or 0) + 1
+                performance.total_count = (performance.total_count or 0) + 1
+                performance.mastery_level = (performance.correct_count / performance.total_count) * 100 if performance.total_count > 0 else 0
+                performance.last_attempt = datetime.utcnow()
+                db.commit()
+            except Exception as e:
+                print(f"Ошибка обновления статистики для темы {topic}: {e}")
         
         return evaluation
 
@@ -605,7 +640,6 @@ class AITeacherService:
     def _build_plan_from_weak_topics(self, weak_topics: List[str], exam_name: str, subject: str) -> Dict:
         weak_set = set(weak_topics)
         
-        # GAOKAO
         if self._is_gaokao(exam_name):
             modules = get_gaokao_modules(subject)
             selected_modules = []
@@ -625,7 +659,6 @@ class AITeacherService:
                 "strategy": f"Адаптивный план по GAOKAO {subject}. Изучаются только темы, в которых вы допустили ошибки."
             }
         
-        # ЕГЭ
         if self._is_ege(exam_name):
             modules = get_ege_modules(subject)
             selected_modules = []
@@ -645,7 +678,6 @@ class AITeacherService:
                 "strategy": f"Адаптивный план по ЕГЭ {subject}. Изучаются только темы, в которых вы допустили ошибки."
             }
         
-        # SAT
         if self._is_sat(exam_name):
             modules = get_sat_modules(subject)
             selected_modules = []
@@ -665,7 +697,6 @@ class AITeacherService:
                 "strategy": f"Адаптивный план по SAT {subject}. Изучаются только темы, в которых вы допустили ошибки."
             }
         
-        # Узбекистан
         if self._is_uzbek(exam_name):
             modules = get_uzbek_modules(subject)
             selected_modules = []
@@ -685,7 +716,6 @@ class AITeacherService:
                 "strategy": f"Адаптивный план по {subject} (Узбекистан). Изучаются только темы, в которых вы допустили ошибки."
             }
         
-        # Индия
         if self._is_india(exam_name):
             modules = get_india_modules(subject)
             selected_modules = []
@@ -705,7 +735,6 @@ class AITeacherService:
                 "strategy": f"Адаптивный план по {subject} (Индия). Изучаются только темы, в которых вы допустили ошибки."
             }
         
-        # ЕНТ (по умолчанию)
         all_modules = get_modules_for_subject(subject)
         selected_modules = []
         for module in all_modules:
@@ -881,82 +910,316 @@ class AITeacherService:
                 "hint": hint if not is_correct else None
             })
         return {"all_correct": all_correct, "results": results}
-
-    async def submit_lesson(self, db: Session, session_id: int, lesson_id: int, user_answers: Dict[str, str]) -> Dict[str, Any]:
-        lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.session_id == session_id).first()
-        if not lesson:
-            raise ValueError("Lesson not found")
-        
-        try:
-            lesson_content = json.loads(lesson.content) if lesson.content else {}
-        except:
-            lesson_content = {}
+    
+    async def check_lesson_answers_flexible(self, lesson_content: Dict, user_answers: Dict[str, str]) -> Dict[str, Any]:
+        """Гибкая проверка ответов на урок с помощью ИИ"""
         tasks = lesson_content.get("tasks", [])
-        if not tasks:
-            lesson.completed = True
-            lesson.completed_at = datetime.utcnow()
-            db.commit()
-            return {
-                "status": "success",
-                "score": 100,
-                "new_level": 0,
-                "message": "Урок успешно завершён (без задач)"
-            }
-        
-        # Проверяем ответы и обновляем статистику по каждой задаче
-        session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
         results = []
         all_correct = True
         correct_count = 0
         
+        questions_for_ai = []
+        
         for i, task in enumerate(tasks):
-            user_ans = user_answers.get(str(i), "").strip().lower()
-            correct_ans = task.get("answer", "").strip().lower()
-            is_correct = (user_ans == correct_ans)
-            if is_correct:
-                correct_count += 1
-            else:
+            question_text = task.get("task", "")
+            user_ans = user_answers.get(str(i), "").strip()
+            correct_ans = task.get("answer", "").strip()
+            topic = lesson_content.get("topic", "математика")
+            
+            user_normalized = self._normalize_answer(user_ans)
+            correct_normalized = self._normalize_answer(correct_ans)
+            is_correct = (user_normalized == correct_normalized)
+            
+            if not user_ans:
+                is_correct = False
+                results.append({
+                    "task_index": i,
+                    "correct": False,
+                    "hint": "Ответ не введён",
+                    "user_answer": user_ans,
+                    "correct_answer": correct_ans
+                })
                 all_correct = False
+                continue
             
-            # Обновляем статистику по теме
-            if session:
-                await ContextService.update_performance(
-                    db, session.user_id, lesson.topic, is_correct
-                )
-            
-            hint = task.get("hint", "Проверьте решение. Возможно, нужно применить формулу или правило.")
-            results.append({
-                "task_index": i,
-                "correct": is_correct,
-                "hint": hint if not is_correct else None
-            })
+            if not is_correct and len(user_ans) > 0:
+                questions_for_ai.append({
+                    "index": i,
+                    "question": question_text,
+                    "user_answer": user_ans,
+                    "correct_answer": correct_ans,
+                    "topic": topic
+                })
+            else:
+                if is_correct:
+                    correct_count += 1
+                else:
+                    all_correct = False
+                results.append({
+                    "task_index": i,
+                    "correct": is_correct,
+                    "hint": task.get("hint", "Проверьте решение") if not is_correct else None,
+                    "user_answer": user_ans,
+                    "correct_answer": correct_ans
+                })
         
-        if not all_correct:
-            return {
-                "status": "failed",
-                "message": f"Правильных ответов: {correct_count}/{len(tasks)}. Исправьте ошибки.",
-                "results": results
-            }
-        
-        lesson.completed = True
-        lesson.completed_at = datetime.utcnow()
-        db.commit()
-        
-        new_level = 0
-        if session:
-            current = session.current_profile.get(lesson.topic, 0)
-            new_level = min(100, current + 10)
-            session.current_profile[lesson.topic] = new_level
-            progress = ProgressHistory(session_id=session_id, profile_snapshot=session.current_profile.copy())
-            db.add(progress)
-            db.commit()
+        if questions_for_ai:
+            print(f"Sending {len(questions_for_ai)} questions to AI for evaluation")
+            prompt = "Оцени следующие ответы ученика. Для каждого вопроса верни JSON объект с полями is_correct (true/false) и reason.\n\n"
+            for q in questions_for_ai:
+                prompt += f"""
+Вопрос {q['index']+1}: {q['question']}
+Правильный ответ: {q['correct_answer']}
+Ответ ученика: {q['user_answer']}
+Тема: {q['topic']}
+
+"""
+            prompt += """
+Верни ТОЛЬКО JSON: {"результаты": [{"index": 1, "is_correct": true, "reason": "..."}]}
+Индексы 1-based.
+"""
+            try:
+                response = await deepseek_client.chat_completion([
+                    {"role": "system", "content": "Ты эксперт по проверке ответов. Отвечай только JSON."},
+                    {"role": "user", "content": prompt}
+                ], max_tokens=2000)
+                
+                import re
+                json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                if json_match:
+                    ai_results = json.loads(json_match.group())
+                    ai_list = ai_results.get("результаты", [])
+                    ai_dict = {r["index"]: r for r in ai_list}
+                    
+                    for q in questions_for_ai:
+                        task_index = q["index"] + 1
+                        ai_result = ai_dict.get(task_index, {})
+                        is_correct = ai_result.get("is_correct", False)
+                        reason = ai_result.get("reason", "")
+                        
+                        if is_correct:
+                            correct_count += 1
+                        else:
+                            all_correct = False
+                        
+                        results.append({
+                            "task_index": q["index"],
+                            "correct": is_correct,
+                            "hint": reason if not is_correct else None,
+                            "user_answer": q["user_answer"],
+                            "correct_answer": q["correct_answer"]
+                        })
+            except Exception as e:
+                print(f"AI batch evaluation failed: {e}")
+                for q in questions_for_ai:
+                    results.append({
+                        "task_index": q["index"],
+                        "correct": False,
+                        "hint": "Ошибка проверки ответа",
+                        "user_answer": q["user_answer"],
+                        "correct_answer": q["correct_answer"]
+                    })
+                    all_correct = False
         
         return {
-            "status": "success",
-            "score": 100,
-            "new_level": new_level,
-            "message": f"Урок успешно завершён! Правильных ответов: {correct_count}/{len(tasks)}"
+            "all_correct": all_correct,
+            "correct_count": correct_count,
+            "total_count": len(tasks),
+            "results": results
         }
+
+    async def submit_lesson(self, db: Session, session_id: int, lesson_id: int, user_answers: Dict[str, str], time_spent_seconds: float = 0.0, task_times: Dict[str, float] = None) -> Dict[str, Any]:
+        print(f"=== DEBUG submit_lesson ===")
+        print(f"session_id: {session_id}, lesson_id: {lesson_id}")
+        print(f"time_spent_seconds: {time_spent_seconds}")
+        
+        try:
+            lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.session_id == session_id).first()
+            if not lesson:
+                raise ValueError("Lesson not found")
+            
+            # Сохраняем время на урок (округляем до целых секунд)
+            lesson.time_spent_seconds = int(time_spent_seconds)
+            lesson.task_times = {k: int(v) for k, v in (task_times or {}).items()}
+            
+            try:
+                lesson_content = json.loads(lesson.content) if lesson.content else {}
+                lesson_content["topic"] = lesson.topic
+            except Exception as e:
+                print(f"Error parsing lesson content: {e}")
+                lesson_content = {"tasks": []}
+            
+            tasks = lesson_content.get("tasks", [])
+            
+            if not tasks:
+                lesson.completed = True
+                lesson.completed_at = datetime.utcnow()
+                db.commit()
+                return {
+                    "status": "success",
+                    "score": 100,
+                    "new_level": 0,
+                    "message": "Урок успешно завершён (без задач)"
+                }
+            
+            session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+            
+            # Гибкая проверка ответов
+            check_result = await self.check_lesson_answers_flexible(lesson_content, user_answers)
+            
+            correct_count = check_result["correct_count"]
+            all_correct = check_result["all_correct"]
+            results = check_result["results"]
+            
+            # Обновляем статистику по времени для тем
+            if session and time_spent_seconds > 0:
+                await self._update_topic_time(db, session.user_id, lesson.topic, int(time_spent_seconds))
+            
+            if session:
+                for result in results:
+                    await self._update_topic_performance(db, session.user_id, lesson.topic, result["correct"])
+            
+            if not all_correct:
+                error_details = []
+                for r in results:
+                    if not r["correct"]:
+                        error_details.append(f"Задача {r['task_index']+1}: ваш ответ '{r['user_answer']}', правильно '{r['correct_answer']}'")
+                return {
+                    "status": "failed",
+                    "message": f"Правильных ответов: {correct_count}/{len(tasks)}. Ошибки:\n" + "\n".join(error_details[:3]),
+                    "results": results
+                }
+            
+            lesson.completed = True
+            lesson.completed_at = datetime.utcnow()
+            lesson.score = 100
+            db.commit()
+            
+            new_level = 0
+            if session:
+                current = session.current_profile.get(lesson.topic, 0)
+                new_level = min(100, current + 10)
+                session.current_profile[lesson.topic] = new_level
+                progress = ProgressHistory(session_id=session_id, profile_snapshot=session.current_profile.copy())
+                db.add(progress)
+                db.commit()
+                
+                # Синхронизируем с StudentPerformance для всех школ
+                user_schools = db.query(SchoolMember).filter(SchoolMember.user_id == session.user_id).all()
+                print(f"🔍 Синхронизация для школ ученика {session.user_id}: {[s.school_id for s in user_schools]}")
+                for school_member in user_schools:
+                    try:
+                        await self.sync_student_performance(db, session.user_id, school_member.school_id)
+                        print(f"✅ Синхронизация для школы {school_member.school_id} успешна")
+                    except Exception as e:
+                        print(f"❌ Ошибка синхронизации для школы {school_member.school_id}: {e}")
+
+            return {
+                "status": "success",
+                "score": 100,
+                "new_level": new_level,
+                "message": f"Урок успешно завершён! Правильных ответов: {correct_count}/{len(tasks)}",
+                "results": results
+            }
+            
+        except Exception as e:
+            print(f"ERROR in submit_lesson: {e}")
+            import traceback
+            traceback.print_exc()
+            raise ValueError(str(e))
+    
+    async def _update_topic_performance(self, db: Session, user_id: int, topic: str, is_correct: bool) -> None:
+        try:
+            performance = db.query(UserPerformance).filter(
+                UserPerformance.user_id == user_id,
+                UserPerformance.topic == topic
+            ).first()
+            
+            if not performance:
+                performance = UserPerformance(
+                    user_id=user_id,
+                    topic=topic,
+                    correct_count=0,
+                    total_count=0,
+                    mastery_level=0.0
+                )
+                db.add(performance)
+                db.flush()
+            
+            performance.correct_count = (performance.correct_count or 0) + (1 if is_correct else 0)
+            performance.total_count = (performance.total_count or 0) + 1
+            performance.mastery_level = (performance.correct_count / performance.total_count) * 100 if performance.total_count > 0 else 0.0
+            performance.last_attempt = datetime.utcnow()
+            db.commit()
+            
+        except Exception as e:
+            print(f"Error in _update_topic_performance: {e}")
+            db.rollback()
+    
+    async def _update_topic_time(self, db: Session, user_id: int, topic: str, seconds: int) -> None:
+        """Обновление времени по теме"""
+        try:
+            time_stat = db.query(TopicTimeStats).filter(
+                TopicTimeStats.user_id == user_id,
+                TopicTimeStats.topic == topic
+            ).first()
+            
+            if not time_stat:
+                time_stat = TopicTimeStats(
+                    user_id=user_id,
+                    topic=topic,
+                    total_seconds=0,
+                    sessions_count=0
+                )
+                db.add(time_stat)
+            
+            time_stat.total_seconds += seconds
+            time_stat.sessions_count += 1
+            time_stat.last_updated = datetime.utcnow()
+            db.commit()
+            
+            # Также обновляем время в UserPerformance
+            performance = db.query(UserPerformance).filter(
+                UserPerformance.user_id == user_id,
+                UserPerformance.topic == topic
+            ).first()
+            if performance:
+                performance.total_time_spent = (performance.total_time_spent or 0) + seconds
+                db.commit()
+                
+        except Exception as e:
+            print(f"Error in _update_topic_time: {e}")
+            db.rollback()
+
+    async def sync_student_performance(self, db: Session, user_id: int, school_id: int):
+        performances = db.query(UserPerformance).filter(UserPerformance.user_id == user_id).all()
+        time_stats = db.query(TopicTimeStats).filter(TopicTimeStats.user_id == user_id).all()
+        time_dict = {ts.topic: ts.total_seconds for ts in time_stats}
+        
+        student_perf = db.query(StudentPerformance).filter(
+            StudentPerformance.user_id == user_id,
+            StudentPerformance.school_id == school_id
+        ).first()
+        
+        if not student_perf:
+            student_perf = StudentPerformance(user_id=user_id, school_id=school_id)
+            student_perf.current_graph = {}
+            student_perf.target_graph = {}
+            db.add(student_perf)
+        else:
+            if student_perf.current_graph is None:
+                student_perf.current_graph = {}
+            if student_perf.target_graph is None:
+                student_perf.target_graph = {}
+        
+        for perf in performances:
+            if perf.total_count > 0:
+                student_perf.current_graph[perf.topic] = perf.mastery_level
+        
+        student_perf.total_time_spent = sum(time_dict.values())
+        student_perf.last_updated = datetime.utcnow()
+        db.commit()
+        print(f"Synced user {user_id} to school {school_id}")
 
     async def generate_progress_test(self, db: Session, session_id: int) -> List[Dict[str, Any]]:
         session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
@@ -1004,7 +1267,6 @@ class AITeacherService:
 
     # ==================== ПОЛЬЗОВАТЕЛЬСКИЕ ТЕСТЫ ====================
     async def _custom_train(self, prompt: str) -> str:
-        """Обучает ИИ на основе пользовательского теста"""
         response = await deepseek_client.chat_completion([
             {"role": "system", "content": "Ты – ИИ учитель, который запоминает структуру тестов и может генерировать похожие вопросы."},
             {"role": "user", "content": prompt}
@@ -1012,7 +1274,6 @@ class AITeacherService:
         return response.strip()
 
     async def _generate_similar_from_custom(self, examples_text: str, num_questions: int = 5) -> str:
-        """Генерирует похожие вопросы на основе примеров"""
         prompt = f"""
 Ты – генератор тестов. Пользователь предоставил примеры своих вопросов:
 
@@ -1043,7 +1304,6 @@ class AITeacherService:
         topic = lesson.topic
         user_id = session.user_id
         
-        # Получаем контекст из истории
         context = await ContextService.get_user_context(db, user_id, current_topic=topic)
         
         prompt = f"""
@@ -1061,45 +1321,41 @@ class AITeacherService:
             {"role": "user", "content": prompt}
         ], max_tokens=1000)
         
-        # Сохраняем взаимодействие
         await ContextService.add_interaction(
             db, user_id, 'question', question, response, session_id, topic
         )
         
         return response
     
-    # backend/app/services.py (добавить в конец класса AITeacherService)
-
     # ========== ГЕНЕРАЦИЯ ПОЛЬЗОВАТЕЛЬСКОГО КУРСА ==========
     async def generate_course_structure(self, db: Session, user_id: int, name: str, description: str, success_criteria: str) -> Dict:
-        """Генерирует структуру курса и сохраняет в БД"""
         criteria_text = success_criteria if success_criteria else "не указаны, придумай разумные критерии"
         prompt = f"""
-    Ты – эксперт по созданию образовательных курсов. Пользователь хочет создать курс:
+Ты – эксперт по созданию образовательных курсов. Пользователь хочет создать курс:
 
-    НАЗВАНИЕ: {name}
-    ОПИСАНИЕ: {description if description else 'не указано'}
-    КРИТЕРИИ УСПЕХА: {criteria_text}
+НАЗВАНИЕ: {name}
+ОПИСАНИЕ: {description if description else 'не указано'}
+КРИТЕРИИ УСПЕХА: {criteria_text}
 
-    Сгенерируй подробную структуру курса в формате JSON. Курс должен состоять из 3-5 модулей, в каждом модуле 2-4 урока.
-    Для каждого урока укажи: название, краткое описание, тип (theory/practice/test). Также добавь общие критерии успеха для всего курса и для каждого модуля.
+Сгенерируй подробную структуру курса в формате JSON. Курс должен состоять из 3-5 модулей, в каждом модуле 2-4 урока.
+Для каждого урока укажи: название, краткое описание, тип (theory/practice/test). Также добавь общие критерии успеха для всего курса и для каждого модуля.
 
-    Верни ТОЛЬКО JSON:
+Верни ТОЛЬКО JSON:
+{{
+"success_criteria": "общие критерии успеха для курса",
+"modules": [
     {{
-    "success_criteria": "общие критерии успеха для курса",
-    "modules": [
-        {{
-        "title": "Название модуля",
-        "description": "Описание модуля",
-        "success_criteria": "критерии успеха модуля",
-        "lessons": [
-            {{"title": "Название урока", "description": "краткое описание", "type": "theory"}},
-            ...
-        ]
-        }}
+    "title": "Название модуля",
+    "description": "Описание модуля",
+    "success_criteria": "критерии успеха модуля",
+    "lessons": [
+        {{"title": "Название урока", "description": "краткое описание", "type": "theory"}},
+        ...
     ]
     }}
-    """
+]
+}}
+"""
         response = await deepseek_client.chat_completion([
             {"role": "system", "content": "Ты эксперт по структуре курсов. Отвечай только JSON."},
             {"role": "user", "content": prompt}
@@ -1111,7 +1367,6 @@ class AITeacherService:
             if json_match:
                 structure = json.loads(json_match.group())
                 
-                # Сохраняем взаимодействие
                 await ContextService.add_interaction(
                     db, user_id, 'course_created',
                     f"Создан курс: {name}",
@@ -1126,38 +1381,27 @@ class AITeacherService:
             return {"error": f"Ошибка парсинга: {str(e)}"}
     
     async def generate_lesson_content(self, db: Session, user_id: int, title: str, subject: str, description: str) -> Dict:
-        """Генерирует полное содержание урока и сохраняет в БД"""
-        
-        # Получаем контекст пользователя для персонализации
         context = await ContextService.get_user_context(db, user_id, current_topic=title)
         
         prompt = f"""
-    Ты – опытный преподаватель по предмету "{subject}". Создай подробный урок на тему "{title}".
+Ты – опытный преподаватель по предмету "{subject}". Создай подробный урок на тему "{title}".
 
-    Описание от пользователя: {description if description else 'нет дополнительных требований'}
+Описание от пользователя: {description if description else 'нет дополнительных требований'}
 
-    Контекст ученика:
-    {context}
+Контекст ученика:
+{context}
 
-    Сгенерируй содержание урока в JSON формате со следующими полями:
+Сгенерируй содержание урока в JSON формате со следующими полями:
 
-    1. theory (string) – теоретическая часть, объяснение темы, формулы в LaTeX.
-    2. practice (array) – практические задания для закрепления (3-5 задач). Каждая задача: {{"task": "текст", "answer": "ответ"}}.
-    3. homework (array) – домашние задания (3-5 задач). Каждая задача: {{"task": "текст", "answer": "ответ"}}.
-    4. success_criteria (string) – критерии успешного освоения урока (что ученик должен знать и уметь).
-    5. youtube_urls (array) – 2-3 ссылки на обучающие видео с YouTube по этой теме (реальные ссылки).
-    6. presentation_content (string) – HTML/CSS код для презентации.
+1. theory (string) – теоретическая часть, объяснение темы.
+2. practice (array) – практические задания (3-5). Каждая: {{"task": "текст", "answer": "ответ"}}.
+3. homework (array) – домашние задания (3-5).
+4. success_criteria (string) – критерии успеха.
+5. youtube_urls (array) – 2-3 ссылки на YouTube.
+6. presentation_content (string) – HTML/CSS для презентации.
 
-    Верни ТОЛЬКО JSON:
-    {{
-    "theory": "...",
-    "practice": [{{"task": "...", "answer": "..."}}],
-    "homework": [{{"task": "...", "answer": "..."}}],
-    "success_criteria": "...",
-    "youtube_urls": ["url1", "url2"],
-    "presentation_content": "..."
-    }}
-    """
+Верни ТОЛЬКО JSON.
+"""
         response = await deepseek_client.chat_completion([
             {"role": "system", "content": "Ты создатель учебных материалов. Отвечай только JSON."},
             {"role": "user", "content": prompt}
@@ -1169,11 +1413,10 @@ class AITeacherService:
             if json_match:
                 content = json.loads(json_match.group())
                 
-                # Сохраняем взаимодействие
                 await ContextService.add_interaction(
                     db, user_id, 'lesson_created',
                     f"Создан урок: {title}",
-                    f"Сгенерировано {len(content.get('practice', []))} практических заданий",
+                    f"Сгенерировано {len(content.get('practice', []))} заданий",
                     topic=title
                 )
                 
@@ -1184,24 +1427,36 @@ class AITeacherService:
             return {"error": f"Ошибка парсинга: {str(e)}"}
         
     async def get_user_statistics(self, db: Session, user_id: int) -> Dict:
-        """Получить статистику успеваемости пользователя"""
         performances = db.query(UserPerformance).filter(UserPerformance.user_id == user_id).all()
+        time_stats = db.query(TopicTimeStats).filter(TopicTimeStats.user_id == user_id).all()
+        time_dict = {ts.topic: ts.total_seconds for ts in time_stats}
         
         weak_topics = []
         strong_topics = []
         average_mastery = 0
         
+        result = []
         for p in performances:
-            if p.mastery_level < 50:
-                weak_topics.append({"topic": p.topic, "mastery": p.mastery_level})
-            elif p.mastery_level > 70:
-                strong_topics.append({"topic": p.topic, "mastery": p.mastery_level})
-            average_mastery += p.mastery_level
+            mastery = p.mastery_level or 0
+            time_min = round((time_dict.get(p.topic, 0) / 60), 1)
+            result.append({
+                "topic": p.topic,
+                "mastery_level": mastery,
+                "correct_count": p.correct_count,
+                "total_count": p.total_count,
+                "total_time_spent_minutes": time_min,
+                "last_attempt": p.last_attempt
+            })
+            
+            if mastery < 50:
+                weak_topics.append({"topic": p.topic, "mastery": mastery})
+            elif mastery > 70:
+                strong_topics.append({"topic": p.topic, "mastery": mastery})
+            average_mastery += mastery
         
         if performances:
             average_mastery /= len(performances)
         
-        # Получаем последние взаимодействия
         interactions = db.query(UserInteraction).filter(
             UserInteraction.user_id == user_id
         ).order_by(UserInteraction.created_at.desc()).limit(10).all()
@@ -1211,6 +1466,7 @@ class AITeacherService:
             "average_mastery": average_mastery,
             "weak_topics": weak_topics[:5],
             "strong_topics": strong_topics[:5],
+            "topics_detail": result,
             "recent_interactions": [
                 {
                     "type": i.interaction_type,
@@ -1218,4 +1474,254 @@ class AITeacherService:
                     "created_at": i.created_at
                 } for i in interactions
             ]
+        }
+
+    # ========== УПРАВЛЕНИЕ ШКОЛОЙ ==========
+    async def create_school(self, db: Session, owner_id: int, name: str, description: str = None) -> Dict:
+        print(f"DEBUG: create_school called with owner_id={owner_id}, name={name}")
+        user = db.query(User).filter(User.id == owner_id).first()
+        if not user:
+            raise ValueError(f"Пользователь с id={owner_id} не найден")
+        if not hasattr(user, 'role') or user.role != 'teacher':
+            raise ValueError(f"Только учитель может создать школу. Ваша роль: {getattr(user, 'role', 'не задана')}")
+        
+        import secrets
+        invite_code = secrets.token_hex(4).upper()
+        school = School(owner_id=owner_id, name=name, description=description, invite_code=invite_code)
+        db.add(school)
+        db.commit()
+        db.refresh(school)
+        
+        member = SchoolMember(school_id=school.id, user_id=owner_id, role='teacher')
+        db.add(member)
+        db.commit()
+        
+        return {"id": school.id, "name": school.name, "description": school.description, "invite_code": invite_code}
+    
+    async def join_school(self, db: Session, user_id: int, invite_code: str) -> Dict:
+        school = db.query(School).filter(School.invite_code == invite_code).first()
+        if not school:
+            raise ValueError("Школа с таким кодом не найдена")
+        
+        existing = db.query(SchoolMember).filter(
+            SchoolMember.school_id == school.id, SchoolMember.user_id == user_id
+        ).first()
+        if existing:
+            raise ValueError("Вы уже в этой школе")
+        
+        member = SchoolMember(school_id=school.id, user_id=user_id, role='student')
+        db.add(member)
+        db.commit()
+        
+        # ===== НОВЫЙ КОД: создаём запись StudentPerformance при вступлении в школу =====
+        sp = db.query(StudentPerformance).filter(
+            StudentPerformance.user_id == user_id,
+            StudentPerformance.school_id == school.id
+        ).first()
+        if not sp:
+            sp = StudentPerformance(user_id=user_id, school_id=school.id)
+            sp.current_graph = {}
+            sp.target_graph = {}
+            db.add(sp)
+            db.commit()
+            print(f"✅ Создана запись StudentPerformance для ученика {user_id} в школе {school.id}")
+        
+        return {"school_id": school.id, "school_name": school.name, "role": "student"}
+
+    async def get_school_stats(self, db: Session, school_id: int, teacher_id: int) -> Dict:
+        school = db.query(School).filter(School.id == school_id, School.owner_id == teacher_id).first()
+        if not school:
+            raise ValueError("Школа не найдена или у вас нет доступа")
+        
+        members = db.query(SchoolMember).filter(SchoolMember.school_id == school_id).all()
+        students = []
+        
+        for member in members:
+            if member.role != 'student':
+                continue
+            user = member.user
+            
+            # Получаем детальную статистику ученика
+            performances = db.query(UserPerformance).filter(UserPerformance.user_id == user.id).all()
+            time_stats = db.query(TopicTimeStats).filter(TopicTimeStats.user_id == user.id).all()
+            total_seconds = sum(ts.total_seconds for ts in time_stats)
+            
+            topics_progress = {}
+            weak_topics = []
+            total_mastery = 0
+            
+            for perf in performances:
+                mastery = perf.mastery_level or 0
+                topics_progress[perf.topic] = mastery
+                total_mastery += mastery
+                if mastery < 50:
+                    weak_topics.append(perf.topic)
+            
+            avg_mastery = total_mastery / len(performances) if performances else 0
+            
+            students.append({
+                "user_id": user.id,
+                "name": user.name,
+                "average_mastery": round(avg_mastery, 1),
+                "total_time_spent_hours": round(total_seconds / 3600, 1),
+                "topics_progress": topics_progress,
+                "weak_topics": weak_topics[:5],
+                "topics_count": len(performances)
+            })
+        
+        students.sort(key=lambda x: x["average_mastery"], reverse=True)
+        
+        return {
+            "school_name": school.name,
+            "total_students": len(students),
+            "students": students
+        }
+
+    # ========== ГРАФЫ ЗНАНИЙ ==========
+    async def build_target_graph(self, db: Session, user_id: int, school_id: int, exam_name: str) -> Dict:
+        prompt = f"""
+    Ты эксперт по экзамену "{exam_name}". Проведи детальный анализ.
+    Верни ТОЛЬКО JSON:
+    {{
+    "topics": [
+        {{"topic": "название", "weight": 15, "hours_to_learn": 10, "difficulty": "medium"}}
+    ],
+    "total_days": 90
+    }}
+    """
+        response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "Ты эксперт по образованию. Отвечай только JSON."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=4000)
+        
+        try:
+            import re
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group())
+                target_graph = {}
+                for topic in data.get("topics", []):
+                    target_graph[topic["topic"]] = {
+                        "weight": topic.get("weight", 0),
+                        "hours_to_learn": topic.get("hours_to_learn", 5),
+                        "difficulty": topic.get("difficulty", "medium")
+                    }
+                
+                # Ищем или создаём StudentPerformance с конкретной школой
+                performance = db.query(StudentPerformance).filter(
+                    StudentPerformance.user_id == user_id,
+                    StudentPerformance.school_id == school_id
+                ).first()
+                if not performance:
+                    performance = StudentPerformance(user_id=user_id, school_id=school_id)
+                    db.add(performance)
+                
+                performance.target_graph = target_graph
+                performance.current_graph = performance.current_graph or {}
+                db.commit()
+                
+                return {"target_graph": target_graph, "total_days": data.get("total_days", 60)}
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            return {"error": str(e)}
+    
+    async def update_current_graph(self, db: Session, user_id: int, school_id: int, topic: str, score: float) -> Dict:
+        performance = db.query(StudentPerformance).filter(
+            StudentPerformance.user_id == user_id,
+            StudentPerformance.school_id == school_id
+        ).first()
+        
+        if not performance:
+            performance = StudentPerformance(user_id=user_id, school_id=school_id)
+            db.add(performance)
+        
+        current = performance.current_graph.get(topic, 0)
+        new_level = current * 0.7 + score * 0.3
+        performance.current_graph[topic] = min(100, new_level)
+        
+        if topic not in performance.topics_progress:
+            performance.topics_progress[topic] = []
+        performance.topics_progress[topic].append({"score": score, "timestamp": datetime.utcnow().isoformat()})
+        performance.topics_progress[topic] = performance.topics_progress[topic][-20:]
+        performance.last_updated = datetime.utcnow()
+        db.commit()
+        
+        target_level = performance.target_graph.get(topic, {}).get("weight", 100)
+        return {"topic": topic, "new_level": new_level, "target_level": target_level}
+
+    async def get_coefficient(self, db: Session, user_id: int, school_id: int) -> Dict:
+        performance = db.query(StudentPerformance).filter(
+            StudentPerformance.user_id == user_id,
+            StudentPerformance.school_id == school_id
+        ).first()
+        
+        if not performance or not performance.target_graph:
+            return {"error": "Нет данных для расчёта"}
+        
+        target = performance.target_graph
+        current = performance.current_graph
+        
+        total_gap = 0
+        total_weight = 0
+        topics_analysis = []
+        
+        for topic, target_data in target.items():
+            target_level = target_data.get("weight", 100)
+            current_level = current.get(topic, 0)
+            gap = target_level - current_level
+            weight = target_data.get("weight", 1)
+            
+            topics_analysis.append({
+                "topic": topic,
+                "target": target_level,
+                "current": current_level,
+                "gap": gap,
+                "weight": weight,
+                "status": "success" if gap <= 20 else "needs_attention"
+            })
+            total_gap += gap * weight
+            total_weight += weight
+        
+        coefficient = max(0, 100 - (total_gap / total_weight)) if total_weight > 0 else 0
+        
+        return {
+            "coefficient": coefficient,
+            "topics": topics_analysis,
+            "recommendation": "Нужно больше практики в слабых темах" if coefficient < 70 else "Хороший прогресс"
+        }
+
+    async def get_learning_graphs(self, db: Session, user_id: int, school_id: int) -> Dict:
+        performance = db.query(StudentPerformance).filter(
+            StudentPerformance.user_id == user_id,
+            StudentPerformance.school_id == school_id
+        ).first()
+
+        if not performance:
+            return {"target_graph": [], "current_graph": []}
+
+        # Преобразование целевого графа (словарь → список)
+        target_list = []
+        if performance.target_graph:
+            for topic, data in performance.target_graph.items():
+                target_list.append({
+                    "topic": topic,
+                    "value": data.get("weight", 0),
+                    "hours": data.get("hours_to_learn", 0),
+                    "difficulty": data.get("difficulty", "medium")
+                })
+
+        # Преобразование текущего графа (словарь → список)
+        current_list = []
+        if performance.current_graph:
+            for topic, mastery in performance.current_graph.items():
+                current_list.append({
+                    "topic": topic,
+                    "value": mastery,
+                    "progress_history": performance.topics_progress.get(topic, [])
+                })
+
+        return {
+            "target_graph": target_list,
+            "current_graph": current_list,
+            "last_updated": performance.last_updated
         }

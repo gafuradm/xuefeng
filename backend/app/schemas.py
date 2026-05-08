@@ -39,11 +39,42 @@ class TestSubmit(BaseModel):
 class TimeSet(BaseModel):
     days: int
 
+# ========== ОБНОВЛЕННАЯ СХЕМА ДЛЯ ОТПРАВКИ УРОКА (с временем) ==========
 class LessonAnswer(BaseModel):
     lesson_id: int
     user_answers: Dict[str, str]
+    time_spent_seconds: Optional[float] = 0.0
+    task_times: Optional[Dict[str, float]] = {}
+    
+# ========== НОВЫЕ СХЕМЫ ДЛЯ ДЕТАЛЬНОЙ СТАТИСТИКИ ПОЛЬЗОВАТЕЛЯ ==========
+class TopicTimeStatsResponse(BaseModel):
+    topic: str
+    total_seconds: int
+    sessions_count: int
+    last_updated: datetime
 
-# ========== НОВЫЕ СХЕМЫ ДЛЯ ПОЛЬЗОВАТЕЛЬСКИХ ТЕСТОВ ==========
+class UserDetailedStatsResponse(BaseModel):
+    topic: str
+    mastery_level: float
+    correct_count: int
+    total_count: int
+    total_time_spent_minutes: float
+    last_attempt: datetime
+
+class StudentProgressResponse(BaseModel):
+    user_id: int
+    name: str
+    average_mastery: float
+    total_time_spent_hours: float
+    topics_progress: Dict[str, float]   # topic -> mastery
+    weak_topics: List[str]
+
+class SchoolStatsResponse(BaseModel):
+    school_name: str
+    total_students: int
+    students: List[StudentProgressResponse]
+
+# ========== СХЕМЫ ДЛЯ ПОЛЬЗОВАТЕЛЬСКИХ ТЕСТОВ ==========
 class QuestionItem(BaseModel):
     text: str
     correct_answer: str
@@ -69,8 +100,6 @@ class CustomTestSubmit(BaseModel):
     test_id: int
     answers: Dict[str, str]
 
-# backend/app/schemas.py (добавить в конец)
-
 # ========== ПОЛЬЗОВАТЕЛЬСКИЕ КУРСЫ ==========
 class CourseModuleCreate(BaseModel):
     title: str
@@ -89,7 +118,7 @@ class CourseLessonCreate(BaseModel):
 class UserCourseCreate(BaseModel):
     name: str
     description: Optional[str] = None
-    success_criteria: Optional[str] = None   # если не указано, ИИ сгенерирует
+    success_criteria: Optional[str] = None
 
 class UserCourseResponse(BaseModel):
     id: int
@@ -100,7 +129,7 @@ class UserCourseResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
-    modules: List[Any] = []   # можно будет подгрузить
+    modules: List[Any] = []
 
     model_config = ConfigDict(from_attributes=True)
 
