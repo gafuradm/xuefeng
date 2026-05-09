@@ -1,0 +1,17 @@
+.whiteboard-toolbar {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: #f0f0f0;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.whiteboard-canvas-container {
+    margin-top: 10px;
+    text-align: center;
+}
+.whiteboard-canvas {
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    max-width: 100%;
+    height: auto;
+}

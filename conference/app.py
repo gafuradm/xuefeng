@@ -587,6 +587,27 @@ def handle_webrtc_restart(data):
     if current_teacher_sid:
         socketio.emit('request_webrtc_restart', {'studentId': data.get('studentId')}, to=current_teacher_sid)
 
+@socketio.on('whiteboard_draw')
+def handle_whiteboard_draw(data):
+    room = data.get('room', 'teacher_room')
+    # Отправляем всем кроме отправителя? Но мы отправляем всем в комнате
+    socketio.emit('whiteboard_draw', data, to=room, skip_sid=request.sid)
+
+@socketio.on('whiteboard_clear')
+def handle_whiteboard_clear(data):
+    room = data.get('room', 'teacher_room')
+    socketio.emit('whiteboard_clear', data, to=room, skip_sid=request.sid)
+
+@socketio.on('whiteboard_page_added')
+def handle_whiteboard_page_added(data):
+    room = data.get('room', 'teacher_room')
+    socketio.emit('whiteboard_page_added', data, to=room, skip_sid=request.sid)
+
+@socketio.on('whiteboard_change_page')
+def handle_whiteboard_change_page(data):
+    room = data.get('room', 'teacher_room')
+    socketio.emit('whiteboard_change_page', data, to=room, skip_sid=request.sid)
+
 # ================= Запуск =================
 if __name__ == "__main__":
     generate_session_code()

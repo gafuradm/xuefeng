@@ -3,6 +3,8 @@
 <head>
     <meta charset="utf-8">
     <title>Student - Live Lecture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -222,6 +224,41 @@
             border: 1px solid #ddd;
             margin-left: 10px;
         }
+        /* Стили для доски */
+        .whiteboard-container {
+            background: white;
+            border-radius: 15px;
+            margin: 20px;
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+        }
+        .whiteboard-toolbar {
+            padding: 10px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .whiteboard-canvas {
+            display: block;
+            background: white;
+            cursor: crosshair;
+            width: 100%;
+            height: auto;
+            background-size: 20px 20px;
+            background-image: linear-gradient(to right, #f0f0f0 1px, transparent 1px), linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
+        }
+        .whiteboard-page {
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .whiteboard-page-header {
+            padding: 5px 10px;
+            background: #f0f0f0;
+            font-size: 12px;
+        }
         @media (max-width: 768px) {
             .code-input {
                 width: 200px;
@@ -231,6 +268,10 @@
             .video-container {
                 margin: 10px;
             }
+            .whiteboard-toolbar button {
+                padding: 5px 10px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -238,7 +279,7 @@
 <div class="container">
     <div class="header">
         <h1>🎓 Студент - Живая лекция</h1>
-        <p>Просмотр лекции | Синхронный перевод | Чат</p>
+        <p>Просмотр лекции | Синхронный перевод | Чат | Интерактивная доска</p>
     </div>
 
     <div id="verificationBox" class="verification-box">
@@ -304,13 +345,18 @@
         <div class="controls">
             <button onclick="toggleSound()" id="soundBtn" class="btn btn-primary">🔊 Озвучка включена</button>
             <button onclick="reconnectAll()" class="btn btn-primary">🔄 Переподключиться</button>
+            <button id="toggleWhiteboardBtn" class="btn btn-primary">📝 Открыть доску</button>
         </div>
+
+        <!-- Контейнер для доски (изначально скрыт) -->
+        <div id="whiteboardContainer" style="display: none;"></div>
     </div>
 </div>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 <script>
+    // ================== ОСНОВНОЙ СКРИПТ (трансляция, перевод, чат) ==================
     const socket = io();
     let studentId = localStorage.getItem("student_id") || "";
     let selectedLang = "en";
@@ -321,6 +367,7 @@
     let cameraPeer = null;
     let screenConnected = false;
     let cameraConnected = false;
+    let whiteboardInstance = null; // для хранения объекта доски
 
     const configuration = {
         iceServers: [
@@ -340,6 +387,8 @@
     const presenceStatus = document.getElementById('presenceStatus');
     const screenStatusSpan = document.getElementById('screenStatus');
     const cameraStatusSpan = document.getElementById('cameraStatus');
+    const toggleWhiteboardBtn = document.getElementById('toggleWhiteboardBtn');
+    const whiteboardContainer = document.getElementById('whiteboardContainer');
 
     function updateStatus(verified) {
         if (verified) {
@@ -496,7 +545,279 @@
         }
     }
 
-    // Socket события
+    // ================== ДОСКА (Whiteboard) ==================
+    class Whiteboard {
+        constructor(containerId, socket, isTeacher, roomName) {
+            this.container = document.getElementById(containerId);
+            this.socket = socket;
+            this.isTeacher = isTeacher;
+            this.roomName = roomName;
+            this.currentPage = 0;
+            this.pages = [];
+            this.ctx = null;
+            this.drawing = false;
+            this.lastX = 0;
+            this.lastY = 0;
+            this.currentColor = '#000000';
+            this.currentSize = 2;
+            this.eraserMode = false;
+            this.init();
+        }
+
+        init() {
+            // Создаём элементы управления
+            this.toolbar = document.createElement('div');
+            this.toolbar.className = 'whiteboard-toolbar';
+            this.toolbar.innerHTML = `
+                <button class="wb-color" data-color="#000000" style="background:#000; color:white;">Чёрный</button>
+                <button class="wb-color" data-color="#ff0000" style="background:#ff0000;">Красный</button>
+                <button class="wb-color" data-color="#0000ff" style="background:#0000ff;">Синий</button>
+                <button class="wb-color" data-color="#00aa00" style="background:#00aa00;">Зелёный</button>
+                <button class="wb-eraser">🧽 Ластик</button>
+                <input type="range" class="wb-size" min="1" max="20" value="2" title="Размер">
+                <button class="wb-clear">🗑 Очистить страницу</button>
+                <button class="wb-newpage">📄 Новая страница</button>
+                <button class="wb-prevpage" ${this.currentPage === 0 ? 'disabled' : ''}>◀ Пред.</button>
+                <span class="wb-pageinfo">Страница 1</span>
+                <button class="wb-nextpage" ${this.pages.length <= 1 ? 'disabled' : ''}>След. ▶</button>
+                <button class="wb-savepdf">📑 Сохранить PDF</button>
+            `;
+            this.container.appendChild(this.toolbar);
+            this.canvasContainer = document.createElement('div');
+            this.canvasContainer.className = 'whiteboard-canvas-container';
+            this.container.appendChild(this.canvasContainer);
+            this.addNewPage();
+
+            // Подписка на события
+            this.socket.on('whiteboard_draw', (data) => {
+                if (data.room === this.roomName && !this.isTeacher) {
+                    this.applyDrawEvent(data);
+                }
+            });
+            this.socket.on('whiteboard_clear', (data) => {
+                if (data.room === this.roomName && !this.isTeacher && this.pages[this.currentPage]) {
+                    this.clearCanvas(this.pages[this.currentPage].canvas);
+                }
+            });
+            this.socket.on('whiteboard_new_page', (data) => {
+                if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) {
+                    // Создаём новую страницу, если её нет
+                    while (this.pages.length <= data.pageIndex) this.addNewPage(false);
+                    this.switchToPage(data.pageIndex);
+                }
+            });
+            this.socket.on('whiteboard_switch_page', (data) => {
+                if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) {
+                    this.switchToPage(data.pageIndex);
+                }
+            });
+
+            // Обработчики UI
+            this.toolbar.querySelectorAll('.wb-color').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.eraserMode = false;
+                    this.currentColor = btn.dataset.color;
+                    this.updateToolbarUI();
+                });
+            });
+            this.toolbar.querySelector('.wb-eraser').addEventListener('click', () => {
+                this.eraserMode = true;
+                this.updateToolbarUI();
+            });
+            this.toolbar.querySelector('.wb-size').addEventListener('input', (e) => {
+                this.currentSize = parseInt(e.target.value);
+            });
+            this.toolbar.querySelector('.wb-clear').addEventListener('click', () => {
+                if (confirm('Очистить текущую страницу?')) {
+                    this.clearCanvas(this.pages[this.currentPage].canvas);
+                    this.broadcastDraw({ type: 'clear' });
+                }
+            });
+            this.toolbar.querySelector('.wb-newpage').addEventListener('click', () => {
+                this.addNewPage(true);
+                this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length - 1 });
+                this.switchToPage(this.pages.length - 1);
+            });
+            this.toolbar.querySelector('.wb-prevpage').addEventListener('click', () => {
+                if (this.currentPage > 0) this.switchToPage(this.currentPage - 1);
+            });
+            this.toolbar.querySelector('.wb-nextpage').addEventListener('click', () => {
+                if (this.currentPage < this.pages.length - 1) this.switchToPage(this.currentPage + 1);
+            });
+            this.toolbar.querySelector('.wb-savepdf').addEventListener('click', () => this.saveAsPDF());
+        }
+
+        updateToolbarUI() {
+            const eraserBtn = this.toolbar.querySelector('.wb-eraser');
+            if (this.eraserMode) {
+                eraserBtn.style.background = '#ddd';
+                eraserBtn.style.color = '#000';
+            } else {
+                eraserBtn.style.background = '';
+                eraserBtn.style.color = '';
+            }
+        }
+
+        addNewPage(broadcast = false) {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'whiteboard-page';
+            pageDiv.style.display = this.pages.length === this.currentPage ? 'block' : 'none';
+            const canvas = document.createElement('canvas');
+            canvas.className = 'whiteboard-canvas';
+            canvas.width = 800;
+            canvas.height = 500;
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+            canvas.style.border = '1px solid #ccc';
+            canvas.style.cursor = 'crosshair';
+            pageDiv.appendChild(canvas);
+            this.canvasContainer.appendChild(pageDiv);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            this.setupCanvasEvents(canvas, ctx);
+            this.pages.push({ canvas, ctx, div: pageDiv });
+            if (broadcast && this.isTeacher) {
+                this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length - 1 });
+            }
+            // Обновить навигацию
+            this.updateNavButtons();
+        }
+
+        setupCanvasEvents(canvas, ctx) {
+            const getCoords = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                let x = (clientX - rect.left) * scaleX;
+                let y = (clientY - rect.top) * scaleY;
+                x = Math.min(Math.max(0, x), canvas.width);
+                y = Math.min(Math.max(0, y), canvas.height);
+                return { x, y };
+            };
+
+            const startDraw = (e) => {
+                e.preventDefault();
+                this.drawing = true;
+                const { x, y } = getCoords(e);
+                this.lastX = x;
+                this.lastY = y;
+                ctx.beginPath();
+                ctx.arc(x, y, this.currentSize / 2, 0, 2 * Math.PI);
+                ctx.fillStyle = this.eraserMode ? 'white' : this.currentColor;
+                ctx.fill();
+                this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor, size: this.currentSize, isStart: true });
+            };
+            const draw = (e) => {
+                if (!this.drawing) return;
+                e.preventDefault();
+                const { x, y } = getCoords(e);
+                ctx.beginPath();
+                ctx.moveTo(this.lastX, this.lastY);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = this.eraserMode ? 'white' : this.currentColor;
+                ctx.lineWidth = this.currentSize;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor, size: this.currentSize, fromX: this.lastX, fromY: this.lastY });
+                this.lastX = x;
+                this.lastY = y;
+            };
+            const endDraw = () => {
+                this.drawing = false;
+            };
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', endDraw);
+            canvas.addEventListener('mouseleave', endDraw);
+            canvas.addEventListener('touchstart', startDraw);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', endDraw);
+        }
+
+        clearCanvas(canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        applyDrawEvent(data) {
+            if (data.type === 'draw') {
+                const canvasObj = this.pages[this.currentPage];
+                if (!canvasObj) return;
+                const ctx = canvasObj.ctx;
+                if (data.isStart) {
+                    ctx.beginPath();
+                    ctx.arc(data.x, data.y, data.size / 2, 0, 2 * Math.PI);
+                    ctx.fillStyle = data.color;
+                    ctx.fill();
+                } else if (data.fromX !== undefined) {
+                    ctx.beginPath();
+                    ctx.moveTo(data.fromX, data.fromY);
+                    ctx.lineTo(data.x, data.y);
+                    ctx.strokeStyle = data.color;
+                    ctx.lineWidth = data.size;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+            } else if (data.type === 'clear') {
+                this.clearCanvas(this.pages[this.currentPage].canvas);
+            }
+        }
+
+        broadcastDraw(data) {
+            data.room = this.roomName;
+            this.socket.emit('whiteboard_draw', data);
+        }
+
+        switchToPage(index) {
+            if (index < 0 || index >= this.pages.length) return;
+            this.pages[this.currentPage].div.style.display = 'none';
+            this.currentPage = index;
+            this.pages[this.currentPage].div.style.display = 'block';
+            this.toolbar.querySelector('.wb-pageinfo').innerText = `Страница ${this.currentPage + 1}`;
+            this.updateNavButtons();
+            if (this.isTeacher) {
+                this.socket.emit('whiteboard_switch_page', { room: this.roomName, pageIndex: this.currentPage });
+            }
+        }
+
+        updateNavButtons() {
+            const prevBtn = this.toolbar.querySelector('.wb-prevpage');
+            const nextBtn = this.toolbar.querySelector('.wb-nextpage');
+            if (prevBtn) prevBtn.disabled = (this.currentPage === 0);
+            if (nextBtn) nextBtn.disabled = (this.currentPage >= this.pages.length - 1);
+        }
+
+        async saveAsPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('landscape');
+            for (let i = 0; i < this.pages.length; i++) {
+                const canvas = this.pages[i].canvas;
+                try {
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgProps = pdf.getImageProperties(imgData);
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    if (i !== 0) pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                } catch (err) {
+                    console.error('Ошибка добавления страницы', err);
+                }
+            }
+            pdf.save(`whiteboard_${new Date().toISOString().slice(0,19)}.pdf`);
+        }
+    }
+
+    // ================== Socket.IO события ==================
     socket.on('connect', () => {
         console.log('Connected to server');
         if (studentId) socket.emit('restore_session', { student_id: studentId });
@@ -621,6 +942,20 @@
         selectedLang = e.target.value;
         localStorage.setItem('student_lang', selectedLang);
         socket.emit('set_language', { lang: selectedLang });
+    });
+
+    // Управление доской
+    toggleWhiteboardBtn.addEventListener('click', () => {
+        if (whiteboardContainer.style.display === 'none') {
+            whiteboardContainer.style.display = 'block';
+            toggleWhiteboardBtn.textContent = '📝 Закрыть доску';
+            if (!whiteboardInstance) {
+                whiteboardInstance = new Whiteboard('whiteboardContainer', socket, false, 'teacher_room');
+            }
+        } else {
+            whiteboardContainer.style.display = 'none';
+            toggleWhiteboardBtn.textContent = '📝 Открыть доску';
+        }
     });
 
     if (studentId) document.getElementById('studentIdInput').value = studentId;
