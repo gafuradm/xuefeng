@@ -783,6 +783,7 @@ class AITeacherService:
         if not session:
             raise ValueError("Session not found")
         
+        # Проверяем, есть ли невыполненный урок
         lesson = db.query(Lesson).filter(Lesson.session_id == session_id, Lesson.completed == False).order_by(Lesson.id).first()
         if lesson:
             try:
@@ -797,18 +798,35 @@ class AITeacherService:
                 "completed": lesson.completed
             }
         
-        study_plan = session.study_plan
-        modules = study_plan.get("modules", [])
-        all_topics_in_order = []
-        for module in modules:
-            all_topics_in_order.extend(module.get("topics", []))
+        # Пытаемся получить план в формате schedule (новый формат от ИИ)
+        study_plan = session.study_plan or {}
+        schedule = study_plan.get("schedule", [])
         
+        # Если schedule пуст – возможно, используется старый формат modules (для обратной совместимости)
+        if not schedule:
+            modules = study_plan.get("modules", [])
+            all_topics_in_order = []
+            for module in modules:
+                all_topics_in_order.extend(module.get("topics", []))
+        else:
+            # Собираем все темы из расписания (уникальные, в порядке появления)
+            all_topics_in_order = []
+            seen = set()
+            for day in schedule:
+                topics = day.get("topics", [])
+                for t in topics:
+                    if t not in seen:
+                        seen.add(t)
+                        all_topics_in_order.append(t)
+        
+        # Получаем уже пройденные темы
         completed_lessons = db.query(Lesson).filter(
             Lesson.session_id == session_id,
             Lesson.completed == True
         ).all()
         completed_topics = {l.topic for l in completed_lessons}
         
+        # Ищем следующую не пройденную тему
         next_topic = None
         for topic in all_topics_in_order:
             if topic not in completed_topics:
@@ -820,12 +838,14 @@ class AITeacherService:
             db.commit()
             return {"status": "completed", "message": "Поздравляем! Вы успешно завершили курс!"}
         
+        # Генерируем урок для следующей темы
         subject = self._get_subject(session.exam_name)
         is_gaokao = self._is_gaokao(session.exam_name)
         is_ege = self._is_ege(session.exam_name)
         is_sat = self._is_sat(session.exam_name)
         is_uzbek = self._is_uzbek(session.exam_name)
         is_india = self._is_india(session.exam_name)
+        
         lesson_content = await self.generate_lesson_with_rag(
             next_topic,
             session.target_profile.get(next_topic, 80),
@@ -854,7 +874,7 @@ class AITeacherService:
             "content": lesson_content,
             "completed": False
         }
-    
+
     async def get_study_plan(self, db: Session, session_id: int) -> Dict:
         session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
         if not session:

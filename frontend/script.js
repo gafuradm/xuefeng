@@ -373,7 +373,10 @@ function displayLesson(lessonData) {
         tasksHtml += content.tasks.map((task, idx) => `
             <div class="task" data-task-idx="${idx}">
                 <p><strong>Задача ${idx + 1}:</strong> ${task.task}</p>
-                <input type="text" id="task_${idx}" placeholder="Ваш ответ" class="answer-input" onfocus="startTaskTimer(${idx})" onblur="stopTaskTimer(${idx})">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="task_${idx}" placeholder="Ваш ответ" class="answer-input" style="flex: 1;" onfocus="startTaskTimer(${idx})" onblur="stopTaskTimer(${idx})">
+                    <button class="btn-secondary" style="padding: 5px 10px;" onclick="uploadPhotoForTask(${idx})">📷 Загрузить фото</button>
+                </div>
             </div>
         `).join('');
         tasksHtml += '</div>';
@@ -1687,11 +1690,24 @@ async function authLogin() {
         if (data.role === 'teacher') {
             document.getElementById('teacherPanel').style.display = 'block';
             document.getElementById('studentPanel').style.display = 'none';
+            document.getElementById('step1').style.display = 'none';
         } else {
+            // Ученик
             document.getElementById('teacherPanel').style.display = 'none';
             document.getElementById('studentPanel').style.display = 'block';
+            document.getElementById('step1').style.display = 'none';
+            
+            // Предлагаем начать обучение (выбрать экзамен)
+            const examName = prompt('Введите название экзамена (например: ЕНТ математика, SAT, IELTS):');
+            if (examName) {
+                await startNewSession(examName);
+            } else {
+                // Если не ввел – показываем главное меню для выбора экзамена (шаг 1)
+                document.getElementById('step1').style.display = 'block';
+                document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+                document.getElementById('step1').style.display = 'block';
+            }
         }
-        document.getElementById('step1').style.display = 'none';
     } catch (error) {
         alert('Ошибка входа: ' + error.message);
     }
@@ -1726,11 +1742,22 @@ async function authRegister() {
         if (data.role === 'teacher') {
             document.getElementById('teacherPanel').style.display = 'block';
             document.getElementById('studentPanel').style.display = 'none';
+            document.getElementById('step1').style.display = 'none';
         } else {
+            // Ученик
             document.getElementById('teacherPanel').style.display = 'none';
             document.getElementById('studentPanel').style.display = 'block';
+            document.getElementById('step1').style.display = 'none';
+            
+            const examName = prompt('Введите название экзамена (например: ЕНТ математика, SAT, IELTS):');
+            if (examName) {
+                await startNewSession(examName);
+            } else {
+                document.getElementById('step1').style.display = 'block';
+                document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+                document.getElementById('step1').style.display = 'block';
+            }
         }
-        document.getElementById('step1').style.display = 'none';
     } catch (error) {
         alert('Ошибка регистрации: ' + error.message);
     }
@@ -1903,4 +1930,83 @@ function switchChatTab(tab) {
         recipientSelect.style.display = 'block';
     }
     loadChatMessages();
+}
+
+// ========== OCR ДЛЯ ЗАДАЧ ==========
+async function uploadPhotoForTask(taskIndex) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            // Показываем индикатор загрузки
+            const taskContainer = document.querySelector(`.task[data-task-idx="${taskIndex}"]`);
+            const originalBtn = taskContainer.querySelector('button');
+            originalBtn.textContent = '⏳ Распознаю...';
+            originalBtn.disabled = true;
+            
+            const response = await fetch(`${API_URL}/api/ocr/recognize`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: formData
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const data = await response.json();
+            
+            // Вставляем распознанный текст в поле ответа
+            const answerInput = document.getElementById(`task_${taskIndex}`);
+            if (answerInput) {
+                answerInput.value = data.text;
+                // Останавливаем таймер задачи (если был активен) и запускаем заново? Не обязательно
+            }
+            alert(`Распознано: "${data.text}"\nУверенность: ${data.confidence * 100}%`);
+        } catch (err) {
+            alert('Ошибка распознавания: ' + err.message);
+        } finally {
+            const taskContainer = document.querySelector(`.task[data-task-idx="${taskIndex}"]`);
+            const originalBtn = taskContainer.querySelector('button');
+            originalBtn.textContent = '📷 Загрузить фото';
+            originalBtn.disabled = false;
+        }
+    };
+    input.click();
+}
+
+async function startNewSession(examName) {
+    if (!currentUserId) {
+        alert('Сначала войдите в систему');
+        return;
+    }
+    try {
+        const sessionRes = await fetch(`${API_URL}/api/sessions?user_id=${currentUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ exam_name: examName })
+        });
+        if (!sessionRes.ok) throw new Error(`HTTP ${sessionRes.status}: ${await sessionRes.text()}`);
+        const session = await sessionRes.json();
+        currentSessionId = session.id;
+        
+        const testRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`);
+        if (!testRes.ok) throw new Error(`HTTP ${testRes.status}: ${await testRes.text()}`);
+        const sessionData = await testRes.json();
+        if (!sessionData.test_results || sessionData.test_results.length === 0) throw new Error("Тест не найден");
+        const testResult = sessionData.test_results[0];
+        currentQuestions = testResult.questions;
+        
+        displayTest(currentQuestions);
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка создания сессии: ' + error.message);
+    }
 }

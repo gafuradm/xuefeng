@@ -12,6 +12,7 @@ from fastapi import Body
 import concurrent.futures
 from datetime import datetime
 import asyncio
+from fastapi import UploadFile, File
 from fastapi.responses import RedirectResponse
 from .models import (
     Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
@@ -36,6 +37,15 @@ from .deepseek_client import deepseek_client
 from .schemas import *
 from .services import AITeacherService
 from .config import settings
+
+# ========== OCR РАСПОЗНАВАНИЕ РУКОПИСНОГО ТЕКСТА ==========
+import easyocr
+import numpy as np
+from PIL import Image
+import io
+
+# Инициализируем EasyOCR один раз при старте (чтобы не грузить модель при каждом запросе)
+ocr_reader = None
 
 # Создаем таблицы
 Base.metadata.create_all(bind=engine)
@@ -1111,3 +1121,54 @@ async def send_private_message(
     db.refresh(new_msg)
     
     return {"status": "ok", "message_id": new_msg.id}
+
+
+@app.on_event("startup")
+async def init_ocr():
+    global ocr_reader
+    try:
+        ocr_reader = easyocr.Reader(['ru', 'en'], gpu=False)
+        print("✅ EasyOCR загружен")
+    except Exception as e:
+        print(f"⚠️ Ошибка загрузки EasyOCR: {e}")
+
+@app.post("/api/ocr/recognize")
+async def recognize_handwriting(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)  # опционально, если хотим авторизацию
+):
+    """Распознаёт рукописный текст из загруженного изображения"""
+    if ocr_reader is None:
+        raise HTTPException(503, "OCR сервис не инициализирован")
+    
+    try:
+        # Читаем файл
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        # Конвертируем в numpy array (RGB)
+        img_array = np.array(image)
+        
+        # Распознаём текст
+        result = ocr_reader.readtext(img_array, detail=1)
+        
+        if not result:
+            return {"text": "", "confidence": 0}
+        
+        # Собираем весь текст
+        full_text = ' '.join([item[1] for item in result])
+        # Средняя уверенность
+        avg_confidence = sum(item[2] for item in result) / len(result)
+        
+        # Пост-обработка через DeepSeek для исправления ошибок (опционально, но повышает качество)
+        # Раскомментируйте если хотите улучшить результат
+        corrected = await deepseek_client.chat_completion([
+             {"role": "system", "content": "Ты эксперт по исправлению OCR-ошибок. Исправь распознанный текст, сохранив смысл."},
+             {"role": "user", "content": f"Распознанный текст:\n{full_text}\n\nИсправь ошибки распознавания и верни только исправленный текст:"}
+        ])
+        full_text = corrected.strip()
+        
+        return {"text": full_text, "confidence": round(avg_confidence, 2)}
+        
+    except Exception as e:
+        print(f"OCR ошибка: {e}")
+        raise HTTPException(400, f"Ошибка распознавания: {str(e)}")
