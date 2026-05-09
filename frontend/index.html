@@ -29,10 +29,39 @@
                         <button id="showTestCreatorBtn" class="btn btn-outline-light" onclick="showTestCreator()">✏️ Свой тест</button>
                         <button onclick="window.open('http://localhost:8000/student', '_blank')" class="btn btn-outline-light">🎥 Присоединиться к лекции</button>
                         <button onclick="window.open('http://localhost:8000/teacher', '_blank')" class="btn btn-outline-light">👨‍🏫 Начать лекцию (учитель)</button>
+                        <button onclick="showAuthModal()" id="loginBtn" class="btn btn-outline-light">🔑 Войти</button>
                     </div>
                 </div>
                 <div class="hero-wave"></div>
             </header>
+
+            <!-- Шапка с профилем -->
+<div class="profile-header" id="profileHeader" style="display: none; justify-content: space-between; align-items: center; padding: 10px 20px; background: white; border-bottom: 1px solid #eee;">
+    <div class="profile-info" style="display: flex; align-items: center; gap: 15px;">
+        <img id="avatarImg" src="" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+        <span id="userNameDisplay"></span>
+        <span id="userRoleDisplay" style="background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;"></span>
+    </div>
+    <div class="profile-actions">
+        <button onclick="showProfileModal()" class="btn-secondary" style="margin-right: 10px;">👤 Профиль</button>
+        <button onclick="logout()" class="btn-secondary" style="background: #dc3545;">🚪 Выйти</button>
+    </div>
+</div>
+
+<!-- Модальное окно профиля (скрыто) -->
+<div id="profileModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; z-index: 1002;">
+    <h3>Мой профиль</h3>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img id="modalAvatar" src="" style="width: 100px; height: 100px; border-radius: 50%; cursor: pointer; border: 2px solid #667eea;">
+        <p style="font-size: 12px; color: #666;">Нажмите на аватар, чтобы изменить</p>
+        <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
+    </div>
+    <p><strong>Имя:</strong> <span id="profileName"></span></p>
+    <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+    <p><strong>Роль:</strong> <span id="profileRole"></span></p>
+    <p><strong>Username:</strong> <span id="profileUsername"></span></p>
+    <button onclick="closeProfileModal()" class="btn-secondary">Закрыть</button>
+</div>
 
             <main class="content-panel">
                 <!-- Шаг 1: Регистрация -->
@@ -295,6 +324,8 @@
                             <button onclick="showMySchoolsStudent()" class="btn btn-secondary">🏫 Мои школы</button>
                             <button onclick="joinSchool()" class="btn btn-secondary">🔗 Вступить в школу</button>
                             <button onclick="showStudentGraphs()" class="btn btn-secondary">📊 Мой прогресс</button>
+                            <!-- Новая кнопка: Мой план -->
+                            <button onclick="showStudentPlan()" class="btn btn-secondary">📅 Мой план</button>
                         </div>
                     </div>
                 </div>
@@ -308,7 +339,30 @@
                     <button onclick="showMySchoolsStudent()" class="btn btn-icon">🏫 Мои школы</button>
                     <button onclick="joinSchool()" class="btn btn-icon">🔗 Вступить в школу</button>
                     <button onclick="showStudentGraphs()" class="btn btn-icon">📊 Мой прогресс</button>
+                    <!-- Новая кнопка: Мой план -->
+                    <button onclick="openChatModal()" class="btn btn-icon">💬 Чат школы</button>
+                    <button onclick="showStudentPlan()" class="btn btn-icon">📅 Мой план</button>
                 </div>
+                <!-- Модальное окно чата -->
+<div id="chatModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 20px; width: 500px; max-width: 90%; height: 600px; max-height: 80vh; display: flex; flex-direction: column; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+    <div style="padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between;">
+        <div>
+            <button id="chatTabGeneral" onclick="switchChatTab('general')" style="margin-right: 10px; padding: 5px 10px; background: #667eea; color: white; border: none; border-radius: 5px;">Общий чат</button>
+            <button id="chatTabPrivate" onclick="switchChatTab('private')" style="padding: 5px 10px; background: #ccc; border: none; border-radius: 5px;">Личные сообщения</button>
+        </div>
+        <button onclick="closeChatModal()" style="background: none; border: none; font-size: 20px;">✕</button>
+    </div>
+    <div id="chatMessagesContainer" style="flex: 1; overflow-y: auto; padding: 15px;"></div>
+    <div style="padding: 15px; border-top: 1px solid #ddd; display: flex;">
+        <input type="text" id="chatInput" placeholder="Введите сообщение..." style="flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd;">
+        <button onclick="sendChatMessage()" style="margin-left: 10px; background: #667eea; color: white; border: none; border-radius: 20px; padding: 0 20px;">Отправить</button>
+    </div>
+    <div id="chatRecipientSelect" style="display: none; padding: 10px; border-bottom: 1px solid #ddd;">
+        <select id="privateRecipientId">
+            <option value="">Выберите получателя</option>
+        </select>
+    </div>
+</div>
             </main>
         </div>
     </div>

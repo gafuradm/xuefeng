@@ -18,11 +18,28 @@ class User(Base):
     interactions = relationship('UserInteraction', back_populates='user', cascade='all, delete-orphan')
     performances = relationship('UserPerformance', back_populates='user', cascade='all, delete-orphan')
     topic_time_stats = relationship('TopicTimeStats', back_populates='user', cascade='all, delete-orphan')
-
+    auth = relationship('UserAuth', back_populates='user', uselist=False, cascade='all, delete-orphan')
     role = Column(String, default='student')
     school_members = relationship('SchoolMember', back_populates='user', cascade='all, delete-orphan')
     owned_schools = relationship('School', foreign_keys='School.owner_id', cascade='all, delete-orphan')
 
+# Добавить после класса User
+class UserAuth(Base):
+    __tablename__ = 'user_auth'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), unique=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    avatar_url = Column(String, nullable=True)
+    last_login = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship('User', back_populates='auth')
+
+# В классе User добавить:
+auth = relationship('UserAuth', back_populates='user', uselist=False, cascade='all, delete-orphan')
 
 class StudentPerformance(Base):
     """Расширенная статистика ученика с графами знаний"""
@@ -270,3 +287,18 @@ class SchoolMember(Base):
     
     school = relationship('School', back_populates='members')
     user = relationship('User', back_populates='school_members')
+
+class SchoolChatMessage(Base):
+    __tablename__ = "school_chat_messages"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    school_id = Column(Integer, ForeignKey("schools.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_private = Column(Boolean, default=False)  # False = общий чат школы, True = личное сообщение
+    recipient_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)  # для личных сообщений
+    
+    school = relationship("School")
+    user = relationship("User", foreign_keys=[user_id], backref="sent_messages")
+    recipient = relationship("User", foreign_keys=[recipient_id], backref="received_messages")

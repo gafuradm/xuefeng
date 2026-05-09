@@ -758,58 +758,25 @@ class AITeacherService:
         if not session:
             raise ValueError("Session not found")
         
-        subject = self._get_subject(session.exam_name)
-        is_gaokao = self._is_gaokao(session.exam_name)
-        is_ege = self._is_ege(session.exam_name)
-        is_sat = self._is_sat(session.exam_name)
-        is_uzbek = self._is_uzbek(session.exam_name)
-        is_india = self._is_india(session.exam_name)
-        
+        # Получаем слабые темы из последнего теста
         last_test = db.query(TestResult).filter(
             TestResult.session_id == session_id
         ).order_by(TestResult.id.desc()).first()
+        weak_topics = last_test.evaluation.get("weak_topics", []) if last_test else []
         
-        weak_topics = []
-        if last_test and last_test.evaluation:
-            weak_topics = last_test.evaluation.get("weak_topics", [])
-        
-        study_plan = self._build_plan_from_weak_topics(weak_topics, session.exam_name, subject)
-        
-        db.query(Lesson).filter(Lesson.session_id == session.id).delete()
-        db.commit()
-        
-        session.study_plan = study_plan
+        # Генерируем план через ИИ
+        plan = await deepseek_client.generate_study_plan(
+            target_profile=session.target_profile,
+            current_profile=session.current_profile,
+            days=days,
+            weak_topics=weak_topics,
+            exam_details=session.exam_details
+        )
+        session.study_plan = plan
         session.time_available_days = days
         session.status = "planning"
-        
-        modules = study_plan.get("modules", [])
-        if modules:
-            first_module = modules[0]
-            first_topic = first_module["topics"][0] if first_module["topics"] else "Начало"
-            lesson_content = await self.generate_lesson_with_rag(
-                first_topic,
-                session.target_profile.get(first_topic, 80),
-                session.current_profile.get(first_topic, 0),
-                'ent',
-                subject,
-                is_gaokao,
-                is_ege,
-                is_sat,
-                is_uzbek,
-                is_india
-            )
-            lesson = Lesson(
-                session_id=session.id,
-                topic=first_topic,
-                content=json.dumps(lesson_content, ensure_ascii=False),
-                tasks=lesson_content.get("tasks", [])
-            )
-            db.add(lesson)
-            print(f"Создан первый урок по теме {first_topic}")
-        
-        session.status = "learning"
         db.commit()
-        return study_plan
+        return plan
 
     async def get_next_lesson(self, db: Session, session_id: int) -> Dict[str, Any]:
         session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
@@ -887,6 +854,12 @@ class AITeacherService:
             "content": lesson_content,
             "completed": False
         }
+    
+    async def get_study_plan(self, db: Session, session_id: int) -> Dict:
+        session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+        if not session:
+            raise ValueError("Session not found")
+        return session.study_plan or {}
     
     # ==================== ПРОВЕРКА ОТВЕТОВ ====================
     async def check_lesson_answers(self, lesson: Lesson, user_answers: Dict[str, str]) -> Dict[str, Any]:
@@ -1079,6 +1052,17 @@ class AITeacherService:
                 for result in results:
                     await self._update_topic_performance(db, session.user_id, lesson.topic, result["correct"])
             
+            # ===== СИНХРОНИЗАЦИЯ ДЛЯ ВСЕХ ШКОЛ (ДАЖЕ ЕСЛИ УРОК НЕ ЗАВЕРШЁН) =====
+            if session:
+                user_schools = db.query(SchoolMember).filter(SchoolMember.user_id == session.user_id).all()
+                print(f"🔍 Синхронизация для школ ученика {session.user_id}: {[s.school_id for s in user_schools]}")
+                for school_member in user_schools:
+                    try:
+                        await self.sync_student_performance(db, session.user_id, school_member.school_id)
+                        print(f"✅ Синхронизация для школы {school_member.school_id} успешна")
+                    except Exception as e:
+                        print(f"❌ Ошибка синхронизации для школы {school_member.school_id}: {e}")
+
             if not all_correct:
                 error_details = []
                 for r in results:
@@ -1103,16 +1087,6 @@ class AITeacherService:
                 progress = ProgressHistory(session_id=session_id, profile_snapshot=session.current_profile.copy())
                 db.add(progress)
                 db.commit()
-                
-                # Синхронизируем с StudentPerformance для всех школ
-                user_schools = db.query(SchoolMember).filter(SchoolMember.user_id == session.user_id).all()
-                print(f"🔍 Синхронизация для школ ученика {session.user_id}: {[s.school_id for s in user_schools]}")
-                for school_member in user_schools:
-                    try:
-                        await self.sync_student_performance(db, session.user_id, school_member.school_id)
-                        print(f"✅ Синхронизация для школы {school_member.school_id} успешна")
-                    except Exception as e:
-                        print(f"❌ Ошибка синхронизации для школы {school_member.school_id}: {e}")
 
             return {
                 "status": "success",
@@ -1212,15 +1186,18 @@ class AITeacherService:
             if student_perf.target_graph is None:
                 student_perf.target_graph = {}
         
+        # КОПИРУЕМ СЛОВАРЬ, А НЕ МЕНЯЕМ ПО КЛЮЧУ
+        new_current = dict(student_perf.current_graph)
         for perf in performances:
             if perf.total_count > 0:
-                student_perf.current_graph[perf.topic] = perf.mastery_level
+                new_current[perf.topic] = perf.mastery_level
+        student_perf.current_graph = new_current
         
         student_perf.total_time_spent = sum(time_dict.values())
         student_perf.last_updated = datetime.utcnow()
         db.commit()
         print(f"Synced user {user_id} to school {school_id}")
-
+    
     async def generate_progress_test(self, db: Session, session_id: int) -> List[Dict[str, Any]]:
         session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
         if not session:
@@ -1513,7 +1490,7 @@ class AITeacherService:
         db.add(member)
         db.commit()
         
-        # ===== НОВЫЙ КОД: создаём запись StudentPerformance при вступлении в школу =====
+        # Создаём запись StudentPerformance при вступлении в школу
         sp = db.query(StudentPerformance).filter(
             StudentPerformance.user_id == user_id,
             StudentPerformance.school_id == school.id
@@ -1525,6 +1502,9 @@ class AITeacherService:
             db.add(sp)
             db.commit()
             print(f"✅ Создана запись StudentPerformance для ученика {user_id} в школе {school.id}")
+        
+        # ===== ВАЖНО: синхронизируем существующий прогресс ученика =====
+        await self.sync_student_performance(db, user_id, school.id)
         
         return {"school_id": school.id, "school_name": school.name, "role": "student"}
 
@@ -1637,7 +1617,9 @@ class AITeacherService:
         
         current = performance.current_graph.get(topic, 0)
         new_level = current * 0.7 + score * 0.3
-        performance.current_graph[topic] = min(100, new_level)
+        new_current = dict(performance.current_graph or {})
+        new_current[topic] = min(100, new_level)
+        performance.current_graph = new_current
         
         if topic not in performance.topics_progress:
             performance.topics_progress[topic] = []

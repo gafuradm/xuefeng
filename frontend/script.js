@@ -1051,6 +1051,72 @@ async function generateVideo(lessonId) {
     }
 }
 
+async function showStudentPlan() {
+    if (!currentSessionId) {
+        alert("Сначала создайте сессию (начните обучение)");
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/study_plan`);
+        if (!response.ok) throw new Error(await response.text());
+        const plan = await response.json();
+        // Показываем план в модальном окне, а не в displayPlan
+        let planHtml = `
+            <h3>📅 Мой план подготовки</h3>
+            <p><strong>Стратегия:</strong> ${plan.strategy || 'Не указана'}</p>
+            <p><strong>Всего дней:</strong> ${plan.total_days || 0}</p>
+            <p><strong>Часов в день:</strong> ${plan.hours_per_day || 0}</p>
+            <h4>Расписание:</h4>
+        `;
+        if (plan.schedule && plan.schedule.length) {
+            for (let day of plan.schedule) {
+                const typeIcon = day.type === 'theory' ? '📖' : (day.type === 'test' ? '📝' : '🔄');
+                planHtml += `
+                    <div style="border-bottom:1px solid #ccc; margin-bottom: 10px;">
+                        <strong>${typeIcon} День ${day.day}:</strong> ${day.type === 'theory' ? 'Теория' : (day.type === 'test' ? 'Тест' : 'Повторение')}<br>
+                        Темы: ${day.topics?.join(', ') || '—'}<br>
+                        Часов: ${day.hours || 3}<br>
+                        Описание: ${day.description || day.tasks || ''}
+                    </div>
+                `;
+            }
+        } else {
+            planHtml += '<p>Нет расписания</p>';
+        }
+        showModal(planHtml);
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка загрузки плана: ' + error.message);
+    }
+}
+
+async function showStudentPlanForTeacher(studentId, schoolId) {
+    const sessionId = prompt("Введите ID сессии ученика (можно узнать у ученика или из БД):");
+    if (!sessionId) return;
+    try {
+        const response = await fetch(`${API_URL}/api/sessions/${sessionId}/study_plan`);
+        if (!response.ok) throw new Error(await response.text());
+        const plan = await response.json();
+        showModal(`
+            <h3>📅 План ученика (сессия ${sessionId})</h3>
+            <p><strong>Стратегия:</strong> ${plan.strategy || 'Не указана'}</p>
+            <p><strong>Всего дней:</strong> ${plan.total_days || 0}</p>
+            <p><strong>Часов в день:</strong> ${plan.hours_per_day || 0}</p>
+            <h4>Расписание:</h4>
+            ${(plan.schedule || []).map(day => `
+                <div style="border-bottom:1px solid #ccc; margin-bottom: 10px;">
+                    <strong>День ${day.day}:</strong> ${day.type === 'theory' ? '📖 Теория' : (day.type === 'test' ? '📝 Тест' : '🔄 Повторение')}<br>
+                    Темы: ${day.topics?.join(', ') || '—'}<br>
+                    Часов: ${day.hours || 3}<br>
+                    Описание: ${day.description || day.tasks || ''}
+                </div>
+            `).join('')}
+        `);
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
 // ========== УЧИТЕЛЬСКИЕ ФУНКЦИИ ==========
 async function showCreateSchoolForm() {
     const name = prompt("Название школы:");
@@ -1071,6 +1137,41 @@ async function showJoinSchoolForm() {
     else alert("Ошибка: " + result.detail);
 }
 
+async function askStudentSessionId(studentId) {
+    const sessionId = prompt(`Введите ID активной сессии ученика ${studentId} (можно посмотреть в БД или спросить у ученика):`);
+    if (!sessionId) return;
+    try {
+        const response = await fetch(`${API_URL}/api/sessions/${sessionId}/study_plan`);
+        if (!response.ok) throw new Error(await response.text());
+        const plan = await response.json();
+        let planHtml = `
+            <h3>📅 План подготовки ученика (сессия ${sessionId})</h3>
+            <p><strong>Стратегия:</strong> ${plan.strategy || 'Не указана'}</p>
+            <p><strong>Всего дней:</strong> ${plan.total_days || 0}</p>
+            <p><strong>Часов в день:</strong> ${plan.hours_per_day || 0}</p>
+            <h4>Расписание:</h4>
+        `;
+        if (plan.schedule && plan.schedule.length) {
+            for (let day of plan.schedule) {
+                const typeIcon = day.type === 'theory' ? '📖' : (day.type === 'test' ? '📝' : '🔄');
+                planHtml += `
+                    <div style="border-bottom:1px solid #ccc; margin-bottom: 10px;">
+                        <strong>${typeIcon} День ${day.day}:</strong> ${day.type === 'theory' ? 'Теория' : (day.type === 'test' ? 'Тест' : 'Повторение')}<br>
+                        Темы: ${day.topics?.join(', ') || '—'}<br>
+                        Часов: ${day.hours || 3}<br>
+                        Описание: ${day.description || day.tasks || ''}
+                    </div>
+                `;
+            }
+        } else {
+            planHtml += '<p>Нет расписания</p>';
+        }
+        showModal(planHtml);
+    } catch (error) {
+        alert('Ошибка загрузки плана: ' + error.message);
+    }
+}
+
 async function showSchoolStats() {
     const schoolId = prompt("Введите ID школы:");
     if (!schoolId) return;
@@ -1089,12 +1190,11 @@ async function showSchoolStats() {
         let html = `<h3>📊 ${escapeHtml(data.school_name)}</h3>`;
         html += `<p>👥 Всего учеников: ${data.total_students}</p>`;
         
-        // Используем data.students (не leaderboard)
         if (data.students && data.students.length > 0) {
             html += '<table style="width:100%; border-collapse: collapse;">';
-            html += '<tr style="background: #667eea; color: white;"><th style="padding: 10px;">ID</th><th style="padding: 10px;">Имя</th><th style="padding: 10px;">Средний уровень</th><th style="padding: 10px;">Время (ч)</th><th style="padding: 10px;">Действия</th></tr>';
+            html += '<tr style="background: #667eea; color: white;"><th style="padding: 10px;">ID</th><th style="padding: 10px;">Имя</th><th style="padding: 10px;">Средний уровень</th><th style="padding: 10px;">Время (ч)</th><th style="padding: 10px;">Прогресс</th><th style="padding: 10px;">План</th></tr>';
             
-            data.students.forEach((student) => {
+            for (let student of data.students) {
                 const avgMastery = student.average_mastery || 0;
                 const totalTime = student.total_time_spent_hours || 0;
                 html += `<tr style="border-bottom: 1px solid #ddd;">
@@ -1103,8 +1203,9 @@ async function showSchoolStats() {
                             <td style="padding: 10px;">${avgMastery.toFixed(1)}%</td>
                             <td style="padding: 10px;">${totalTime.toFixed(1)} ч</td>
                             <td style="padding: 10px;"><button onclick="viewStudentGraphs(${student.user_id}, ${schoolId})">📈 Графы</button></td>
+                            <td style="padding: 10px;"><button onclick="askStudentSessionId(${student.user_id})">📅 План</button></td>
                           </tr>`;
-            });
+            }
             html += '</table>';
         } else {
             html += '<p>Нет учеников в школе</p>';
@@ -1236,17 +1337,25 @@ async function buildTargetGraph() {
 
 // ========== ФУНКЦИИ ДЛЯ УЧЕНИКА ==========
 async function showStudentGraphs() {
-    if (!currentUserId) { alert("Сначала создайте пользователя"); return; }
+    if (!currentUserId) {
+        alert("Сначала создайте пользователя");
+        return;
+    }
     try {
         const perfResponse = await fetch(`${API_URL}/api/user/detailed_stats?user_id=${currentUserId}`);
         if (!perfResponse.ok) throw new Error(await perfResponse.text());
         const stats = await perfResponse.json();
-        if (!stats.topics_detail?.length) {
-            alert("Нет данных. Пройдите несколько уроков.");
+        
+        // Фильтруем только темы, где были попытки (total_count > 0)
+        const topicsWithProgress = stats.topics_detail?.filter(t => t.total_count > 0) || [];
+        
+        if (!topicsWithProgress.length) {
+            alert("Нет данных о прогрессе. Пройдите несколько уроков.");
             return;
         }
+        
         let html = '<h3>📊 Моя успеваемость</h3>';
-        for (let item of stats.topics_detail) {
+        for (let item of topicsWithProgress) {
             const mastery = item.mastery_level || 0;
             const color = mastery >= 70 ? '#28a745' : (mastery >= 40 ? '#ffc107' : '#dc3545');
             const status = mastery >= 70 ? '✅ Освоено' : (mastery >= 40 ? '⚠️ В процессе' : '❌ Требует внимания');
@@ -1274,9 +1383,15 @@ async function showStudentGraphs() {
                 <div style="background:rgba(255,255,255,0.3);height:10px;border-radius:5px;margin-top:10px">
                     <div style="background:white;width:${avgLevel}%;height:10px;border-radius:5px"></div>
                 </div>
-                <p>Изучено тем: ${stats.total_topics}</p>
+                <p>Изучено тем: ${topicsWithProgress.length}</p>
             </div>
         `;
+        // Добавляем кнопку для просмотра плана подготовки
+        if (currentSessionId) {
+            html += `<div style="margin-top:20px;text-align:center">
+                        <button onclick="showStudentPlan()" class="btn-primary">📅 Мой план подготовки</button>
+                    </div>`;
+        }
         showModal(html);
     } catch (error) {
         alert('Ошибка: ' + error.message);
@@ -1423,3 +1538,369 @@ document.addEventListener('DOMContentLoaded', function() {
         roleSelect.addEventListener('change', function(e) { setRole(e.target.value); });
     }
 });
+
+// ========== АВТОРИЗАЦИЯ ==========
+let authToken = localStorage.getItem('authToken');
+let currentUser = null;
+
+// Сохраняем токен в localStorage при успешном входе
+function setAuthToken(token, userData) {
+    authToken = token;
+    currentUser = userData;
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+}
+
+// Выход
+function logout() {
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    document.getElementById('profileHeader').style.display = 'none';
+    document.getElementById('step1').style.display = 'block';
+    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+    document.getElementById('step1').style.display = 'block';
+    alert('Вы вышли из системы');
+}
+
+// Показать модальное окно профиля
+async function showProfileModal() {
+    if (!authToken) {
+        alert('Сначала войдите в систему');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/api/auth/profile`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const profile = await response.json();
+        
+        document.getElementById('modalAvatar').src = profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+        document.getElementById('profileName').textContent = profile.name;
+        document.getElementById('profileEmail').textContent = profile.email;
+        document.getElementById('profileRole').textContent = profile.role === 'teacher' ? 'Учитель' : 'Ученик';
+        document.getElementById('profileUsername').textContent = profile.username;
+        
+        document.getElementById('profileModal').style.display = 'block';
+        
+        // ВАЖНО: добавляем клик на аватар
+        const modalAvatar = document.getElementById('modalAvatar');
+        const avatarUpload = document.getElementById('avatarUpload');
+        modalAvatar.onclick = () => avatarUpload.click();
+        
+    } catch (error) {
+        alert('Ошибка загрузки профиля: ' + error.message);
+    }
+}
+
+function closeProfileModal() {
+    document.getElementById('profileModal').style.display = 'none';
+}
+
+// Загрузка аватара
+document.getElementById('avatarUpload')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onloadend = async function() {
+        const avatarUrl = reader.result;
+        const response = await fetch(`${API_URL}/api/auth/avatar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ avatar_url: avatarUrl })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('avatarImg').src = data.avatar_url;
+            document.getElementById('modalAvatar').src = data.avatar_url;
+            alert('Аватар обновлён');
+        } else {
+            alert('Ошибка обновления аватара');
+        }
+    };
+    reader.readAsDataURL(file);
+});
+
+// Форма регистрации/логина
+function showAuthModal() {
+    const modalHtml = `
+        <div id="authModal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; z-index: 1002;">
+            <h3>Вход / Регистрация</h3>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="authUsername" placeholder="Username" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+                <input type="password" id="authPassword" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+                <input type="text" id="authName" placeholder="Имя (при регистрации)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+                <input type="email" id="authEmail" placeholder="Email (при регистрации)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+                <select id="authRole" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+                    <option value="student">Ученик</option>
+                    <option value="teacher">Учитель</option>
+                </select>
+            </div>
+            <button onclick="authLogin()" class="btn-primary" style="margin-right: 10px;">Войти</button>
+            <button onclick="authRegister()" class="btn-secondary">Зарегистрироваться</button>
+            <button onclick="closeAuthModal()" class="btn-outline" style="margin-top: 10px;">Закрыть</button>
+        </div>
+    `;
+    const overlay = document.createElement('div');
+    overlay.id = 'authOverlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.background = 'rgba(0,0,0,0.5)';
+    overlay.style.zIndex = '1001';
+    overlay.onclick = closeAuthModal;
+    document.body.appendChild(overlay);
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+async function authLogin() {
+    const username = document.getElementById('authUsername').value;
+    const password = document.getElementById('authPassword').value;
+    if (!username || !password) {
+        alert('Введите username и пароль');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/api/auth/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
+            method: 'POST'
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        setAuthToken(data.access_token, data);
+        document.getElementById('avatarImg').src = data.avatar_url;
+        document.getElementById('userNameDisplay').textContent = data.name;
+        document.getElementById('userRoleDisplay').textContent = data.role === 'teacher' ? 'Учитель' : 'Ученик';
+        document.getElementById('profileHeader').style.display = 'flex';
+        closeAuthModal();
+        
+        currentUserId = data.user_id;
+        currentUserRole = data.role;
+        
+        if (data.role === 'teacher') {
+            document.getElementById('teacherPanel').style.display = 'block';
+            document.getElementById('studentPanel').style.display = 'none';
+        } else {
+            document.getElementById('teacherPanel').style.display = 'none';
+            document.getElementById('studentPanel').style.display = 'block';
+        }
+        document.getElementById('step1').style.display = 'none';
+    } catch (error) {
+        alert('Ошибка входа: ' + error.message);
+    }
+}
+
+async function authRegister() {
+    const username = document.getElementById('authUsername').value;
+    const password = document.getElementById('authPassword').value;
+    const name = document.getElementById('authName').value;
+    const email = document.getElementById('authEmail').value;
+    const role = document.getElementById('authRole').value;
+    if (!username || !password || !name || !email) {
+        alert('Заполните все поля');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/api/auth/register?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&role=${role}`, {
+            method: 'POST'
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        setAuthToken(data.access_token, data);
+        document.getElementById('avatarImg').src = data.avatar_url;
+        document.getElementById('userNameDisplay').textContent = data.name;
+        document.getElementById('userRoleDisplay').textContent = data.role === 'teacher' ? 'Учитель' : 'Ученик';
+        document.getElementById('profileHeader').style.display = 'flex';
+        closeAuthModal();
+        
+        currentUserId = data.user_id;
+        currentUserRole = data.role;
+        
+        if (data.role === 'teacher') {
+            document.getElementById('teacherPanel').style.display = 'block';
+            document.getElementById('studentPanel').style.display = 'none';
+        } else {
+            document.getElementById('teacherPanel').style.display = 'none';
+            document.getElementById('studentPanel').style.display = 'block';
+        }
+        document.getElementById('step1').style.display = 'none';
+    } catch (error) {
+        alert('Ошибка регистрации: ' + error.message);
+    }
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById('authModal');
+    const overlay = document.getElementById('authOverlay');
+    if (modal) modal.remove();
+    if (overlay) overlay.remove();
+}
+
+// Обновляем startLearning - теперь не нужен, используем авторизацию
+// Но оставим для совместимости
+
+// ========== ЧАТ ==========
+let currentChatSchoolId = null;
+let currentChatTab = 'general';
+let chatPollingInterval = null;
+
+async function openChatModal() {
+    if (!currentUserId) {
+        alert('Сначала войдите в систему');
+        return;
+    }
+    // Получаем школы пользователя
+    const schoolsResp = await fetch(`${API_URL}/api/schools/my?user_id=${currentUserId}`);
+    if (!schoolsResp.ok) return alert('Ошибка загрузки школ');
+    const schools = await schoolsResp.json();
+    if (schools.length === 0) {
+        alert('Вы не состоите ни в одной школе');
+        return;
+    }
+    let schoolId;
+    if (schools.length === 1) {
+        schoolId = schools[0].id;
+    } else {
+        const choice = prompt('Выберите школу:\n' + schools.map(s => `${s.id} - ${s.name}`).join('\n') + '\nВведите ID школы:');
+        if (!choice) return;
+        schoolId = parseInt(choice);
+        if (!schools.find(s => s.id === schoolId)) {
+            alert('Неверный ID школы');
+            return;
+        }
+    }
+    currentChatSchoolId = schoolId;
+    
+    // Загружаем список участников школы для личных сообщений
+    const membersResp = await fetch(`${API_URL}/api/schools/${schoolId}?user_id=${currentUserId}`);
+    if (membersResp.ok) {
+        const schoolData = await membersResp.json();
+        const select = document.getElementById('privateRecipientId');
+        select.innerHTML = '<option value="">Выберите получателя</option>';
+        for (let m of schoolData.members) {
+            if (m.id !== currentUserId) {
+                select.innerHTML += `<option value="${m.id}">${m.name} (${m.role === 'teacher' ? 'Учитель' : 'Ученик'})</option>`;
+            }
+        }
+    }
+    
+    document.getElementById('chatModal').style.display = 'flex';
+    switchChatTab('general');
+    startChatPolling();
+}
+
+function closeChatModal() {
+    document.getElementById('chatModal').style.display = 'none';
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
+    chatPollingInterval = null;
+}
+
+function startChatPolling() {
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
+    loadChatMessages();
+    chatPollingInterval = setInterval(() => loadChatMessages(), 3000);
+}
+
+async function loadChatMessages() {
+    if (!currentChatSchoolId) return;
+    const container = document.getElementById('chatMessagesContainer');
+    try {
+        let url;
+        if (currentChatTab === 'general') {
+            url = `${API_URL}/api/chat/school/${currentChatSchoolId}/messages`;
+        } else {
+            const recipientId = document.getElementById('privateRecipientId').value;
+            if (!recipientId) {
+                container.innerHTML = '<p>Выберите получателя для личных сообщений.</p>';
+                return;
+            }
+            url = `${API_URL}/api/chat/private/${recipientId}`;
+        }
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const messages = await response.json();
+        
+        container.innerHTML = '';
+        for (let msg of messages) {
+            const isMe = (msg.user_id === currentUserId);
+            const avatarUrl = msg.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+            container.innerHTML += `
+                <div style="margin-bottom: 15px; display: flex; align-items: flex-start; ${isMe ? 'flex-direction: row-reverse;' : ''}">
+                    <img src="${avatarUrl}" style="width: 35px; height: 35px; border-radius: 50%; margin: ${isMe ? '0 0 0 10px' : '0 10px 0 0'}">
+                    <div style="background: ${isMe ? '#667eea' : '#f1f1f1'}; color: ${isMe ? 'white' : 'black'}; padding: 8px 12px; border-radius: 15px; max-width: 70%;">
+                        <div style="font-size: 12px; font-weight: bold;">${escapeHtml(msg.user_name)}</div>
+                        <div>${escapeHtml(msg.message)}</div>
+                        <div style="font-size: 10px; opacity: 0.7;">${new Date(msg.created_at).toLocaleTimeString()}</div>
+                    </div>
+                </div>
+            `;
+        }
+        container.scrollTop = container.scrollHeight;
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message) return;
+    input.value = '';
+    try {
+        let url, body;
+        if (currentChatTab === 'general') {
+            url = `${API_URL}/api/chat/school/${currentChatSchoolId}/send`;
+            body = JSON.stringify({ message });
+        } else {
+            const recipientId = document.getElementById('privateRecipientId').value;
+            if (!recipientId) {
+                alert('Выберите получателя');
+                return;
+            }
+            url = `${API_URL}/api/chat/private/send`;
+            body = JSON.stringify({ recipient_id: parseInt(recipientId), message });
+        }
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: body
+        });
+        if (!response.ok) throw new Error(await response.text());
+        loadChatMessages();
+    } catch (err) {
+        alert('Ошибка отправки: ' + err.message);
+    }
+}
+
+function switchChatTab(tab) {
+    currentChatTab = tab;
+    const generalBtn = document.getElementById('chatTabGeneral');
+    const privateBtn = document.getElementById('chatTabPrivate');
+    const recipientSelect = document.getElementById('chatRecipientSelect');
+    if (tab === 'general') {
+        generalBtn.style.background = '#667eea';
+        generalBtn.style.color = 'white';
+        privateBtn.style.background = '#ccc';
+        privateBtn.style.color = 'black';
+        recipientSelect.style.display = 'none';
+    } else {
+        privateBtn.style.background = '#667eea';
+        privateBtn.style.color = 'white';
+        generalBtn.style.background = '#ccc';
+        generalBtn.style.color = 'black';
+        recipientSelect.style.display = 'block';
+    }
+    loadChatMessages();
+}

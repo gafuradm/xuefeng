@@ -8,11 +8,23 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import json
+from fastapi import Body
 import concurrent.futures
 from datetime import datetime
 import asyncio
 from fastapi.responses import RedirectResponse
-
+from .models import (
+    Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
+    UserCourse, CourseModule, CourseLesson, UserLesson,
+    UserInteraction, UserPerformance, CustomTest,
+    School, SchoolMember, LessonVideo, SchoolChatMessage  # ← добавить
+)
+from .models import (
+    Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
+    UserCourse, CourseModule, CourseLesson, UserLesson,
+    UserInteraction, UserPerformance, CustomTest,
+    School, SchoolMember, LessonVideo
+)
 from .database import engine, get_db
 from .models import (
     Base, User, Session as SessionModel, TestResult, Lesson, ProgressHistory,
@@ -50,6 +62,11 @@ if os.path.exists(frontend_path):
 
 # Инициализация сервиса
 ai_service = AITeacherService()
+
+from pydantic import BaseModel
+
+class AvatarUpdate(BaseModel):
+    avatar_url: str
 
 @app.on_event("startup")
 async def startup_event():
@@ -162,6 +179,14 @@ async def get_session(session_id: int, db: Session = Depends(get_db)):
             for t in test_results
         ]
     }
+
+@app.get("/api/sessions/{session_id}/study_plan")
+async def get_study_plan(session_id: int, db: Session = Depends(get_db)):
+    try:
+        plan = await ai_service.get_study_plan(db, session_id)
+        return plan
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/sessions/{session_id}/progress")
 async def get_progress(session_id: int, db: Session = Depends(get_db)):
@@ -899,3 +924,190 @@ async def conference_teacher_redirect():
 @app.get("/conference/student")
 async def conference_student_redirect():
     return RedirectResponse(url="http://localhost:8000/student")
+
+from .auth import get_password_hash, verify_password, create_access_token, get_current_user
+
+# Регистрация
+@app.post("/api/auth/register")
+async def register(username: str, password: str, name: str, email: str, role: str = "student", db: Session = Depends(get_db)):
+    # Проверка уникальности username
+    existing = db.query(UserAuth).filter(UserAuth.username == username).first()
+    if existing:
+        raise HTTPException(400, "Username already exists")
+    
+    # Создаём пользователя
+    user = User(name=name, email=email, role=role)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    # Создаём аутентификацию
+    user_auth = UserAuth(
+        user_id=user.id,
+        username=username,
+        password_hash=get_password_hash(password),
+        avatar_url=f"https://api.dicebear.com/7.x/avataaars/svg?seed={username}"
+    )
+    db.add(user_auth)
+    db.commit()
+    
+    token = create_access_token(data={"sub": user.id})
+    return {"access_token": token, "token_type": "bearer", "user_id": user.id, "role": user.role, "name": user.name, "avatar_url": user_auth.avatar_url}
+
+# Логин
+@app.post("/api/auth/login")
+async def login(username: str, password: str, db: Session = Depends(get_db)):
+    user_auth = db.query(UserAuth).filter(UserAuth.username == username).first()
+    if not user_auth or not verify_password(password, user_auth.password_hash):
+        raise HTTPException(401, "Неверное имя пользователя или пароль")
+    
+    user = user_auth.user
+    user_auth.last_login = datetime.utcnow()
+    db.commit()
+    
+    token = create_access_token(data={"sub": user.id})
+    return {"access_token": token, "token_type": "bearer", "user_id": user.id, "role": user.role, "name": user.name, "avatar_url": user_auth.avatar_url}
+
+# Получить профиль текущего пользователя
+@app.get("/api/auth/profile")
+async def get_profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_auth = db.query(UserAuth).filter(UserAuth.user_id == current_user.id).first()
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "role": current_user.role,
+        "avatar_url": user_auth.avatar_url if user_auth else None,
+        "username": user_auth.username if user_auth else None
+    }
+
+# Обновить аватар
+@app.post("/api/auth/avatar")
+async def update_avatar(data: AvatarUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_auth = db.query(UserAuth).filter(UserAuth.user_id == current_user.id).first()
+    if user_auth:
+        user_auth.avatar_url = data.avatar_url
+        db.commit()
+    return {"avatar_url": data.avatar_url}
+
+# ========== ЧАТ ШКОЛЫ ==========
+
+# Получить сообщения общего чата школы (последние 50)
+@app.get("/api/chat/school/{school_id}/messages")
+async def get_school_chat_messages(
+    school_id: int,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Проверяем, является ли пользователь участником школы
+    member = db.query(SchoolMember).filter(
+        SchoolMember.school_id == school_id,
+        SchoolMember.user_id == current_user.id
+    ).first()
+    if not member:
+        raise HTTPException(403, "Вы не являетесь участником этой школы")
+    
+    messages = db.query(SchoolChatMessage).filter(
+        SchoolChatMessage.school_id == school_id,
+        SchoolChatMessage.is_private == False
+    ).order_by(SchoolChatMessage.created_at.desc()).limit(limit).all()
+    
+    return [{
+        "id": m.id,
+        "user_id": m.user_id,
+        "user_name": m.user.name,
+        "user_role": m.user.role,
+        "avatar_url": db.query(UserAuth).filter(UserAuth.user_id == m.user_id).first().avatar_url if db.query(UserAuth).filter(UserAuth.user_id == m.user_id).first() else None,
+        "message": m.message,
+        "created_at": m.created_at.isoformat()
+    } for m in reversed(messages)]
+
+# Отправить сообщение в общий чат школы
+@app.post("/api/chat/school/{school_id}/send")
+async def send_school_chat_message(
+    school_id: int,
+    message: str = Body(..., embed=True),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    member = db.query(SchoolMember).filter(
+        SchoolMember.school_id == school_id,
+        SchoolMember.user_id == current_user.id
+    ).first()
+    if not member:
+        raise HTTPException(403, "Вы не являетесь участником этой школы")
+    
+    new_msg = SchoolChatMessage(
+        school_id=school_id,
+        user_id=current_user.id,
+        message=message,
+        is_private=False
+    )
+    db.add(new_msg)
+    db.commit()
+    db.refresh(new_msg)
+    
+    return {"status": "ok", "message_id": new_msg.id}
+
+# Получить личные сообщения между текущим пользователем и указанным пользователем
+@app.get("/api/chat/private/{other_user_id}")
+async def get_private_messages(
+    other_user_id: int,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    messages = db.query(SchoolChatMessage).filter(
+        SchoolChatMessage.is_private == True,
+        ((SchoolChatMessage.user_id == current_user.id) & (SchoolChatMessage.recipient_id == other_user_id)) |
+        ((SchoolChatMessage.user_id == other_user_id) & (SchoolChatMessage.recipient_id == current_user.id))
+    ).order_by(SchoolChatMessage.created_at.desc()).limit(limit).all()
+    
+    other_user = db.query(User).filter(User.id == other_user_id).first()
+    if not other_user:
+        raise HTTPException(404, "Пользователь не найден")
+    
+    return [{
+        "id": m.id,
+        "user_id": m.user_id,
+        "user_name": m.user.name,
+        "message": m.message,
+        "created_at": m.created_at.isoformat()
+    } for m in reversed(messages)]
+
+# Отправить личное сообщение
+@app.post("/api/chat/private/send")
+async def send_private_message(
+    recipient_id: int = Body(...),
+    message: str = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    recipient = db.query(User).filter(User.id == recipient_id).first()
+    if not recipient:
+        raise HTTPException(404, "Получатель не найден")
+    
+    # Проверяем, что оба пользователя состоят в одной школе
+    common_school = db.query(SchoolMember).filter(
+        SchoolMember.user_id == current_user.id
+    ).filter(
+        SchoolMember.school_id.in_(
+            db.query(SchoolMember.school_id).filter(SchoolMember.user_id == recipient_id)
+        )
+    ).first()
+    if not common_school:
+        raise HTTPException(403, "Вы не можете писать этому пользователю (нет общей школы)")
+    
+    new_msg = SchoolChatMessage(
+        school_id=common_school.school_id,
+        user_id=current_user.id,
+        recipient_id=recipient_id,
+        message=message,
+        is_private=True
+    )
+    db.add(new_msg)
+    db.commit()
+    db.refresh(new_msg)
+    
+    return {"status": "ok", "message_id": new_msg.id}

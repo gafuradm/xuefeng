@@ -338,81 +338,74 @@ class DeepSeekClient:
             raise ValueError(f"Не удалось распарсить JSON: {response}")
     
     # --- Генерация долгого плана (минимум 180 дней) ---
-    async def generate_study_plan(self, target_profile: Dict, current_profile: Dict, days: int, exam_details: Dict) -> Dict[str, Any]:
-      # Принудительно делаем план не короче 180 дней
-      if days < 180:
-          days = 180
-      full_course_note = ""
-      if exam_details.get("is_full_course"):
-          full_course_note = "Это полный курс школьной математики (5-11 классы). Разбей материал на модули по классам или крупным темам. Каждый модуль должен заканчиваться тестом с порогом 80%. Уроки должны быть очень подробными, с большим количеством задач."
-      prompt = f"""Ты – методист по математике. Составь детальный план подготовки по математике на {days} дней.
-      {full_course_note}
-      Целевой профиль: {json.dumps(target_profile, ensure_ascii=False)}
-      Текущий профиль: {json.dumps(current_profile, ensure_ascii=False)}
-      Требования:
-      - План должен быть разбит на модули (по 20-30 дней). В каждом модуле перечислите темы.
-      - Ежедневно: теория + практика (20-30 задач).
-      - Промежуточные тесты каждые 5-7 дней с порогом 80%. После теста – день на разбор ошибок.
-      - Интенсивность: 4 часа в день.
-      - Итоговый экзамен в последние 5 дней.
-      Верни ТОЛЬКО JSON, без пояснений. Формат:
-      {{
-        "total_days": {days},
-        "hours_per_day": 4,
-        "schedule": [
-          {{"day": 1, "module": "Алгебра 5-6", "topics": ["Натуральные числа", "Дроби"], "hours": 4, "type": "theory", "tasks": "20 задач на дроби"}},
-          {{"day": 7, "type": "test", "topics": ["Алгебра 5-6"], "description": "Тест 15 вопросов, проходной 80%"}}
-        ],
-        "strategy": "Общая стратегия подготовки"
-      }}"""
-      response = await self.chat_completion([
-          {"role": "system", "content": "Ты методист по подготовке к экзаменам. Отвечай только JSON. Не добавляй никакой текст до или после JSON."},
-          {"role": "user", "content": prompt}
-      ], max_tokens=8000)
-      
-      # Очистка ответа: убираем возможные Markdown-блоки и лишний текст
-      cleaned = response.strip()
-      # Удаляем ```json ... ``` если есть
-      if cleaned.startswith("```json"):
-          cleaned = cleaned[7:]
-      if cleaned.startswith("```"):
-          cleaned = cleaned[3:]
-      if cleaned.endswith("```"):
-          cleaned = cleaned[:-3]
-      cleaned = cleaned.strip()
-      
-      # Пытаемся найти JSON в тексте (на случай, если остался лишний текст)
-      json_match = re.search(r'\{.*\}', cleaned, re.DOTALL)
-      if json_match:
-          cleaned = json_match.group()
-      
-      # Пробуем распарсить
-      try:
-          plan = json.loads(cleaned)
-          # Проверяем наличие обязательных полей
-          if "schedule" not in plan:
-              plan["schedule"] = []
-          if "total_days" not in plan:
-              plan["total_days"] = days
-          if "hours_per_day" not in plan:
-              plan["hours_per_day"] = 4
-          if "strategy" not in plan:
-              plan["strategy"] = "Интенсивный курс с промежуточными тестами."
-          return plan
-      except json.JSONDecodeError as e:
-          print(f"Ошибка парсинга JSON: {e}")
-          print(f"Ответ DeepSeek: {response[:500]}...")
-          # Возвращаем заглушку, чтобы сервер не падал
-          return {
-              "total_days": days,
-              "hours_per_day": 4,
-              "schedule": [
-                  {"day": 1, "type": "theory", "topics": ["Алгебра"], "hours": 4, "tasks": "Изучение основ"},
-                  {"day": 2, "type": "theory", "topics": ["Геометрия"], "hours": 4, "tasks": "Изучение основ"},
-                  {"day": 3, "type": "test", "topics": ["Алгебра", "Геометрия"], "description": "Тест"}
-              ],
-              "strategy": "План создан автоматически из-за ошибки генерации."
-          }
+    async def generate_study_plan(self, target_profile: Dict, current_profile: Dict, days: int, weak_topics: List[str], exam_details: Dict) -> Dict[str, Any]:
+        # Принудительно делаем план не короче 7 дней и не длиннее 365
+        days = max(7, min(days, 365))
+        full_course_note = ""
+        if exam_details.get("is_full_course"):
+            full_course_note = "Это полный курс. Разбей материал на модули по крупным темам."
+        weak_topics_str = ", ".join(weak_topics) if weak_topics else "нет явно выделенных"
+        prompt = f"""
+    Ты – методист по подготовке к экзаменам. Составь детальный план подготовки на {days} дней.
+    {full_course_note}
+    Слабые темы ученика: {weak_topics_str}
+    Целевой профиль: {json.dumps(target_profile, ensure_ascii=False)}
+    Текущий профиль: {json.dumps(current_profile, ensure_ascii=False)}
+    Требования:
+    - План должен быть разбит на дни. В каждый день укажи темы для изучения (не более 2-3 тем в день).
+    - Включи дни для повторения (каждые 5-7 дней) и тестирования.
+    - Интенсивность: 3-4 часа в день.
+    - В конце оставь 5 дней на итоговое повторение и пробный экзамен.
+    Верни ТОЛЬКО JSON, без пояснений. Формат:
+    {{
+    "total_days": {days},
+    "hours_per_day": 4,
+    "schedule": [
+        {{"day": 1, "topics": ["Тема1", "Тема2"], "type": "theory", "hours": 3, "tasks": "описание задач"}},
+        {{"day": 7, "type": "review", "topics": ["Тема1"], "hours": 2, "description": "повторение"}},
+        {{"day": 14, "type": "test", "topics": ["все пройденные"], "description": "тест 15 вопросов"}}
+    ],
+    "strategy": "Общая стратегия подготовки"
+    }}
+    """
+        response = await self.chat_completion([
+            {"role": "system", "content": "Ты методист по подготовке к экзаменам. Отвечай только JSON. Не добавляй никакой текст до или после JSON."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=4000)
+        cleaned = response.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        if cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+        json_match = re.search(r'\{.*\}', cleaned, re.DOTALL)
+        if json_match:
+            cleaned = json_match.group()
+        try:
+            plan = json.loads(cleaned)
+            if "schedule" not in plan:
+                plan["schedule"] = []
+            if "total_days" not in plan:
+                plan["total_days"] = days
+            if "hours_per_day" not in plan:
+                plan["hours_per_day"] = 4
+            if "strategy" not in plan:
+                plan["strategy"] = "Интенсивный курс с промежуточными тестами."
+            return plan
+        except json.JSONDecodeError as e:
+            print(f"Ошибка парсинга JSON: {e}")
+            print(f"Ответ DeepSeek: {response[:500]}...")
+            return {
+                "total_days": days,
+                "hours_per_day": 4,
+                "schedule": [
+                    {"day": 1, "type": "theory", "topics": ["Основные темы"], "hours": 4, "tasks": "Изучение основ"},
+                    {"day": days-2, "type": "test", "topics": ["Все темы"], "description": "Итоговый тест"}
+                ],
+                "strategy": "План создан автоматически."
+            }
     
     # --- Генерация глубокого урока (Khan Academy style) ---
     # backend/app/deepseek_client.py - метод generate_lesson_with_examples
