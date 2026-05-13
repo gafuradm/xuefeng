@@ -1,0 +1,838 @@
+{
+  "metadata": {
+    "title": "标准教程 HSK 3",
+    "subtitle": "STANDARD COURSE HSK 3",
+    "total_pages": 199,
+    "language": "ru",
+    "source": "hsk3.pdf"
+  },
+  "contents": [
+    {
+      "page": 2,
+      "section": "目录",
+      "type": "table_of_contents",
+      "lessons": [
+        {
+          "lesson_number": 1,
+          "title": "周末你有什么打算",
+          "title_en": "What's your plan for the weekend",
+          "page": 1,
+          "vocabulary": ["周末", "打算", "啊", "跟", "一直", "游戏", "作业", "着急", "复习", "南方", "北方", "面包", "带", "地图", "搬", "小丽", "小刚"],
+          "notes": [
+            "结果补语“好”",
+            "“一……也/都+不/没……”表示否定",
+            "连词“那”"
+          ]
+        },
+        {
+          "lesson_number": 2,
+          "title": "他什么时候回来",
+          "title_en": "When will he come back",
+          "page": 11,
+          "vocabulary": ["腿", "疼", "脚", "树", "容易", "难", "太太", "秘书", "经理", "办公室", "辆", "楼", "拿", "把", "伞", "胖", "其实", "瘦", "周", "周明"],
+          "notes": [
+            "简单趋向补语",
+            "两个动作连续发生：V₁了……就V₂……",
+            "反问的表达：能……吗？"
+          ]
+        },
+        {
+          "lesson_number": 3,
+          "title": "桌子上放着很多饮料",
+          "title_en": "There are plenty of drinks on the table",
+          "page": 20,
+          "vocabulary": ["还是", "爬山", "小心", "条", "裤子", "记得", "衬衫", "元", "新鲜", "甜", "只", "放", "饮料", "或者", "舒服", "花", "绿"],
+          "notes": [
+            "“还是”和“或者”",
+            "存在的表达：Location Word + V着 + Numeral + Measure Word + N",
+            "“会”表示可能"
+          ]
+        },
+        {
+          "lesson_number": 4,
+          "title": "她总是笑着跟客人说话",
+          "title_en": "She always smiles when talking to customers",
+          "page": 29,
+          "vocabulary": ["比赛", "照片", "年级", "又", "聪明", "热情", "努力", "总是", "回答", "站", "饿", "超市", "蛋糕", "年轻", "认真", "客人", "小明", "马可", "李小美"],
+          "notes": [
+            "又……又……",
+            "动作的伴随：V₁着 (O₁) + V₂ (O₂)"
+          ]
+        },
+        {
+          "lesson_number": 5,
+          "title": "我最近越来越胖了",
+          "title_en": "I am getting fatter and fatter lately",
+          "page": 37,
+          "vocabulary": ["发烧", "为", "照顾", "用", "感冒", "季节", "当然", "春天", "草", "夏天", "裙子", "最近", "越", "张"],
+          "notes": [
+            "“了”表示变化",
+            "越来越 + Adj / Mental V"
+          ]
+        },
+        {
+          "lesson_number": 6,
+          "title": "怎么突然找不到了",
+          "title_en": "Why are they suddenly missing",
+          "page": 46,
+          "vocabulary": ["眼镜", "突然", "离开", "清楚", "刚才", "帮忙", "特别", "讲", "明白", "锻炼", "音乐", "公园", "聊天儿", "睡着", "更", "史"],
+          "notes": [
+            "可能补语: V得/不 + Complements of Possibility",
+            "“呢”询问处所: “N+呢”",
+            "“刚”和“刚才”"
+          ]
+        },
+        {
+          "lesson_number": 7,
+          "title": "我跟她都认识五年了",
+          "title_en": "I've known her for five years",
+          "page": 55,
+          "vocabulary": ["同事", "以前", "银行", "久", "感兴趣", "结婚", "欢迎", "迟到", "半", "接", "刻", "差"],
+          "notes": [
+            "时段的表达",
+            "表达兴趣",
+            "用“半”“刻”“差”表示时间"
+          ]
+        },
+        {
+          "lesson_number": 8,
+          "title": "你去哪儿我就去哪儿",
+          "title_en": "I'll go wherever you go",
+          "page": 64,
+          "vocabulary": ["又", "满意", "电梯", "层", "害怕", "熊猫", "见面", "安静", "可乐", "一会儿", "马上", "洗手间", "老", "几乎", "变化", "健康", "重要"],
+          "notes": [
+            "“又”和“再”",
+            "疑问代词活用1"
+          ]
+        },
+        {
+          "lesson_number": 9,
+          "title": "她的汉语说得跟中国人一样好",
+          "title_en": "She speaks Chinese like a native",
+          "page": 72,
+          "vocabulary": ["中文", "班", "一样", "最后", "放心", "一定", "担心", "比较", "了解", "先", "中间", "参加", "影响"],
+          "notes": [
+            "越A越B",
+            "比较句1: A跟B一样 (+Adj)"
+          ]
+        },
+        {
+          "lesson_number": 10,
+          "title": "数学比历史难多了",
+          "title_en": "Maths is much harder than history",
+          "page": 81,
+          "vocabulary": ["个子", "矮", "历史", "体育", "数学", "方便", "自行车", "骑", "旧", "换", "地方", "中介", "主要", "环境", "附近"],
+          "notes": [
+            "比较句2: A比B + Adj + 一点儿/一些/得多/多了",
+            "概数的表达1"
+          ]
+        },
+        {
+          "lesson_number": 11,
+          "title": "别忘了把空调关了",
+          "title_en": "Don't forget to turn off the air conditioner",
+          "page": 90,
+          "vocabulary": ["图书馆", "借", "词典", "还", "灯", "会议", "结束", "忘记", "空调", "关", "地铁", "双", "筷子", "啤酒", "口", "瓶子", "笔记本电脑", "电子邮件", "习惯"],
+          "notes": [
+            "“把”字句1: A把B+V+……",
+            "概数的表达2: 左右"
+          ]
+        },
+        {
+          "lesson_number": 12,
+          "title": "把重要的东西放在我这儿吧",
+          "title_en": "Leave the important items with me",
+          "page": 98,
+          "vocabulary": ["太阳", "西", "生气", "行李箱", "自己", "包", "发现", "护照", "起飞", "司机", "教", "画", "需要", "黑板"],
+          "notes": [
+            "“才”和“就”",
+            "“把”字句2: A把B+V+在/到/给……"
+          ]
+        },
+        {
+          "lesson_number": 13,
+          "title": "我是走回来的",
+          "title_en": "I walked back",
+          "page": 107,
+          "vocabulary": ["终于", "爷爷", "礼物", "奶奶", "遇到", "一边", "过去", "一般", "愿意", "起来", "应该", "生活", "校长", "坏", "经常"],
+          "notes": [
+            "复合趋向补语",
+            "一边……一边……"
+          ]
+        },
+        {
+          "lesson_number": 14,
+          "title": "你把水果拿过来",
+          "title_en": "Please bring the fruit here",
+          "page": 116,
+          "vocabulary": ["打扫", "干净", "然后", "冰箱", "洗澡", "节目", "月亮", "像", "盘子", "刮风", "叔叔", "阿姨", "故事", "声音", "菜单", "简单", "香蕉"],
+          "notes": [
+            "“把”字句3: A把B+V+结果补语/趋向补语",
+            "先……，再/又……，然后……"
+          ]
+        },
+        {
+          "lesson_number": 15,
+          "title": "其他都没什么问题",
+          "title_en": "The rest of them are all OK",
+          "page": 125,
+          "vocabulary": ["留学", "水平", "提高", "练习", "完成", "句子", "其他", "发", "要求", "注意", "上网", "除了", "新闻", "花", "极了", "节日", "举行", "世界", "街道", "各", "文化", "小云"],
+          "notes": [
+            "除了……以外，都/还/也……",
+            "疑问代词活用2",
+            "程度的表达：极了"
+          ]
+        },
+        {
+          "lesson_number": 16,
+          "title": "我现在累得下了班就想睡觉",
+          "title_en": "I am so tired that I want to do nothing but sleep after work",
+          "page": 135,
+          "vocabulary": ["城市", "如果", "认为", "皮鞋", "帽子", "长", "可爱", "米", "公斤", "鼻子", "头发", "检查", "刷牙", "关系", "别人", "词语"],
+          "notes": [
+            "如果……（的话），（S）就……",
+            "复杂的状态补语",
+            "单音节形容词重叠"
+          ]
+        },
+        {
+          "lesson_number": 17,
+          "title": "谁都有办法看好你的“病”",
+          "title_en": "Everybody is able to cure your 'disease'",
+          "page": 143,
+          "vocabulary": ["请假", "一共", "邻居", "后来", "爱好", "办法", "饱", "为了", "决定", "选择", "冬天", "必须", "根据", "情况", "口", "渴"],
+          "notes": [
+            "双音节动词重叠",
+            "疑问代词活用3"
+          ]
+        },
+        {
+          "lesson_number": 18,
+          "title": "我相信他们会同意的",
+          "title_en": "I believe they'll agree",
+          "page": 151,
+          "vocabulary": ["向", "万", "只", "嘴", "动物", "段", "不但……而且……", "有名", "同意", "相信", "关于", "机会", "国家", "种", "特点", "奇怪", "地"],
+          "notes": [
+            "只要……就……",
+            "介词“关于”"
+          ]
+        },
+        {
+          "lesson_number": 19,
+          "title": "你没看出来吗",
+          "title_en": "Didn't you recognise him",
+          "page": 159,
+          "vocabulary": ["耳朵", "脸", "短", "马", "张", "位", "蓝", "秋天", "过", "鸟", "哭", "黄河", "船", "经过"],
+          "notes": [
+            "趋向补语的引申义",
+            "“使”“叫”“让”"
+          ]
+        },
+        {
+          "lesson_number": 20,
+          "title": "我被他影响了",
+          "title_en": "I've been influenced by him",
+          "page": 168,
+          "vocabulary": ["照相机", "被", "难过", "东", "信用卡", "关心", "只有……才……", "成绩", "碗", "分", "解决", "试", "真正", "多么"],
+          "notes": [
+            "“被”字句",
+            "只有……才……"
+          ]
+        }
+      ],
+      "culture_sections": [
+        {
+          "title": "中国有什么传统运动",
+          "title_en": "Traditional Sports in China",
+          "page": 54
+        },
+        {
+          "title": "中国人结婚时穿什么",
+          "title_en": "What Chinese People Wear on Their Wedding Days",
+          "page": 89
+        },
+        {
+          "title": "中国人什么礼物不能送",
+          "title_en": "Taboo Gifts in China",
+          "page": 177
+        },
+        {
+          "title": "中国人过生日吃什么",
+          "title_en": "What Food Chinese People Eat on Their Birthdays",
+          "page": 143
+        }
+      ],
+      "common_sayings": [
+        {
+          "saying": "不到长城非好汉",
+          "pinyin": "Bú dào Chángchéng fēi hǎohàn",
+          "translation": "He who has never been to the Great Wall is not a true man",
+          "page": 19
+        },
+        {
+          "saying": "饭后百步走，活到九十九",
+          "pinyin": "Fàn hòu bǎi bù zǒu, huó dào jiǔ shí jiǔ",
+          "translation": "A walk after dinner makes one live to 99",
+          "page": 28
+        },
+        {
+          "saying": "茶好客常来",
+          "pinyin": "Chá hǎo kè cháng lái",
+          "translation": "Good tea attracts frequenters",
+          "page": 37
+        },
+        {
+          "saying": "五十步笑百步",
+          "pinyin": "Wǔshí bù xiào bǎi bù",
+          "translation": "The one who retreated 50 steps laughs at the one who retreated 100",
+          "page": 45
+        },
+        {
+          "saying": "药到病除",
+          "pinyin": "Yào dào bìng chú",
+          "translation": "The minute the medicine is used, the disease is cured",
+          "page": 53
+        },
+        {
+          "saying": "万事开头难",
+          "pinyin": "Wàn shì kāitóu nán",
+          "translation": "The first step is always the hardest",
+          "page": 63
+        },
+        {
+          "saying": "一步走错步步错",
+          "pinyin": "Yí bù zǒu cuò bù bù cuò",
+          "translation": "One wrong move makes all moves wrong",
+          "page": 72
+        },
+        {
+          "saying": "站得高，看得远",
+          "pinyin": "Zhàn de gāo, kàn de yuǎn",
+          "translation": "The higher you stand, the farther you'll see",
+          "page": 80
+        },
+        {
+          "saying": "三人行，必有我师",
+          "pinyin": "Sān rén xíng, bì yǒu wǒ shī",
+          "translation": "When I walk with two others, there must be one whom I can learn from",
+          "page": 89
+        },
+        {
+          "saying": "不可同日而语",
+          "pinyin": "Bù kě tóng rì ér yǔ",
+          "translation": "The two cannot be mentioned in the same breath",
+          "page": 97
+        },
+        {
+          "saying": "贵人多忘事",
+          "pinyin": "Guìrén duō wàng shì",
+          "translation": "Great wits have short memories",
+          "page": 106
+        },
+        {
+          "saying": "习惯成自然",
+          "pinyin": "Xíguàn chéng zìrán",
+          "translation": "Habit is a second nature",
+          "page": 115
+        },
+        {
+          "saying": "礼轻情意重",
+          "pinyin": "Lǐ qīng qíngyì zhòng",
+          "translation": "Small as it is, the gift conveys deep affection",
+          "page": 124
+        },
+        {
+          "saying": "先到先得",
+          "pinyin": "Xiān dào xiān dé",
+          "translation": "First come, first served",
+          "page": 133
+        },
+        {
+          "saying": "一是一，二是二",
+          "pinyin": "Yī shì yī, èr shì èr",
+          "translation": "Call a spade a spade",
+          "page": 142
+        },
+        {
+          "saying": "钱不是万能的",
+          "pinyin": "Qián bú shì wàn néng de",
+          "translation": "Money is not omnipotent",
+          "page": 151
+        },
+        {
+          "saying": "早睡早起身体好",
+          "pinyin": "Zǎo shuì zǎo qǐ shēntǐ hǎo",
+          "translation": "Keeping early hours is good for your health",
+          "page": 159
+        },
+        {
+          "saying": "见怪不怪",
+          "pinyin": "Jiàn guài bú guài",
+          "translation": "One has become inured to the unusual",
+          "page": 167
+        },
+        {
+          "saying": "百闻不如一见",
+          "pinyin": "Bǎi wén bù rú yí jiàn",
+          "translation": "To see something once is better than to hear about it a hundred times",
+          "page": 176
+        },
+        {
+          "saying": "车到山前必有路",
+          "pinyin": "Chē dào shān qián bì yǒu lù",
+          "translation": "The cart will find its way round the hill when it gets there",
+          "page": 185
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "section": "汉字知识",
+      "character_notes": [
+        {
+          "type": "指事字",
+          "description": "Self-Explanatory Characters",
+          "examples": ["一", "二", "三", "上", "下", "本", "末"],
+          "page": 3
+        },
+        {
+          "type": "会意字",
+          "description": "Associative Compounds",
+          "examples": ["明", "休", "从", "看"],
+          "page": 3
+        },
+        {
+          "type": "形声字1",
+          "description": "Pictophonetic Characters 1 (左右结构)",
+          "subtypes": [
+            {
+              "name": "左形右声",
+              "examples": [
+                {"character": "妈", "phonetic": "马", "semantic": "女"},
+                {"character": "住", "phonetic": "主", "semantic": "亻"}
+              ]
+            },
+            {
+              "name": "右形左声",
+              "examples": [
+                {"character": "放", "phonetic": "方", "semantic": "攵"},
+                {"character": "邻", "phonetic": "令", "semantic": "阝"}
+              ]
+            }
+          ],
+          "page": 87
+        },
+        {
+          "type": "形声字2",
+          "description": "Pictophonetic Characters 2 (上下结构)",
+          "subtypes": [
+            {
+              "name": "上形下声",
+              "examples": [
+                {"character": "爸", "phonetic": "巴", "semantic": "父"},
+                {"character": "苹", "phonetic": "平", "semantic": "艹"}
+              ]
+            },
+            {
+              "name": "下形上声",
+              "examples": [
+                {"character": "想", "phonetic": "相", "semantic": "心"},
+                {"character": "努", "phonetic": "奴", "semantic": "力"}
+              ]
+            }
+          ],
+          "page": 122
+        },
+        {
+          "type": "形声字3",
+          "description": "Pictophonetic Characters 3 (内外结构)",
+          "subtypes": [
+            {
+              "name": "外形内声",
+              "examples": [
+                {"character": "园", "phonetic": "元", "semantic": "囗"},
+                {"character": "病", "phonetic": "丙", "semantic": "疒"}
+              ]
+            },
+            {
+              "name": "内形外声",
+              "examples": [
+                {"character": "问", "phonetic": "门", "semantic": "口"},
+                {"character": "闻", "phonetic": "门", "semantic": "耳"}
+              ]
+            }
+          ],
+          "page": 158
+        }
+      ]
+    },
+    {
+      "page": "187-197",
+      "section": "词语总表",
+      "vocabulary": [
+        { "word": "阿姨", "pinyin": "āyí", "part_of_speech": "n.", "meaning": "aunt", "lesson": 14 },
+        { "word": "啊", "pinyin": "a", "part_of_speech": "part.", "meaning": "used at the end of a sentence to indicate confirmation or defense", "lesson": 1 },
+        { "word": "矮", "pinyin": "ǎi", "part_of_speech": "adj.", "meaning": "short", "lesson": 10 },
+        { "word": "爱好", "pinyin": "àihào", "part_of_speech": "n.", "meaning": "hobby, interest", "lesson": 17 },
+        { "word": "安静", "pinyin": "ānjìng", "part_of_speech": "adj.", "meaning": "quiet", "lesson": 8 },
+        { "word": "把", "pinyin": "bǎ", "part_of_speech": "m.", "meaning": "used for things with a handle", "lesson": 2 },
+        { "word": "班", "pinyin": "bān", "part_of_speech": "n.", "meaning": "class", "lesson": 9 },
+        { "word": "搬", "pinyin": "bān", "part_of_speech": "v.", "meaning": "to move, to carry", "lesson": 1 },
+        { "word": "办法", "pinyin": "bànfǎ", "part_of_speech": "n.", "meaning": "way, approach", "lesson": 17 },
+        { "word": "办公室", "pinyin": "bàngōngshì", "part_of_speech": "n.", "meaning": "office", "lesson": 2 },
+        { "word": "半", "pinyin": "bàn", "part_of_speech": "num.", "meaning": "half", "lesson": 7 },
+        { "word": "帮忙", "pinyin": "bāng máng", "part_of_speech": "v.", "meaning": "to help", "lesson": 6 },
+        { "word": "包", "pinyin": "bāo", "part_of_speech": "n.", "meaning": "bag, sack", "lesson": 12 },
+        { "word": "饱", "pinyin": "bǎo", "part_of_speech": "adj.", "meaning": "full, having eaten one's fill", "lesson": 17 },
+        { "word": "北方", "pinyin": "běifāng", "part_of_speech": "n.", "meaning": "north, northern part", "lesson": 1 },
+        { "word": "被", "pinyin": "bèi", "part_of_speech": "prep.", "meaning": "used to indicate the passive voice", "lesson": 20 },
+        { "word": "鼻子", "pinyin": "bízi", "part_of_speech": "n.", "meaning": "nose", "lesson": 16 },
+        { "word": "比较", "pinyin": "bǐjiào", "part_of_speech": "adv.", "meaning": "fairly, rather", "lesson": 9 },
+        { "word": "比赛", "pinyin": "bǐsài", "part_of_speech": "n.", "meaning": "match, competition", "lesson": 4 },
+        { "word": "笔记本(电脑)", "pinyin": "bǐjìběn(diànnǎo)", "part_of_speech": "n.", "meaning": "notebook, laptop", "lesson": 11 },
+        { "word": "必须", "pinyin": "bìxū", "part_of_speech": "adv.", "meaning": "must", "lesson": 17 },
+        { "word": "变化", "pinyin": "biànhuà", "part_of_speech": "v.", "meaning": "to change", "lesson": 8 },
+        { "word": "别人", "pinyin": "biérén", "part_of_speech": "n.", "meaning": "other people", "lesson": 16 },
+        { "word": "冰箱", "pinyin": "bīngxiāng", "part_of_speech": "n.", "meaning": "refrigerator", "lesson": 14 },
+        { "word": "不但……而且……", "pinyin": "búdàn……érqiě……", "part_of_speech": "conj.", "meaning": "not only… but also…", "lesson": 18 },
+        { "word": "菜单", "pinyin": "càidān", "part_of_speech": "n.", "meaning": "menu", "lesson": 14 },
+        { "word": "参加", "pinyin": "cānjiā", "part_of_speech": "v.", "meaning": "to participate", "lesson": 9 },
+        { "word": "草", "pinyin": "cǎo", "part_of_speech": "n.", "meaning": "grass", "lesson": 5 },
+        { "word": "层", "pinyin": "céng", "part_of_speech": "m.", "meaning": "used for floors", "lesson": 8 },
+        { "word": "差", "pinyin": "chà", "part_of_speech": "v.", "meaning": "to fall short of", "lesson": 7 },
+        { "word": "超市", "pinyin": "chāoshì", "part_of_speech": "n.", "meaning": "supermarket", "lesson": 4 },
+        { "word": "衬衫", "pinyin": "chènshān", "part_of_speech": "n.", "meaning": "shirt", "lesson": 3 },
+        { "word": "成绩", "pinyin": "chéngjì", "part_of_speech": "n.", "meaning": "grade, performance, achievement", "lesson": 20 },
+        { "word": "城市", "pinyin": "chéngshì", "part_of_speech": "n.", "meaning": "city", "lesson": 16 },
+        { "word": "迟到", "pinyin": "chídào", "part_of_speech": "v.", "meaning": "to be late", "lesson": 7 },
+        { "word": "除了", "pinyin": "chúle", "part_of_speech": "prep.", "meaning": "other than", "lesson": 15 },
+        { "word": "船", "pinyin": "chuán", "part_of_speech": "n.", "meaning": "boat, ship", "lesson": 19 },
+        { "word": "春天", "pinyin": "chūntiān", "part_of_speech": "n.", "meaning": "spring", "lesson": 5 },
+        { "word": "词典", "pinyin": "cídiǎn", "part_of_speech": "n.", "meaning": "dictionary", "lesson": 11 },
+        { "word": "聪明", "pinyin": "cōngming", "part_of_speech": "adj.", "meaning": "clever, smart", "lesson": 4 },
+        { "word": "打扫", "pinyin": "dǎsǎo", "part_of_speech": "v.", "meaning": "to clean, to sweep", "lesson": 14 },
+        { "word": "打算", "pinyin": "dǎsuàn", "part_of_speech": "n./v.", "meaning": "plan; to intend", "lesson": 1 },
+        { "word": "带", "pinyin": "dài", "part_of_speech": "v.", "meaning": "to take along, to bring", "lesson": 1 },
+        { "word": "担心", "pinyin": "dān xīn", "part_of_speech": "v.", "meaning": "to worry", "lesson": 9 },
+        { "word": "蛋糕", "pinyin": "dàngāo", "part_of_speech": "n.", "meaning": "cake", "lesson": 4 },
+        { "word": "当然", "pinyin": "dāngrán", "part_of_speech": "adv.", "meaning": "of course", "lesson": 5 },
+        { "word": "地", "pinyin": "de", "part_of_speech": "part.", "meaning": "used to connect an adverbial modifier and the verb it modifies", "lesson": 18 },
+        { "word": "灯", "pinyin": "dēng", "part_of_speech": "n.", "meaning": "light, lamp", "lesson": 11 },
+        { "word": "地方", "pinyin": "dìfang", "part_of_speech": "n.", "meaning": "place", "lesson": 10 },
+        { "word": "地铁", "pinyin": "dìtiě", "part_of_speech": "n.", "meaning": "subway", "lesson": 11 },
+        { "word": "地图", "pinyin": "dìtú", "part_of_speech": "n.", "meaning": "map", "lesson": 1 },
+        { "word": "电梯", "pinyin": "diàntī", "part_of_speech": "n.", "meaning": "elevator", "lesson": 8 },
+        { "word": "电子邮件", "pinyin": "diànzǐ yóujiàn", "part_of_speech": "n.", "meaning": "e-mail", "lesson": 11 },
+        { "word": "东", "pinyin": "dōng", "part_of_speech": "n.", "meaning": "east", "lesson": 20 },
+        { "word": "冬天", "pinyin": "dōngtiān", "part_of_speech": "n.", "meaning": "winter", "lesson": 17 },
+        { "word": "动物", "pinyin": "dòngwù", "part_of_speech": "n.", "meaning": "animal", "lesson": 18 },
+        { "word": "短", "pinyin": "duǎn", "part_of_speech": "adj.", "meaning": "short", "lesson": 19 },
+        { "word": "段", "pinyin": "duàn", "part_of_speech": "m.", "meaning": "used for sections or periods", "lesson": 18 },
+        { "word": "锻炼", "pinyin": "duànliàn", "part_of_speech": "v.", "meaning": "to do physical exercise", "lesson": 6 },
+        { "word": "多么", "pinyin": "duōme", "part_of_speech": "adv.", "meaning": "very, to a great extent", "lesson": 20 },
+        { "word": "饿", "pinyin": "è", "part_of_speech": "adj.", "meaning": "hungry", "lesson": 4 },
+        { "word": "耳朵", "pinyin": "ěrduo", "part_of_speech": "n.", "meaning": "ear", "lesson": 19 },
+        { "word": "发", "pinyin": "fā", "part_of_speech": "v.", "meaning": "to send", "lesson": 15 },
+        { "word": "发烧", "pinyin": "fā shāo", "part_of_speech": "v.", "meaning": "to have a fever", "lesson": 5 },
+        { "word": "发现", "pinyin": "fāxiàn", "part_of_speech": "v.", "meaning": "to discover", "lesson": 12 },
+        { "word": "方便", "pinyin": "fāngbiàn", "part_of_speech": "adj.", "meaning": "convenient", "lesson": 10 },
+        { "word": "放", "pinyin": "fàng", "part_of_speech": "v.", "meaning": "to put, to place", "lesson": 3 },
+        { "word": "放心", "pinyin": "fàng xīn", "part_of_speech": "v.", "meaning": "to ease one's mind, to rest assured", "lesson": 9 },
+        { "word": "分", "pinyin": "fēn", "part_of_speech": "v.", "meaning": "to distinguish", "lesson": 20 },
+        { "word": "附近", "pinyin": "fùjìn", "part_of_speech": "n.", "meaning": "nearby, vicinity", "lesson": 10 },
+        { "word": "复习", "pinyin": "fùxí", "part_of_speech": "v.", "meaning": "to review", "lesson": 1 },
+        { "word": "干净", "pinyin": "gānjìng", "part_of_speech": "adj.", "meaning": "clean", "lesson": 14 },
+        { "word": "感冒", "pinyin": "gǎnmào", "part_of_speech": "v.", "meaning": "to catch a cold", "lesson": 5 },
+        { "word": "感兴趣", "pinyin": "gǎn xìngqù", "part_of_speech": "phrase", "meaning": "to be interested in", "lesson": 7 },
+        { "word": "刚才", "pinyin": "gāngcái", "part_of_speech": "n.", "meaning": "just now", "lesson": 6 },
+        { "word": "个子", "pinyin": "gèzi", "part_of_speech": "n.", "meaning": "height, stature", "lesson": 10 },
+        { "word": "根据", "pinyin": "gēnjù", "part_of_speech": "prep.", "meaning": "according to, based on", "lesson": 17 },
+        { "word": "跟", "pinyin": "gēn", "part_of_speech": "prep.", "meaning": "with", "lesson": 1 },
+        { "word": "更", "pinyin": "gèng", "part_of_speech": "adv.", "meaning": "more, even more", "lesson": 6 },
+        { "word": "公斤", "pinyin": "gōngjīn", "part_of_speech": "n.", "meaning": "kilogramme", "lesson": 16 },
+        { "word": "公园", "pinyin": "gōngyuán", "part_of_speech": "n.", "meaning": "park", "lesson": 6 },
+        { "word": "故事", "pinyin": "gùshi", "part_of_speech": "n.", "meaning": "story", "lesson": 14 },
+        { "word": "刮风", "pinyin": "guā fēng", "part_of_speech": "v.", "meaning": "to be windy", "lesson": 14 },
+        { "word": "关", "pinyin": "guān", "part_of_speech": "v.", "meaning": "to turn off, to close", "lesson": 11 },
+        { "word": "关系", "pinyin": "guānxi", "part_of_speech": "n.", "meaning": "relationship", "lesson": 16 },
+        { "word": "关心", "pinyin": "guānxīn", "part_of_speech": "v.", "meaning": "to care for, to be interested in", "lesson": 20 },
+        { "word": "关于", "pinyin": "guānyú", "part_of_speech": "prep.", "meaning": "about, regarding", "lesson": 18 },
+        { "word": "国家", "pinyin": "guójiā", "part_of_speech": "n.", "meaning": "country, nation", "lesson": 18 },
+        { "word": "过", "pinyin": "guò", "part_of_speech": "v.", "meaning": "to spend, to pass", "lesson": 19 },
+        { "word": "过去", "pinyin": "guòqù", "part_of_speech": "n.", "meaning": "past", "lesson": 13 },
+        { "word": "还是", "pinyin": "háishi", "part_of_speech": "conj.", "meaning": "or", "lesson": 3 },
+        { "word": "害怕", "pinyin": "hàipà", "part_of_speech": "v.", "meaning": "to be afraid, to be scared", "lesson": 8 },
+        { "word": "黑板", "pinyin": "hēibǎn", "part_of_speech": "n.", "meaning": "blackboard", "lesson": 12 },
+        { "word": "后来", "pinyin": "hòulái", "part_of_speech": "n.", "meaning": "later, afterwards", "lesson": 17 },
+        { "word": "护照", "pinyin": "hùzhào", "part_of_speech": "n.", "meaning": "passport", "lesson": 12 },
+        { "word": "花", "pinyin": "huā", "part_of_speech": "n.", "meaning": "flower", "lesson": 3 },
+        { "word": "花", "pinyin": "huā", "part_of_speech": "v.", "meaning": "to spend", "lesson": 15 },
+        { "word": "画", "pinyin": "huà", "part_of_speech": "v./n.", "meaning": "to draw, to paint; drawing, painting", "lesson": 12 },
+        { "word": "坏", "pinyin": "huài", "part_of_speech": "adj.", "meaning": "broken, ruined", "lesson": 13 },
+        { "word": "欢迎", "pinyin": "huānyíng", "part_of_speech": "v.", "meaning": "to welcome", "lesson": 7 },
+        { "word": "还", "pinyin": "huán", "part_of_speech": "v.", "meaning": "to return", "lesson": 11 },
+        { "word": "环境", "pinyin": "huánjìng", "part_of_speech": "n.", "meaning": "environment", "lesson": 10 },
+        { "word": "换", "pinyin": "huàn", "part_of_speech": "v.", "meaning": "to change, to substitute", "lesson": 10 },
+        { "word": "回答", "pinyin": "huídá", "part_of_speech": "v.", "meaning": "to answer", "lesson": 4 },
+        { "word": "会议", "pinyin": "huìyì", "part_of_speech": "n.", "meaning": "meeting, conference", "lesson": 11 },
+        { "word": "或者", "pinyin": "huòzhě", "part_of_speech": "conj.", "meaning": "or", "lesson": 3 },
+        { "word": "几乎", "pinyin": "jīhū", "part_of_speech": "adv.", "meaning": "almost", "lesson": 8 },
+        { "word": "机会", "pinyin": "jīhuì", "part_of_speech": "n.", "meaning": "opportunity", "lesson": 18 },
+        { "word": "极了", "pinyin": "jí le", "part_of_speech": "adv.", "meaning": "extremely", "lesson": 15 },
+        { "word": "记得", "pinyin": "jìde", "part_of_speech": "v.", "meaning": "to remember", "lesson": 3 },
+        { "word": "季节", "pinyin": "jìjié", "part_of_speech": "n.", "meaning": "season", "lesson": 5 },
+        { "word": "检查", "pinyin": "jiǎnchá", "part_of_speech": "v.", "meaning": "to check, to examine", "lesson": 16 },
+        { "word": "简单", "pinyin": "jiǎndān", "part_of_speech": "adj.", "meaning": "simple", "lesson": 14 },
+        { "word": "见面", "pinyin": "jiàn miàn", "part_of_speech": "v.", "meaning": "to meet", "lesson": 8 },
+        { "word": "健康", "pinyin": "jiànkāng", "part_of_speech": "adj.", "meaning": "healthy", "lesson": 8 },
+        { "word": "讲", "pinyin": "jiǎng", "part_of_speech": "v.", "meaning": "to explain", "lesson": 6 },
+        { "word": "教", "pinyin": "jiāo", "part_of_speech": "v.", "meaning": "to teach", "lesson": 12 },
+        { "word": "脚", "pinyin": "jiǎo", "part_of_speech": "n.", "meaning": "foot", "lesson": 2 },
+        { "word": "接", "pinyin": "jiē", "part_of_speech": "v.", "meaning": "to meet (sb.), to pick up (sb.)", "lesson": 7 },
+        { "word": "街道", "pinyin": "jiēdào", "part_of_speech": "n.", "meaning": "street", "lesson": 15 },
+        { "word": "节目", "pinyin": "jiémù", "part_of_speech": "n.", "meaning": "programme", "lesson": 14 },
+        { "word": "节日", "pinyin": "jiérì", "part_of_speech": "n.", "meaning": "festival", "lesson": 15 },
+        { "word": "结婚", "pinyin": "jié hūn", "part_of_speech": "v.", "meaning": "to marry, to get married", "lesson": 7 },
+        { "word": "结束", "pinyin": "jiéshù", "part_of_speech": "v.", "meaning": "to end, to finish", "lesson": 11 },
+        { "word": "解决", "pinyin": "jiějué", "part_of_speech": "v.", "meaning": "to solve", "lesson": 20 },
+        { "word": "借", "pinyin": "jiè", "part_of_speech": "v.", "meaning": "to borrow, to lend", "lesson": 11 },
+        { "word": "经常", "pinyin": "jīngcháng", "part_of_speech": "adv.", "meaning": "often", "lesson": 13 },
+        { "word": "经过", "pinyin": "jīngguò", "part_of_speech": "v.", "meaning": "to pass by", "lesson": 19 },
+        { "word": "经理", "pinyin": "jīnglǐ", "part_of_speech": "n.", "meaning": "manager", "lesson": 2 },
+        { "word": "久", "pinyin": "jiǔ", "part_of_speech": "adj.", "meaning": "for a long time, long", "lesson": 7 },
+        { "word": "旧", "pinyin": "jiù", "part_of_speech": "adj.", "meaning": "old, used, worn", "lesson": 10 },
+        { "word": "句子", "pinyin": "jùzi", "part_of_speech": "n.", "meaning": "sentence", "lesson": 15 },
+        { "word": "决定", "pinyin": "juédìng", "part_of_speech": "v.", "meaning": "to decide", "lesson": 17 },
+        { "word": "可爱", "pinyin": "kě'ài", "part_of_speech": "adj.", "meaning": "lovely, adorable", "lesson": 16 },
+        { "word": "渴", "pinyin": "kě", "part_of_speech": "adj.", "meaning": "thirsty", "lesson": 17 },
+        { "word": "刻", "pinyin": "kè", "part_of_speech": "m.", "meaning": "quarter", "lesson": 7 },
+        { "word": "客人", "pinyin": "kèrén", "part_of_speech": "n.", "meaning": "customer, guest", "lesson": 4 },
+        { "word": "空调", "pinyin": "kōngtiáo", "part_of_speech": "n.", "meaning": "air conditioner", "lesson": 11 },
+        { "word": "口", "pinyin": "kǒu", "part_of_speech": "m.", "meaning": "mouthful", "lesson": 11 },
+        { "word": "口", "pinyin": "kǒu", "part_of_speech": "n.", "meaning": "mouth", "lesson": 17 },
+        { "word": "哭", "pinyin": "kū", "part_of_speech": "v.", "meaning": "to cry", "lesson": 19 },
+        { "word": "裤子", "pinyin": "kùzi", "part_of_speech": "n.", "meaning": "pants", "lesson": 3 },
+        { "word": "筷子", "pinyin": "kuàizi", "part_of_speech": "n.", "meaning": "chopsticks", "lesson": 11 },
+        { "word": "蓝", "pinyin": "lán", "part_of_speech": "adj.", "meaning": "blue", "lesson": 19 },
+        { "word": "老", "pinyin": "lǎo", "part_of_speech": "adj.", "meaning": "old", "lesson": 8 },
+        { "word": "离开", "pinyin": "lí kāi", "part_of_speech": "v.", "meaning": "to leave, to part with", "lesson": 6 },
+        { "word": "礼物", "pinyin": "lǐwù", "part_of_speech": "n.", "meaning": "gift, present", "lesson": 13 },
+        { "word": "历史", "pinyin": "lìshǐ", "part_of_speech": "n.", "meaning": "history", "lesson": 10 },
+        { "word": "脸", "pinyin": "liǎn", "part_of_speech": "n.", "meaning": "face", "lesson": 19 },
+        { "word": "练习", "pinyin": "liànxí", "part_of_speech": "n.", "meaning": "exercise", "lesson": 15 },
+        { "word": "辆", "pinyin": "liàng", "part_of_speech": "m.", "meaning": "used for vehicle", "lesson": 2 },
+        { "word": "聊天儿", "pinyin": "liáotiānr", "part_of_speech": "v.", "meaning": "to chat", "lesson": 6 },
+        { "word": "了解", "pinyin": "liǎojiě", "part_of_speech": "v.", "meaning": "to know", "lesson": 9 },
+        { "word": "邻居", "pinyin": "línjū", "part_of_speech": "n.", "meaning": "neighbour", "lesson": 17 },
+        { "word": "留学", "pinyin": "liú xué", "part_of_speech": "v.", "meaning": "to study abroad", "lesson": 15 },
+        { "word": "楼", "pinyin": "lóu", "part_of_speech": "n.", "meaning": "building", "lesson": 2 },
+        { "word": "绿", "pinyin": "lǜ", "part_of_speech": "adj.", "meaning": "green", "lesson": 3 },
+        { "word": "马", "pinyin": "mǎ", "part_of_speech": "n.", "meaning": "horse", "lesson": 19 },
+        { "word": "马上", "pinyin": "mǎshàng", "part_of_speech": "adv.", "meaning": "immediately, at once", "lesson": 8 },
+        { "word": "满意", "pinyin": "mǎnyì", "part_of_speech": "v.", "meaning": "to be satisfied", "lesson": 8 },
+        { "word": "帽子", "pinyin": "màozi", "part_of_speech": "n.", "meaning": "hat, cap", "lesson": 16 },
+        { "word": "米", "pinyin": "mǐ", "part_of_speech": "n.", "meaning": "metre", "lesson": 16 },
+        { "word": "面包", "pinyin": "miànbāo", "part_of_speech": "n.", "meaning": "bread", "lesson": 1 },
+        { "word": "明白", "pinyin": "míngbai", "part_of_speech": "adj.", "meaning": "clear", "lesson": 6 },
+        { "word": "拿", "pinyin": "ná", "part_of_speech": "v.", "meaning": "to take, to fetch", "lesson": 2 },
+        { "word": "奶奶", "pinyin": "nǎinai", "part_of_speech": "n.", "meaning": "grandmother", "lesson": 13 },
+        { "word": "南方", "pinyin": "nánfāng", "part_of_speech": "n.", "meaning": "south, southern part", "lesson": 1 },
+        { "word": "难", "pinyin": "nán", "part_of_speech": "adj.", "meaning": "difficult", "lesson": 2 },
+        { "word": "难过", "pinyin": "nánguò", "part_of_speech": "adj.", "meaning": "sad", "lesson": 20 },
+        { "word": "年级", "pinyin": "niánjí", "part_of_speech": "n.", "meaning": "grade", "lesson": 4 },
+        { "word": "年轻", "pinyin": "niánqīng", "part_of_speech": "adj.", "meaning": "young", "lesson": 4 },
+        { "word": "鸟", "pinyin": "niǎo", "part_of_speech": "n.", "meaning": "bird", "lesson": 19 },
+        { "word": "努力", "pinyin": "nǔlì", "part_of_speech": "adj.", "meaning": "hard-working", "lesson": 4 },
+        { "word": "爬山", "pinyin": "pá shān", "part_of_speech": "v.", "meaning": "to climb a mountain", "lesson": 3 },
+        { "word": "盘子", "pinyin": "pánzi", "part_of_speech": "n.", "meaning": "plate", "lesson": 14 },
+        { "word": "胖", "pinyin": "pàng", "part_of_speech": "adj.", "meaning": "fat", "lesson": 2 },
+        { "word": "皮鞋", "pinyin": "píxié", "part_of_speech": "n.", "meaning": "leather shoes", "lesson": 16 },
+        { "word": "啤酒", "pinyin": "píjiǔ", "part_of_speech": "n.", "meaning": "beer", "lesson": 11 },
+        { "word": "瓶子", "pinyin": "píngzi", "part_of_speech": "n.", "meaning": "bottle", "lesson": 11 },
+        { "word": "其他", "pinyin": "qítā", "part_of_speech": "pron.", "meaning": "the rest", "lesson": 15 },
+        { "word": "奇怪", "pinyin": "qíguài", "part_of_speech": "adj.", "meaning": "strange, odd", "lesson": 18 },
+        { "word": "骑", "pinyin": "qí", "part_of_speech": "v.", "meaning": "to ride", "lesson": 10 },
+        { "word": "起飞", "pinyin": "qǐfēi", "part_of_speech": "v.", "meaning": "(of an aircraft) to take off", "lesson": 12 },
+        { "word": "起来", "pinyin": "qǐlái", "part_of_speech": "v.", "meaning": "(indicating an upward movement) to rise", "lesson": 13 },
+        { "word": "其实", "pinyin": "qíshí", "part_of_speech": "adv.", "meaning": "actually", "lesson": 2 },
+        { "word": "秋天", "pinyin": "qiūtiān", "part_of_speech": "n.", "meaning": "autumn, fall", "lesson": 19 },
+        { "word": "裙子", "pinyin": "qúnzi", "part_of_speech": "n.", "meaning": "dress, skirt", "lesson": 5 },
+        { "word": "然后", "pinyin": "ránhòu", "part_of_speech": "conj.", "meaning": "then, after that", "lesson": 14 },
+        { "word": "热情", "pinyin": "rèqíng", "part_of_speech": "adj.", "meaning": "warm, enthusiastic", "lesson": 4 },
+        { "word": "认为", "pinyin": "rènwéi", "part_of_speech": "v.", "meaning": "to think, to believe", "lesson": 16 },
+        { "word": "认真", "pinyin": "rènzhēn", "part_of_speech": "adj.", "meaning": "serious, earnest", "lesson": 4 },
+        { "word": "容易", "pinyin": "róngyì", "part_of_speech": "adj.", "meaning": "easy", "lesson": 2 },
+        { "word": "如果", "pinyin": "rúguǒ", "part_of_speech": "conj.", "meaning": "if, in case", "lesson": 16 },
+        { "word": "伞", "pinyin": "sǎn", "part_of_speech": "n.", "meaning": "umbrella", "lesson": 2 },
+        { "word": "上班", "pinyin": "shàng bān", "part_of_speech": "v.", "meaning": "to work", "lesson": 6 },
+        { "word": "上网", "pinyin": "shàng wǎng", "part_of_speech": "v.", "meaning": "to surf the Internet", "lesson": 15 },
+        { "word": "生病", "pinyin": "shēng bìng", "part_of_speech": "v.", "meaning": "to fall ill", "lesson": 5 },
+        { "word": "生气", "pinyin": "shēng qì", "part_of_speech": "v.", "meaning": "angry", "lesson": 12 },
+        { "word": "声音", "pinyin": "shēngyīn", "part_of_speech": "n.", "meaning": "sound, voice", "lesson": 14 },
+        { "word": "树", "pinyin": "shù", "part_of_speech": "n.", "meaning": "tree", "lesson": 2 },
+        { "word": "数学", "pinyin": "shùxué", "part_of_speech": "n.", "meaning": "maths", "lesson": 10 },
+        { "word": "刷牙", "pinyin": "shuā yá", "part_of_speech": "v.", "meaning": "to brush the teeth", "lesson": 16 },
+        { "word": "双", "pinyin": "shuāng", "part_of_speech": "m.", "meaning": "pair", "lesson": 11 },
+        { "word": "水平", "pinyin": "shuǐpíng", "part_of_speech": "n.", "meaning": "level, standard", "lesson": 15 },
+        { "word": "睡着", "pinyin": "shuì zháo", "part_of_speech": "v.", "meaning": "to fall asleep", "lesson": 6 },
+        { "word": "司机", "pinyin": "sījī", "part_of_speech": "n.", "meaning": "driver", "lesson": 12 },
+        { "word": "瘦", "pinyin": "shòu", "part_of_speech": "adj.", "meaning": "thin", "lesson": 2 },
+        { "word": "叔叔", "pinyin": "shūshu", "part_of_speech": "n.", "meaning": "uncle", "lesson": 14 },
+        { "word": "舒服", "pinyin": "shūfu", "part_of_speech": "adj.", "meaning": "comfortable", "lesson": 3 },
+        { "word": "太阳", "pinyin": "tàiyáng", "part_of_speech": "n.", "meaning": "sun", "lesson": 12 },
+        { "word": "特别", "pinyin": "tèbié", "part_of_speech": "adv.", "meaning": "extraordinarily", "lesson": 6 },
+        { "word": "特点", "pinyin": "tèdiǎn", "part_of_speech": "n.", "meaning": "feature", "lesson": 18 },
+        { "word": "疼", "pinyin": "téng", "part_of_speech": "adj.", "meaning": "hurt, painful", "lesson": 2 },
+        { "word": "提高", "pinyin": "tí gāo", "part_of_speech": "v.", "meaning": "to improve", "lesson": 15 },
+        { "word": "体育", "pinyin": "tǐyù", "part_of_speech": "n.", "meaning": "P.E., sports", "lesson": 10 },
+        { "word": "甜", "pinyin": "tián", "part_of_speech": "adj.", "meaning": "sweet", "lesson": 3 },
+        { "word": "条", "pinyin": "tiáo", "part_of_speech": "m.", "meaning": "used for pants, dresses, etc.", "lesson": 3 },
+        { "word": "同事", "pinyin": "tóngshì", "part_of_speech": "n.", "meaning": "colleague", "lesson": 7 },
+        { "word": "同意", "pinyin": "tóngyì", "part_of_speech": "v.", "meaning": "to agree", "lesson": 18 },
+        { "word": "头发", "pinyin": "tóufa", "part_of_speech": "n.", "meaning": "hair", "lesson": 16 },
+        { "word": "突然", "pinyin": "tūrán", "part_of_speech": "adv.", "meaning": "suddenly", "lesson": 6 },
+        { "word": "图书馆", "pinyin": "túshūguǎn", "part_of_speech": "n.", "meaning": "library", "lesson": 11 },
+        { "word": "腿", "pinyin": "tuǐ", "part_of_speech": "n.", "meaning": "leg", "lesson": 2 },
+        { "word": "完成", "pinyin": "wán chéng", "part_of_speech": "v.", "meaning": "to complete", "lesson": 15 },
+        { "word": "碗", "pinyin": "wǎn", "part_of_speech": "n.", "meaning": "bowl", "lesson": 20 },
+        { "word": "万", "pinyin": "wàn", "part_of_speech": "num.", "meaning": "ten thousand", "lesson": 18 },
+        { "word": "忘记", "pinyin": "wàngjì", "part_of_speech": "v.", "meaning": "to forget", "lesson": 11 },
+        { "word": "为", "pinyin": "wèi", "part_of_speech": "prep.", "meaning": "for", "lesson": 5 },
+        { "word": "为了", "pinyin": "wèile", "part_of_speech": "prep.", "meaning": "for the sake of", "lesson": 17 },
+        { "word": "位", "pinyin": "wèi", "part_of_speech": "m.", "meaning": "a respectful measure word for people", "lesson": 19 },
+        { "word": "文化", "pinyin": "wénhuà", "part_of_speech": "n.", "meaning": "culture", "lesson": 15 },
+        { "word": "西", "pinyin": "xī", "part_of_speech": "n.", "meaning": "west", "lesson": 12 },
+        { "word": "习惯", "pinyin": "xíguàn", "part_of_speech": "v./n.", "meaning": "to be used to; habit", "lesson": 11 },
+        { "word": "洗手间", "pinyin": "xǐshǒujiān", "part_of_speech": "n.", "meaning": "bathroom, restroom", "lesson": 8 },
+        { "word": "洗澡", "pinyin": "xǐ zǎo", "part_of_speech": "v.", "meaning": "to take a bath/shower", "lesson": 14 },
+        { "word": "夏天", "pinyin": "xiàtiān", "part_of_speech": "n.", "meaning": "summer", "lesson": 5 },
+        { "word": "先", "pinyin": "xiān", "part_of_speech": "adv.", "meaning": "first, in advance", "lesson": 9 },
+        { "word": "相信", "pinyin": "xiāngxìn", "part_of_speech": "v.", "meaning": "to believe", "lesson": 18 },
+        { "word": "香蕉", "pinyin": "xiāngjiāo", "part_of_speech": "n.", "meaning": "banana", "lesson": 14 },
+        { "word": "向", "pinyin": "xiàng", "part_of_speech": "prep.", "meaning": "towards", "lesson": 18 },
+        { "word": "像", "pinyin": "xiàng", "part_of_speech": "v.", "meaning": "to be like", "lesson": 14 },
+        { "word": "小心", "pinyin": "xiǎoxīn", "part_of_speech": "adj.", "meaning": "careful", "lesson": 3 },
+        { "word": "校长", "pinyin": "xiàozhǎng", "part_of_speech": "n.", "meaning": "headmaster", "lesson": 13 },
+        { "word": "新闻", "pinyin": "xīnwén", "part_of_speech": "n.", "meaning": "news", "lesson": 15 },
+        { "word": "新鲜", "pinyin": "xīnxiān", "part_of_speech": "adj.", "meaning": "fresh", "lesson": 3 },
+        { "word": "信用卡", "pinyin": "xìnyòngkǎ", "part_of_speech": "n.", "meaning": "credit card", "lesson": 20 },
+        { "word": "行李箱", "pinyin": "xínglixiāng", "part_of_speech": "n.", "meaning": "luggage, suitcase", "lesson": 12 },
+        { "word": "熊猫", "pinyin": "xióngmāo", "part_of_speech": "n.", "meaning": "panda", "lesson": 8 },
+        { "word": "需要", "pinyin": "xūyào", "part_of_speech": "v.", "meaning": "to need", "lesson": 12 },
+        { "word": "选择", "pinyin": "xuǎnzé", "part_of_speech": "v.", "meaning": "to choose", "lesson": 17 },
+        { "word": "要求", "pinyin": "yāoqiú", "part_of_speech": "n.", "meaning": "requirement", "lesson": 15 },
+        { "word": "爷爷", "pinyin": "yéye", "part_of_speech": "n.", "meaning": "grandfather", "lesson": 13 },
+        { "word": "一定", "pinyin": "yídìng", "part_of_speech": "adv.", "meaning": "definitely, certainly", "lesson": 9 },
+        { "word": "一共", "pinyin": "yígòng", "part_of_speech": "adv.", "meaning": "in total", "lesson": 17 },
+        { "word": "一会儿", "pinyin": "yíhuìr", "part_of_speech": "n.", "meaning": "a moment", "lesson": 8 },
+        { "word": "一样", "pinyin": "yíyàng", "part_of_speech": "adj.", "meaning": "same, as...as...", "lesson": 9 },
+        { "word": "以前", "pinyin": "yǐqián", "part_of_speech": "n.", "meaning": "before, ago", "lesson": 7 },
+        { "word": "一般", "pinyin": "yìbān", "part_of_speech": "adj.", "meaning": "general, usual", "lesson": 13 },
+        { "word": "一边", "pinyin": "yìbiān", "part_of_speech": "adv.", "meaning": "indicating two actions taking place at the same time", "lesson": 13 },
+        { "word": "一直", "pinyin": "yìzhí", "part_of_speech": "adv.", "meaning": "all the time", "lesson": 1 },
+        { "word": "音乐", "pinyin": "yīnyuè", "part_of_speech": "n.", "meaning": "music", "lesson": 6 },
+        { "word": "银行", "pinyin": "yínháng", "part_of_speech": "n.", "meaning": "bank", "lesson": 7 },
+        { "word": "饮料", "pinyin": "yǐnliào", "part_of_speech": "n.", "meaning": "drink, beverage", "lesson": 3 },
+        { "word": "应该", "pinyin": "yīnggāi", "part_of_speech": "v.", "meaning": "should", "lesson": 13 },
+        { "word": "影响", "pinyin": "yǐngxiǎng", "part_of_speech": "n.", "meaning": "influence", "lesson": 9 },
+        { "word": "用", "pinyin": "yòng", "part_of_speech": "v.", "meaning": "to need", "lesson": 5 },
+        { "word": "游戏", "pinyin": "yóuxì", "part_of_speech": "n.", "meaning": "game", "lesson": 1 },
+        { "word": "有名", "pinyin": "yǒumíng", "part_of_speech": "adj.", "meaning": "famous", "lesson": 18 },
+        { "word": "又", "pinyin": "yòu", "part_of_speech": "adv.", "meaning": "again", "lesson": 8 },
+        { "word": "遇到", "pinyin": "yùdào", "part_of_speech": "v.", "meaning": "to come across, to run into", "lesson": 13 },
+        { "word": "元", "pinyin": "yuán", "part_of_speech": "m.", "meaning": "unit of money", "lesson": 3 },
+        { "word": "愿意", "pinyin": "yuànyì", "part_of_speech": "v.", "meaning": "would like to", "lesson": 13 },
+        { "word": "月亮", "pinyin": "yuèliang", "part_of_speech": "n.", "meaning": "moon", "lesson": 14 },
+        { "word": "越", "pinyin": "yuè", "part_of_speech": "adv.", "meaning": "more, to a greater degree", "lesson": 5 },
+        { "word": "站", "pinyin": "zhàn", "part_of_speech": "v.", "meaning": "to stand", "lesson": 4 },
+        { "word": "张", "pinyin": "zhāng", "part_of_speech": "m.", "meaning": "used for flat objects such as paper, photos, etc.", "lesson": 19 },
+        { "word": "长", "pinyin": "zhǎng", "part_of_speech": "v.", "meaning": "to grow, to develop", "lesson": 16 },
+        { "word": "着急", "pinyin": "zháojí", "part_of_speech": "adj.", "meaning": "worried, anxious", "lesson": 1 },
+        { "word": "照顾", "pinyin": "zhàogù", "part_of_speech": "v.", "meaning": "to take care of", "lesson": 5 },
+        { "word": "照片", "pinyin": "zhàopiàn", "part_of_speech": "n.", "meaning": "photo", "lesson": 4 },
+        { "word": "照相机", "pinyin": "zhàoxiàngjī", "part_of_speech": "n.", "meaning": "camera", "lesson": 20 },
+        { "word": "只", "pinyin": "zhī", "part_of_speech": "m.", "meaning": "used for certain animals", "lesson": 18 },
+        { "word": "只", "pinyin": "zhǐ", "part_of_speech": "adv.", "meaning": "only, solely", "lesson": 3 },
+        { "word": "只有……才……", "pinyin": "zhǐyǒu……cái……", "part_of_speech": "conj.", "meaning": "only… (that/can…)", "lesson": 20 },
+        { "word": "中间", "pinyin": "zhōngjiān", "part_of_speech": "n.", "meaning": "middle", "lesson": 9 },
+        { "word": "终于", "pinyin": "zhōngyú", "part_of_speech": "adv.", "meaning": "finally", "lesson": 13 },
+        { "word": "种", "pinyin": "zhǒng", "part_of_speech": "m.", "meaning": "kind, type", "lesson": 18 },
+        { "word": "重要", "pinyin": "zhòngyào", "part_of_speech": "adj.", "meaning": "important", "lesson": 8 },
+        { "word": "周末", "pinyin": "zhōumò", "part_of_speech": "n.", "meaning": "weekend", "lesson": 1 },
+        { "word": "主要", "pinyin": "zhǔyào", "part_of_speech": "adj.", "meaning": "main", "lesson": 10 },
+        { "word": "注意", "pinyin": "zhù yì", "part_of_speech": "v.", "meaning": "to pay attention to", "lesson": 15 },
+        { "word": "自己", "pinyin": "zìjǐ", "part_of_speech": "pron.", "meaning": "self", "lesson": 12 },
+        { "word": "自行车", "pinyin": "zìxíngchē", "part_of_speech": "n.", "meaning": "bicycle", "lesson": 10 },
+        { "word": "总是", "pinyin": "zǒngshì", "part_of_speech": "adv.", "meaning": "always", "lesson": 4 },
+        { "word": "嘴", "pinyin": "zuǐ", "part_of_speech": "n.", "meaning": "mouth", "lesson": 18 },
+        { "word": "最后", "pinyin": "zuìhòu", "part_of_speech": "n.", "meaning": "the last one", "lesson": 9 },
+        { "word": "最近", "pinyin": "zuìjìn", "part_of_speech": "adv.", "meaning": "lately, recently", "lesson": 5 },
+        { "word": "作业", "pinyin": "zuòyè", "part_of_speech": "n.", "meaning": "homework", "lesson": 1 }
+      ],
+      "proper_nouns": [
+        { "word": "黄河", "pinyin": "Huáng Hé", "meaning": "Yellow River", "lesson": 19 },
+        { "word": "李小美", "pinyin": "Lǐ Xiǎoměi", "meaning": "Li Xiaomei", "lesson": 4 },
+        { "word": "马可", "pinyin": "Mǎkě", "meaning": "Marco", "lesson": 4 },
+        { "word": "小刚", "pinyin": "Xiǎogāng", "meaning": "Xiaogang", "lesson": 1 },
+        { "word": "小丽", "pinyin": "Xiǎolì", "meaning": "Xiaoli", "lesson": 1 },
+        { "word": "小明", "pinyin": "Xiǎomíng", "meaning": "Xiaoming", "lesson": 4 },
+        { "word": "小云", "pinyin": "Xiǎoyún", "meaning": "Xiaoyun", "lesson": 15 },
+        { "word": "张", "pinyin": "Zhāng", "meaning": "Zhang", "lesson": 5 },
+        { "word": "中文", "pinyin": "Zhōngwén", "meaning": "Chinese language", "lesson": 9 },
+        { "word": "周", "pinyin": "Zhōu", "meaning": "Zhou", "lesson": 2 },
+        { "word": "周明", "pinyin": "Zhōu Míng", "meaning": "Zhou Ming", "lesson": 2 }
+      ],
+      "words_not_in_syllabus": [
+        { "word": "词语", "pinyin": "cíyǔ", "part_of_speech": "n.", "meaning": "word, expression", "lesson": 16, "level": "4" },
+        { "word": "各", "pinyin": "gè", "part_of_speech": "pron.", "meaning": "each", "lesson": 15, "level": "4" },
+        { "word": "举行", "pinyin": "jǔxíng", "part_of_speech": "v.", "meaning": "to hold (a meeting, an event, etc.)", "lesson": 15, "level": "4" },
+        { "word": "可乐", "pinyin": "kělè", "part_of_speech": "n.", "meaning": "cola, Coke", "lesson": 8, "level": "/" },
+        { "word": "秘书", "pinyin": "mìshū", "part_of_speech": "n.", "meaning": "secretary", "lesson": 2, "level": "5" },
+        { "word": "情况", "pinyin": "qíngkuàng", "part_of_speech": "n.", "meaning": "condition, situation", "lesson": 17, "level": "4" },
+        { "word": "生活", "pinyin": "shēnghuó", "part_of_speech": "n.", "meaning": "life", "lesson": 13, "level": "4" },
+        { "word": "睡着", "pinyin": "shuì zháo", "part_of_speech": "v.", "meaning": "to fall asleep", "lesson": 6, "level": "/" },
+        { "word": "太太", "pinyin": "tàitai", "part_of_speech": "n.", "meaning": "Mrs., madam", "lesson": 2, "level": "5" },
+        { "word": "特点", "pinyin": "tèdiǎn", "part_of_speech": "n.", "meaning": "feature", "lesson": 18, "level": "4" },
+        { "word": "眼镜", "pinyin": "yǎnjìng", "part_of_speech": "n.", "meaning": "glasses, spectacles", "lesson": 6, "level": "4" }
+      ]
+    },
+    {
+      "page": "198-199",
+      "section": "补充词语",
+      "supplementary_words": [
+        { "word": "办事", "pinyin": "bàn shì", "part_of_speech": "v.", "meaning": "to work, to handle affairs", "lesson": 2, "source": "办公室、事" },
+        { "word": "帮", "pinyin": "bāng", "part_of_speech": "v.", "meaning": "to help", "lesson": 6, "source": "帮忙" },
+        { "word": "变", "pinyin": "biàn", "part_of_speech": "v.", "meaning": "to change, to become", "lesson": 9, "source": "变化" },
+        { "word": "春节", "pinyin": "Chūn Jié", "part_of_speech": "n.", "meaning": "Spring Festival", "lesson": 15, "source": "春天、节日" },
+        { "word": "打", "pinyin": "dǎ", "part_of_speech": "v.", "meaning": "to send, to remit", "lesson": 18, "source": "打篮球" },
+        { "word": "到时候", "pinyin": "dào shíhou", "part_of_speech": "n.", "meaning": "that time, then", "lesson": 7, "source": "到、时候" },
+        { "word": "房子", "pinyin": "fángzi", "part_of_speech": "n.", "meaning": "house, building", "lesson": 8, "source": "房间、子" },
+        { "word": "刚", "pinyin": "gāng", "part_of_speech": "adv.", "meaning": "just, only a short while ago", "lesson": 6, "source": "刚才" },
+        { "word": "贵", "pinyin": "guì", "part_of_speech": "adj.", "meaning": "(honorific term) your", "lesson": 18, "source": "（很）贵" },
+        { "word": "歌舞", "pinyin": "gēwǔ", "part_of_speech": "v.", "meaning": "sing and dance", "lesson": 15, "source": "唱歌、跳舞" },
+        { "word": "红酒", "pinyin": "hóng jiǔ", "part_of_speech": "n.", "meaning": "red wine", "lesson": 13, "source": "红、啤酒" },
+        { "word": "句", "pinyin": "jù", "part_of_speech": "m.", "meaning": "a measure word used for sentences", "lesson": 17, "source": "句子" },
+        { "word": "开", "pinyin": "kāi", "part_of_speech": "v.", "meaning": "to open out, to unfold", "lesson": 5, "source": "开门" },
+        { "word": "每天", "pinyin": "měi tiān", "part_of_speech": "n.", "meaning": "every day", "lesson": 2, "source": "每、天" },
+        { "word": "哪里", "pinyin": "nǎli", "part_of_speech": "pron.", "meaning": "(self-deprecatory expression) not at all", "lesson": 9, "source": "哪儿、里" },
+        { "word": "女孩儿", "pinyin": "nǚháir", "part_of_speech": "n.", "meaning": "girl", "lesson": 4, "source": "女、孩子" },
+        { "word": "钱包", "pinyin": "qiánbāo", "part_of_speech": "n.", "meaning": "purse, wallet", "lesson": 12, "source": "钱、包" },
+        { "word": "人名", "pinyin": "rén míng", "part_of_speech": "n.", "meaning": "name (of a person)", "lesson": 18, "source": "人、名字" },
+        { "word": "认", "pinyin": "rèn", "part_of_speech": "v.", "meaning": "to recognise, to identify", "lesson": 20, "source": "认识" },
+        { "word": "上", "pinyin": "shàng", "part_of_speech": "v.", "meaning": "to go up, to ascend", "lesson": 2, "source": "上边" },
+        { "word": "听说", "pinyin": "tīngshuō", "part_of_speech": "v.", "meaning": "to hear about, to be told", "lesson": 5, "source": "听、说" },
+        { "word": "外地", "pinyin": "wàidì", "part_of_speech": "n.", "meaning": "other places", "lesson": 18, "source": "外面、地方" },
+        { "word": "鲜花", "pinyin": "xiānhuā", "part_of_speech": "n.", "meaning": "fresh flowers", "lesson": 4, "source": "新鲜、花" },
+        { "word": "香瓜", "pinyin": "xiāngguā", "part_of_speech": "n.", "meaning": "casaba", "lesson": 15, "source": "香蕉、瓜" },
+        { "word": "一般来说", "pinyin": "yìbān lái shuō", "part_of_speech": "phrase", "meaning": "generally speaking", "lesson": 17, "source": "一般、来、说" },
+        { "word": "以后", "pinyin": "yǐhòu", "part_of_speech": "n.", "meaning": "after, later", "lesson": 7, "source": "以前、后边" },
+        { "word": "音乐会", "pinyin": "yīnyuèhuì", "part_of_speech": "n.", "meaning": "concert", "lesson": 6, "source": "音乐、会议" },
+        { "word": "有点儿", "pinyin": "yǒudiǎnr", "part_of_speech": "adv.", "meaning": "a little, a bit", "lesson": 5, "source": "有、一点儿" },
+        { "word": "早", "pinyin": "zǎo", "part_of_speech": "adj.", "meaning": "early", "lesson": 10, "source": "早上" },
+        { "word": "怎么办", "pinyin": "zěnme bàn", "part_of_speech": "phrase", "meaning": "(used to ask for a solution) what to do", "lesson": 7, "source": "怎么、办公室" },
+        { "word": "照", "pinyin": "zhào", "part_of_speech": "v.", "meaning": "to photograph", "lesson": 4, "source": "照片" },
+        { "word": "中秋节", "pinyin": "Zhōngqiū Jié", "part_of_speech": "n.", "meaning": "Mid-Autumn Festival", "lesson": 15, "source": "中间、秋天、节日" }
+      ]
+    }
+  ]
+}

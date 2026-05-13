@@ -22,6 +22,37 @@ class User(Base):
     role = Column(String, default='student')
     school_members = relationship('SchoolMember', back_populates='user', cascade='all, delete-orphan')
     owned_schools = relationship('School', foreign_keys='School.owner_id', cascade='all, delete-orphan')
+    # В класс User (models.py) добавить:
+    # HSK/языковые поля
+    current_hsk_level = Column(Integer, default=1)
+    target_hsk_level = Column(Integer, default=4)
+    exam_date = Column(DateTime, nullable=True)
+    daily_goal = Column(Integer, default=20)
+    
+    # Статистика (будет обновляться автоматически)
+    total_points = Column(Integer, default=0)
+    study_streak = Column(Integer, default=0)
+    longest_streak = Column(Integer, default=0)
+    last_activity_date = Column(DateTime, nullable=True)
+    total_study_time = Column(Integer, default=0)
+    total_words_learned = Column(Integer, default=0)
+    total_tests_taken = Column(Integer, default=0)
+    average_test_score = Column(Float, default=0.0)
+    
+    # Настройки пользователя
+    language = Column(String, default="ru")
+    theme = Column(String, default="light")
+    email_notifications = Column(Boolean, default=True)
+    
+    # Для поступления
+    education_background = Column(Text, nullable=True)
+    university_target = Column(String, nullable=True)
+    program_target = Column(String, nullable=True)
+    work_experience = Column(Text, nullable=True)
+    projects = Column(Text, nullable=True)
+    technical_skills = Column(Text, nullable=True)
+    achievements = Column(Text, nullable=True)
+    letter_style = Column(JSON, nullable=True)
 
 # Добавить после класса User
 class UserAuth(Base):
@@ -302,3 +333,143 @@ class SchoolChatMessage(Base):
     school = relationship("School")
     user = relationship("User", foreign_keys=[user_id], backref="sent_messages")
     recipient = relationship("User", foreign_keys=[recipient_id], backref="received_messages")
+
+# ========== МОДУЛИ ИЗ HSK TUTOR ==========
+
+class UserWord(Base):
+    """Слова пользователя (для HSK и языков)"""
+    __tablename__ = "user_words"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    word_id = Column(String, nullable=False)  # например "你好_1"
+    word_text = Column(String, nullable=True)
+    language = Column(String, default="zh")  # zh, en, ru и т.д.
+    hsk_level = Column(Integer, default=1)
+    status = Column(String, default="new")  # new, learning, learned, review
+    difficulty = Column(Integer, default=3)
+    views_count = Column(Integer, default=0)
+    practice_count = Column(Integer, default=0)
+    correct_count = Column(Integer, default=0)
+    wrong_count = Column(Integer, default=0)
+    last_viewed = Column(DateTime, nullable=True)
+    last_practiced = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", backref="words")
+
+class UserTest(Base):
+    """История тестов пользователя"""
+    __tablename__ = "user_tests"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    test_id = Column(String, nullable=True)
+    test_type = Column(String, nullable=False)  # hsk, grammar, vocabulary, listening, csca_math, csca_physics, csca_chemistry
+    test_level = Column(Integer, default=1)
+    score = Column(Integer, nullable=True)
+    max_score = Column(Integer, nullable=True)
+    percentage = Column(Float, nullable=True)
+    time_spent = Column(Integer, nullable=True)
+    questions_count = Column(Integer, nullable=True)
+    correct_count = Column(Integer, nullable=True)
+    wrong_count = Column(Integer, nullable=True)
+    answers = Column(JSON, nullable=True)
+    results = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", backref="tests")
+
+class StudySession(Base):
+    """Сессии обучения (для статистики времени)"""
+    __tablename__ = "study_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    start_time = Column(DateTime, default=datetime.utcnow)
+    end_time = Column(DateTime, nullable=True)
+    duration_minutes = Column(Integer, default=0)
+    actions_count = Column(Integer, default=0)
+    words_studied = Column(Integer, default=0)
+    tests_taken = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    
+    user = relationship("User", backref="study_sessions")
+
+class GrammarTopic(Base):
+    """Темы грамматики"""
+    __tablename__ = "grammar_topics"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    topic_id = Column(String, unique=True, index=True, nullable=False)
+    name_zh = Column(String, nullable=False)
+    name_en = Column(String, nullable=False)
+    name_ru = Column(String, nullable=True)
+    level = Column(String, nullable=False)  # A1, A2, B1, B2, C1, HSK1-6
+    category = Column(String, nullable=True)
+    explanation = Column(Text, nullable=True)
+    examples = Column(JSON, default=[])
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class HSKWord(Base):
+    """Словарь HSK (общий)"""
+    __tablename__ = "hsk_words"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    character = Column(String, nullable=False)
+    pinyin = Column(String, nullable=False)
+    translation_ru = Column(String, nullable=True)
+    translation_en = Column(String, nullable=True)
+    hsk_level = Column(Integer, nullable=False)
+    part_of_speech = Column(String, nullable=True)
+    example = Column(String, nullable=True)
+    example_translation = Column(String, nullable=True)
+
+class CSCATopic(Base):
+    """Темы CSCA (математика, физика, химия)"""
+    __tablename__ = "csca_topics"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    topic_id = Column(String, unique=True, index=True, nullable=False)
+    name_zh = Column(String, nullable=False)
+    name_en = Column(String, nullable=False)
+    subject = Column(String, nullable=False)  # math, physics, chemistry
+    difficulty = Column(String, default="Intermediate")
+    order = Column(Integer, default=0)
+
+class InterviewSessionDB(Base):
+    """Сессии интервью"""
+    __tablename__ = "interview_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    university = Column(String, nullable=False)
+    program = Column(String, nullable=False)
+    degree = Column(String, nullable=False)
+    professors = Column(JSON, nullable=True)
+    tech_expert = Column(JSON, nullable=True)
+    messages = Column(JSON, nullable=True, default=list)
+    ended = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", backref="interview_sessions")
+
+class University(Base):
+    """Университеты для поиска"""
+    __tablename__ = "universities"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name_zh = Column(String, nullable=False)
+    name_en = Column(String, nullable=False)
+    city = Column(String, nullable=True)
+    province = Column(String, nullable=True)
+    ranking = Column(Integer, nullable=True)
+    type = Column(String, nullable=True)  # 综合性, 理工类, 语言类 и т.д.
+    website = Column(String, nullable=True)
+    tuition_cny = Column(Integer, nullable=True)
+    scholarships = Column(JSON, default=[])
+    programs = Column(JSON, default=[])
+    created_at = Column(DateTime, default=datetime.utcnow)

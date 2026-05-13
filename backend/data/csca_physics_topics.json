@@ -1,0 +1,352 @@
+[
+    {
+      "id": "force",
+      "chinese": "力",
+      "english": "Force",
+      "difficulty": "Basic",
+      "description": "下列关于力的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "velocity",
+      "chinese": "速度",
+      "english": "Velocity",
+      "difficulty": "Basic",
+      "description": "下列关于速度的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "acceleration",
+      "chinese": "加速度",
+      "english": "Acceleration",
+      "difficulty": "Basic",
+      "description": "下列关于加速度的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "energy_conservation",
+      "chinese": "能量",
+      "english": "Energy Conservation",
+      "difficulty": "Basic",
+      "description": "下列关于能量守恒的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "momentum",
+      "chinese": "动量",
+      "english": "Momentum",
+      "difficulty": "Basic",
+      "description": "下列关于动量的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "electric_current",
+      "chinese": "电流",
+      "english": "Electric Current",
+      "difficulty": "Basic",
+      "description": "下列关于电流的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "voltage",
+      "chinese": "电压",
+      "english": "Voltage",
+      "difficulty": "Basic",
+      "description": "下列关于电压的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "ohms_law",
+      "chinese": "电阻",
+      "english": "Ohm's Law",
+      "difficulty": "Basic",
+      "description": "下列关于欧姆定律的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "magnetic_field",
+      "chinese": "磁场",
+      "english": "Magnetic Field",
+      "difficulty": "Intermediate",
+      "description": "下列关于磁场的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "wavelength",
+      "chinese": "波长",
+      "english": "Wavelength",
+      "difficulty": "Basic",
+      "description": "下列关于波长的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "frequency",
+      "chinese": "频率",
+      "english": "Frequency",
+      "difficulty": "Basic",
+      "description": "下列关于频率的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "refraction",
+      "chinese": "折射",
+      "english": "Refraction",
+      "difficulty": "Basic",
+      "description": "下列关于折射的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "temperature",
+      "chinese": "温度",
+      "english": "Temperature",
+      "difficulty": "Basic",
+      "description": "下列关于温度的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "entropy",
+      "chinese": "熵",
+      "english": "Entropy",
+      "difficulty": "Advanced",
+      "description": "下列关于熵的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "photon",
+      "chinese": "光子",
+      "english": "Photon",
+      "difficulty": "Intermediate",
+      "description": "下列关于光子的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "displacement",
+      "chinese": "位移",
+      "english": "Displacement",
+      "difficulty": "Basic",
+      "description": "下列关于位移的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "uniformly_accelerated_linear_motion",
+      "chinese": "匀变速直线运动",
+      "english": "Uniformly Accelerated Linear Motion",
+      "difficulty": "Basic",
+      "description": "下列关于匀变速直线运动的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "newtons_first_law",
+      "chinese": "牛顿第一定律",
+      "english": "Newton's First Law",
+      "difficulty": "Basic",
+      "description": "下列关于牛顿第一定律的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "newtons_second_law",
+      "chinese": "牛顿第二定律",
+      "english": "Newton's Second Law",
+      "difficulty": "Basic",
+      "description": "下列关于牛顿第二定律的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "newtons_third_law",
+      "chinese": "牛顿第三定律",
+      "english": "Newton's Third Law",
+      "difficulty": "Basic",
+      "description": "下列关于牛顿第三定律的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "kinetic_energy",
+      "chinese": "动能",
+      "english": "Kinetic Energy",
+      "difficulty": "Basic",
+      "description": "下列关于动能的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "potential_energy",
+      "chinese": "势能",
+      "english": "Potential Energy",
+      "difficulty": "Basic",
+      "description": "下列关于势能的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "work",
+      "chinese": "功",
+      "english": "Work",
+      "difficulty": "Basic",
+      "description": "下列关于功的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "power",
+      "chinese": "功率",
+      "english": "Power",
+      "difficulty": "Basic",
+      "description": "下列关于功率的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "friction",
+      "chinese": "摩擦力",
+      "english": "Friction",
+      "difficulty": "Basic",
+      "description": "下列关于摩擦力的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "lorentz_force",
+      "chinese": "洛伦兹力",
+      "english": "Lorentz Force",
+      "difficulty": "Intermediate",
+      "description": "下列关于洛伦兹力的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "left-hand_rule",
+      "chinese": "左手定则",
+      "english": "Left-hand Rule",
+      "difficulty": "Intermediate",
+      "description": "下列关于左手定则的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "right-hand_rule",
+      "chinese": "右手定则",
+      "english": "Right-hand Rule",
+      "difficulty": "Intermediate",
+      "description": "下列关于右手定则的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "electric_field",
+      "chinese": "电场",
+      "english": "Electric Field",
+      "difficulty": "Basic",
+      "description": "下列关于电场的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "electric_potential",
+      "chinese": "电势",
+      "english": "Electric Potential",
+      "difficulty": "Basic",
+      "description": "下列关于电势的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "magnetic_flux",
+      "chinese": "磁通量",
+      "english": "Magnetic Flux",
+      "difficulty": "Intermediate",
+      "description": "下列关于磁通量的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "electromagnetic_induction",
+      "chinese": "电磁感应",
+      "english": "Electromagnetic Induction",
+      "difficulty": "Intermediate",
+      "description": "下列关于电磁感应的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "faradays_law",
+      "chinese": "法拉第定律",
+      "english": "Faraday's Law",
+      "difficulty": "Intermediate",
+      "description": "下列关于法拉第定律的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "lenzs_law",
+      "chinese": "楞次定律",
+      "english": "Lenz's Law",
+      "difficulty": "Intermediate",
+      "description": "下列关于楞次定律的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "amperes_rule",
+      "chinese": "安培定则",
+      "english": "Ampere's Rule",
+      "difficulty": "Intermediate",
+      "description": "下列关于安培定则的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "circuit",
+      "chinese": "电路",
+      "english": "Circuit",
+      "difficulty": "Basic",
+      "description": "下列关于电路的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "reflection",
+      "chinese": "反射",
+      "english": "Reflection",
+      "difficulty": "Basic",
+      "description": "下列关于反射的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "diffraction",
+      "chinese": "衍射",
+      "english": "Diffraction",
+      "difficulty": "Intermediate",
+      "description": "下列关于衍射的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "interference",
+      "chinese": "干涉",
+      "english": "Interference",
+      "difficulty": "Intermediate",
+      "description": "下列关于干涉的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "amplitude",
+      "chinese": "振幅",
+      "english": "Amplitude",
+      "difficulty": "Basic",
+      "description": "下列关于振幅的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "period",
+      "chinese": "周期",
+      "english": "Period",
+      "difficulty": "Basic",
+      "description": "下列关于周期的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "wave_speed",
+      "chinese": "波速",
+      "english": "Wave Speed",
+      "difficulty": "Basic",
+      "description": "下列关于波速的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "refractive_index",
+      "chinese": "折射率",
+      "english": "Refractive Index",
+      "difficulty": "Intermediate",
+      "description": "下列关于折射率的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "heat",
+      "chinese": "热量",
+      "english": "Heat",
+      "difficulty": "Basic",
+      "description": "下列关于热量的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "internal_energy",
+      "chinese": "内能",
+      "english": "Internal Energy",
+      "difficulty": "Basic",
+      "description": "下列关于内能的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "first_law_of_thermodynamics",
+      "chinese": "热力学第一定律",
+      "english": "First Law of Thermodynamics",
+      "difficulty": "Intermediate",
+      "description": "下列关于热力学第一定律的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "second_law_of_thermodynamics",
+      "chinese": "热力学第二定律",
+      "english": "Second Law of Thermodynamics",
+      "difficulty": "Advanced",
+      "description": "下列关于热力学第二定律的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "thermal_conduction",
+      "chinese": "热传导",
+      "english": "Thermal Conduction",
+      "difficulty": "Basic",
+      "description": "下列关于热传导的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "quantum",
+      "chinese": "量子",
+      "english": "Quantum",
+      "difficulty": "Advanced",
+      "description": "下列关于量子的说法中，正确的是哪一项？"
+    },
+    {
+      "id": "theory_of_relativity",
+      "chinese": "相对论",
+      "english": "Theory of Relativity",
+      "difficulty": "Advanced",
+      "description": "下列关于相对论的说法中，正确的是哪一项？"
+    }
+  ]

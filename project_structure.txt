@@ -1,0 +1,202 @@
+.
+├── answers.json
+├── backend
+│   ├── Dockerfile
+│   ├── app
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── config.py
+│   │   ├── context_service.py
+│   │   ├── data
+│   │   ├── database.py
+│   │   ├── deepseek_client.py
+│   │   ├── main.py
+│   │   ├── math_topics.py
+│   │   ├── models.py
+│   │   ├── rag
+│   │   ├── schemas.py
+│   │   ├── services.py
+│   │   ├── subject_topics.py
+│   │   └── video_generator.py
+│   ├── data
+│   │   ├── audio_history_user_1765294354973.json
+│   │   ├── chengyu.json
+│   │   ├── courses
+│   │   ├── csca_chemistry_topics.json
+│   │   ├── csca_math_topics.json
+│   │   ├── csca_physics_topics.json
+│   │   ├── ege
+│   │   ├── ent
+│   │   ├── gaokao
+│   │   ├── grammar_history_user_1764969479719.json
+│   │   ├── grammar_history_user_1765294354973.json
+│   │   ├── grammar_topics.json
+│   │   ├── hsk1.pdf
+│   │   ├── hsk1_words.json
+│   │   ├── hsk2.pdf
+│   │   ├── hsk2_words.json
+│   │   ├── hsk3.pdf
+│   │   ├── hsk3_words.json
+│   │   ├── hsk4.pdf
+│   │   ├── hsk4_words.json
+│   │   ├── hsk5.pdf
+│   │   ├── hsk5_words.json
+│   │   ├── hsk6.pdf
+│   │   ├── hsk6_words.json
+│   │   ├── hsk7.pdf
+│   │   ├── hsk_all_words.json
+│   │   ├── hsk_test_templates.json
+│   │   ├── hsk_words.json -> hsk_all_words.json
+│   │   ├── india
+│   │   ├── music
+│   │   ├── radical_examples.json
+│   │   ├── radicals.json
+│   │   ├── sat
+│   │   ├── tests
+│   │   ├── textbooks
+│   │   ├── translations_user_1764969479719.json
+│   │   ├── translations_user_1765294354973.json
+│   │   ├── uni.json
+│   │   ├── universities.json
+│   │   ├── uzbek
+│   │   ├── vector_stores
+│   │   └── videos
+│   ├── fonts
+│   │   ├── Caveat-Bold.ttf
+│   │   ├── Caveat-Medium.ttf
+│   │   ├── Caveat-Regular.ttf
+│   │   ├── Caveat-SemiBold.ttf
+│   │   ├── Caveat-VariableFont_wght.ttf
+│   │   ├── Montserrat-Black.ttf
+│   │   ├── Montserrat-BlackItalic.ttf
+│   │   ├── Montserrat-Bold.ttf
+│   │   ├── Montserrat-BoldItalic.ttf
+│   │   ├── Montserrat-ExtraBold.ttf
+│   │   ├── Montserrat-ExtraBoldItalic.ttf
+│   │   ├── Montserrat-ExtraLight.ttf
+│   │   ├── Montserrat-ExtraLightItalic.ttf
+│   │   ├── Montserrat-Italic-VariableFont_wght.ttf
+│   │   ├── Montserrat-Italic.ttf
+│   │   ├── Montserrat-Light.ttf
+│   │   ├── Montserrat-LightItalic.ttf
+│   │   ├── Montserrat-Medium.ttf
+│   │   ├── Montserrat-MediumItalic.ttf
+│   │   ├── Montserrat-Regular.ttf
+│   │   ├── Montserrat-SemiBold.ttf
+│   │   ├── Montserrat-SemiBoldItalic.ttf
+│   │   ├── Montserrat-Thin.ttf
+│   │   ├── Montserrat-ThinItalic.ttf
+│   │   ├── Montserrat-VariableFont_wght.ttf
+│   │   ├── Roboto-Black.ttf
+│   │   ├── Roboto-BlackItalic.ttf
+│   │   ├── Roboto-Bold.ttf
+│   │   ├── Roboto-BoldItalic.ttf
+│   │   ├── Roboto-ExtraBold.ttf
+│   │   ├── Roboto-ExtraBoldItalic.ttf
+│   │   ├── Roboto-ExtraLight.ttf
+│   │   ├── Roboto-ExtraLightItalic.ttf
+│   │   ├── Roboto-Italic-VariableFont_wdth,wght.ttf
+│   │   ├── Roboto-Italic.ttf
+│   │   ├── Roboto-Light.ttf
+│   │   ├── Roboto-LightItalic.ttf
+│   │   ├── Roboto-Medium.ttf
+│   │   ├── Roboto-MediumItalic.ttf
+│   │   ├── Roboto-Regular.ttf
+│   │   ├── Roboto-SemiBold.ttf
+│   │   ├── Roboto-SemiBoldItalic.ttf
+│   │   ├── Roboto-Thin.ttf
+│   │   ├── Roboto-ThinItalic.ttf
+│   │   ├── Roboto-VariableFont_wdth,wght.ttf
+│   │   ├── Roboto_Condensed-Black.ttf
+│   │   ├── Roboto_Condensed-BlackItalic.ttf
+│   │   ├── Roboto_Condensed-Bold.ttf
+│   │   ├── Roboto_Condensed-BoldItalic.ttf
+│   │   ├── Roboto_Condensed-ExtraBold.ttf
+│   │   ├── Roboto_Condensed-ExtraBoldItalic.ttf
+│   │   ├── Roboto_Condensed-ExtraLight.ttf
+│   │   ├── Roboto_Condensed-ExtraLightItalic.ttf
+│   │   ├── Roboto_Condensed-Italic.ttf
+│   │   ├── Roboto_Condensed-Light.ttf
+│   │   ├── Roboto_Condensed-LightItalic.ttf
+│   │   ├── Roboto_Condensed-Medium.ttf
+│   │   ├── Roboto_Condensed-MediumItalic.ttf
+│   │   ├── Roboto_Condensed-Regular.ttf
+│   │   ├── Roboto_Condensed-SemiBold.ttf
+│   │   ├── Roboto_Condensed-SemiBoldItalic.ttf
+│   │   ├── Roboto_Condensed-Thin.ttf
+│   │   ├── Roboto_Condensed-ThinItalic.ttf
+│   │   ├── Roboto_SemiCondensed-Black.ttf
+│   │   ├── Roboto_SemiCondensed-BlackItalic.ttf
+│   │   ├── Roboto_SemiCondensed-Bold.ttf
+│   │   ├── Roboto_SemiCondensed-BoldItalic.ttf
+│   │   ├── Roboto_SemiCondensed-ExtraBold.ttf
+│   │   ├── Roboto_SemiCondensed-ExtraBoldItalic.ttf
+│   │   ├── Roboto_SemiCondensed-ExtraLight.ttf
+│   │   ├── Roboto_SemiCondensed-ExtraLightItalic.ttf
+│   │   ├── Roboto_SemiCondensed-Italic.ttf
+│   │   ├── Roboto_SemiCondensed-Light.ttf
+│   │   ├── Roboto_SemiCondensed-LightItalic.ttf
+│   │   ├── Roboto_SemiCondensed-Medium.ttf
+│   │   ├── Roboto_SemiCondensed-MediumItalic.ttf
+│   │   ├── Roboto_SemiCondensed-Regular.ttf
+│   │   ├── Roboto_SemiCondensed-SemiBold.ttf
+│   │   ├── Roboto_SemiCondensed-SemiBoldItalic.ttf
+│   │   ├── Roboto_SemiCondensed-Thin.ttf
+│   │   └── Roboto_SemiCondensed-ThinItalic.ttf
+│   ├── lesson1.json
+│   ├── modules
+│   │   ├── grammar_explainer.py
+│   │   ├── hsk_test_generator.py
+│   │   └── translator.py
+│   ├── plan.json
+│   ├── requirements.txt
+│   ├── scripts
+│   │   ├── build_ege_vector.py
+│   │   ├── build_ent_hnsw.py
+│   │   ├── build_ent_vector.py
+│   │   ├── build_gaokao_vector.py
+│   │   ├── build_india_vector.py
+│   │   ├── build_sat_vector.py
+│   │   ├── build_uzbek_vector.py
+│   │   ├── build_vector_db.py
+│   │   ├── check_gaokao_data.py
+│   │   ├── clean_data_local.py
+│   │   ├── clean_gaokao_tasks.py
+│   │   ├── improve_all_gaokao.py
+│   │   ├── migrate_gaokao_data.py
+│   │   ├── parse_ege_files.py
+│   │   ├── parse_ent_cleaned.py
+│   │   ├── parse_ent_improved.py
+│   │   ├── parse_gaokao_files.py
+│   │   ├── parse_gaokao_files_v2.py
+│   │   ├── parse_india_files.py
+│   │   ├── parse_pdf_subjects.py
+│   │   ├── parse_sat_files.py
+│   │   └── parse_uzbek_files.py
+│   ├── static
+│   │   └── presentations
+│   └── test_rag.py
+├── conference
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── static
+│   │   ├── whiteboard.css
+│   │   └── whiteboard.js
+│   └── templates
+│       ├── student.html
+│       └── teacher.html
+├── docker-compose.yml
+├── fly.toml
+├── frontend
+│   ├── data
+│   │   └── gaokao
+│   ├── index.html
+│   ├── script.js
+│   └── style.css
+├── lesson1.json
+├── plan.json
+├── project_structure.txt
+├── questions.json
+└── start_services.py
+
+29 directories, 171 files

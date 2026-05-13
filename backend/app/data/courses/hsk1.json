@@ -1,0 +1,885 @@
+{
+  "metadata": {
+    "title": "标准教程 HSK 1",
+    "subtitle": "STANDARD COURSE HSK 1",
+    "total_pages": 136,
+    "language": "ru",
+    "source": "hsk1.pdf"
+  },
+  "contents": [
+    {
+      "page": 2,
+      "section": "目录",
+      "type": "table_of_contents",
+      "lessons": [
+        {
+          "lesson_number": 1,
+          "title": "你好",
+          "title_en": "Hello",
+          "page": 2,
+          "vocabulary": ["你", "好", "*您", "你们", "对不起", "没关系"],
+          "notes": [
+            "疑问代词“什么”",
+            "“是”字句",
+            "用“吗”的疑问句"
+          ]
+        },
+        {
+          "lesson_number": 2,
+          "title": "谢谢你",
+          "title_en": "Thank you",
+          "page": 8,
+          "vocabulary": ["谢谢", "不", "不客气", "再见"],
+          "notes": []
+        },
+        {
+          "lesson_number": 3,
+          "title": "你叫什么名字",
+          "title_en": "What's your name",
+          "page": 14,
+          "vocabulary": ["叫", "什么", "名字", "我", "是", "老师", "吗", "学生", "人", "李月", "中国", "美国"],
+          "notes": [
+            "疑问代词“什么”",
+            "“是”字句",
+            "用“吗”的疑问句"
+          ]
+        },
+        {
+          "lesson_number": 4,
+          "title": "她是我的汉语老师",
+          "title_en": "She is my Chinese teacher",
+          "page": 22,
+          "vocabulary": ["她", "谁", "的", "汉语", "哪", "国", "呢", "他", "同学", "朋友"],
+          "notes": [
+            "疑问代词“谁”、“哪”",
+            "结构助词“的”",
+            "疑问助词“呢”（1）"
+          ]
+        },
+        {
+          "lesson_number": 5,
+          "title": "她女儿今年二十岁",
+          "title_en": "Her daughter is 20 years old this year",
+          "page": 30,
+          "vocabulary": ["家", "有", "*口", "女儿", "几", "岁", "了", "今年", "多", "大"],
+          "notes": [
+            "疑问代词“几”",
+            "百以内的数字",
+            "“了”表变化",
+            "“多+大”表示疑问"
+          ]
+        },
+        {
+          "lesson_number": 6,
+          "title": "我会说汉语",
+          "title_en": "I can speak Chinese",
+          "page": 40,
+          "vocabulary": ["会", "说", "妈妈", "菜", "很", "*好吃", "做", "写", "汉字", "字", "怎么", "读"],
+          "notes": [
+            "能愿动词“会”(1)",
+            "形容词谓语句",
+            "疑问代词“怎么”(1)"
+          ]
+        },
+        {
+          "lesson_number": 7,
+          "title": "今天几号",
+          "title_en": "What's the date today",
+          "page": 48,
+          "vocabulary": ["请", "*问", "今天", "号", "月", "星期", "昨天", "明天", "去", "学校", "看", "书"],
+          "notes": [
+            "日期的表达(1):月、日/号、星期",
+            "名词谓语句",
+            "连动句(1):去+地方+做什么"
+          ]
+        },
+        {
+          "lesson_number": 8,
+          "title": "我想喝茶",
+          "title_en": "I'd like some tea",
+          "page": 56,
+          "vocabulary": ["想", "喝", "茶", "吃", "米饭", "下午", "商店", "买", "个", "杯子", "这", "多少", "钱", "块", "那"],
+          "notes": [
+            "能愿动词“想”",
+            "疑问代词“多少”",
+            "量词“个”、“口”",
+            "钱数的表达"
+          ]
+        },
+        {
+          "lesson_number": 9,
+          "title": "你儿子在哪儿工作",
+          "title_en": "Where does your son work",
+          "page": 64,
+          "vocabulary": ["小", "猫", "在", "那儿", "狗", "椅子", "下面(下)", "在", "哪儿", "工作", "儿子", "医院", "医生", "爸爸"],
+          "notes": [
+            "动词“在”",
+            "疑问代词“哪儿”",
+            "介词“在”",
+            "疑问助词“呢”(2)"
+          ]
+        },
+        {
+          "lesson_number": 10,
+          "title": "我能坐这儿吗",
+          "title_en": "Can I sit here",
+          "page": 72,
+          "vocabulary": ["桌子", "上", "电脑", "和", "本", "里", "前面", "后面", "这儿", "没有(没)", "能", "坐", "王方", "谢朋"],
+          "notes": [
+            "“有”字句:表示存在",
+            "连词“和”",
+            "能愿动词“能”",
+            "用“请”的祈使句"
+          ]
+        },
+        {
+          "lesson_number": 11,
+          "title": "现在几点",
+          "title_en": "What's the time now",
+          "page": 82,
+          "vocabulary": ["现在", "点", "分", "中午", "吃饭", "时候", "回", "我们", "电影", "住", "前", "北京"],
+          "notes": [
+            "时间的表达",
+            "时间词做状语",
+            "名词“前”"
+          ]
+        },
+        {
+          "lesson_number": 12,
+          "title": "明天天气怎么样",
+          "title_en": "What will the weather be like tomorrow",
+          "page": 90,
+          "vocabulary": ["天气", "怎么样", "太", "热", "冷", "下雨", "小姐", "来", "*身体", "爱", "些", "水果", "水"],
+          "notes": [
+            "疑问代词“怎么样”",
+            "主谓谓语句",
+            "程度副词“太”",
+            "能愿动词“会”（2）"
+          ]
+        },
+        {
+          "lesson_number": 13,
+          "title": "他在学做中国菜呢",
+          "title_en": "He is learning to cook Chinese food",
+          "page": 98,
+          "vocabulary": ["喂", "*也", "学习", "上午", "睡觉", "电视", "喜欢", "*给", "打电话", "*吧", "大卫"],
+          "notes": [
+            "叹词“喂”",
+            "“在……呢”表示动作正在进行",
+            "电话号码的表达",
+            "语气助词“吧”"
+          ]
+        },
+        {
+          "lesson_number": 14,
+          "title": "她买了不少衣服",
+          "title_en": "She has bought quite a few clothes",
+          "page": 104,
+          "vocabulary": ["东西", "一点儿", "苹果", "看见", "先生", "开", "车", "回来", "分钟", "后", "衣服", "漂亮", "*啊", "少", "这些", "都", "张"],
+          "notes": [
+            "“了”表发生或完成",
+            "名词“后”",
+            "语气助词“啊”",
+            "副词“都”"
+          ]
+        },
+        {
+          "lesson_number": 15,
+          "title": "我是坐飞机来的",
+          "title_en": "I came here by air",
+          "page": 112,
+          "vocabulary": ["认识", "年", "大学", "饭店", "出租车", "*一起", "高兴", "听", "飞机"],
+          "notes": [
+            "“是……的”句：强调时间、地点、方式",
+            "日期的表达（2）：年、月、日/号、星期"
+          ]
+        }
+      ],
+      "culture_sections": [
+        {
+          "title": "中国人对年龄的询问方法",
+          "title_en": "Ways of Asking a Chinese Person's Age",
+          "page": 39
+        },
+        {
+          "title": "中国人姓名的特点",
+          "title_en": "Features of Chinese People's Names",
+          "page": 81
+        },
+        {
+          "title": "Common Communication Tools of Chinese People",
+          "page": 125
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "section": "拼音 и фонетика",
+      "phonetics": [
+        {
+          "type": "initials_and_finals_1",
+          "initials": ["b", "p", "m", "f", "d", "t", "n", "l", "g", "k", "h", "j", "q", "x"],
+          "finals": ["i", "u", "ü", "er", "a", "ia", "ua", "o", "uo", "e", "ie", "üe", "ai", "uai", "ei", "uei (ui)", "ao", "iao"]
+        },
+        {
+          "type": "tones",
+          "description": "Четыре тона: 1й (55), 2й (35), 3й (214), 4й (51)"
+        },
+        {
+          "type": "syllable_structure",
+          "description": "Инициаль + финаль + тон"
+        },
+        {
+          "type": "tone_sandhi",
+          "description": "3й+3й -> 2й+3й"
+        },
+        {
+          "type": "initials_and_finals_2",
+          "initials": ["zh", "ch", "sh", "r", "z", "c", "s"],
+          "finals": ["ou", "iou (iu)", "an", "iuan", "uan", "en", "in", "uen (un)", "ün", "ang", "iang", "uang", "eng", "ing", "ueng", "ong", "iong"]
+        },
+        {
+          "type": "neutral_tone",
+          "description": "Краткий и лёгкий тон"
+        },
+        {
+          "type": "pinyin_rules_1",
+          "description": "Правила постановки тонов и сокращения (iou, uei, iu, ui, un)"
+        },
+        {
+          "type": "differentiation_jqx_zcs",
+          "description": "Различие произношения j, q, x и z, c, s"
+        },
+        {
+          "type": "differentiation_i_u_ü",
+          "description": "Различие произношения i, u, ü"
+        },
+        {
+          "type": "tone_sandhi_bu",
+          "description": "Изменение тона ‘不’: перед 4м тоном -> 2й"
+        },
+        {
+          "type": "pinyin_rules_2",
+          "description": "Правила ü с j, q, x (опускание точек)"
+        },
+        {
+          "type": "differentiation_zh_ch_sh_r",
+          "description": "Различие произношения zh, ch, sh, r"
+        },
+        {
+          "type": "differentiation_n_ng",
+          "description": "Различие переднеязычного n и заднеязычного ng"
+        },
+        {
+          "type": "tone_sandhi_yi",
+          "description": "Изменение тона ‘一’: перед 1,2,3 -> 4й; перед 4м -> 2й"
+        },
+        {
+          "type": "pinyin_rules_3",
+          "description": "Использование y и w"
+        },
+        {
+          "type": "retroflex_final",
+          "description": "Эризация: добавление ‘r’"
+        },
+        {
+          "type": "differentiation_finals_i_u_ü",
+          "description": "Различие финалей, начинающихся с i, u, ü"
+        },
+        {
+          "type": "aspirated_unaspirated",
+          "description": "Различие придыхательных и непридыхательных инициалей (b-p, d-t, g-k, j-q, z-c, zh-ch)"
+        },
+        {
+          "type": "pinyin_rules_4",
+          "description": "Апостроф (разделительный знак)"
+        },
+        {
+          "type": "tone_collocation_disyllabic_1",
+          "description": "1й тон + 1/2/3/4"
+        },
+        {
+          "type": "tone_collocation_disyllabic_2",
+          "description": "2й тон + 1/2/3/4"
+        },
+        {
+          "type": "tone_collocation_disyllabic_3",
+          "description": "3й тон + 1/2/3/4 (3й тон в сочетании = 211)"
+        },
+        {
+          "type": "tone_collocation_disyllabic_4",
+          "description": "4й тон + 1/2/3/4"
+        },
+        {
+          "type": "neutral_tone_function",
+          "description": "Функция нейтрального тона: различие значений (东西 dōngxī / dōngxi)"
+        },
+        {
+          "type": "reduplicated_syllables",
+          "description": "Второй слог в удвоениях обычно нейтральный"
+        },
+        {
+          "type": "suffix_pronunciation",
+          "description": "Суффиксы 们, 子, 头 читаются нейтральным тоном"
+        },
+        {
+          "type": "tone_collocation_trisyllabic_1",
+          "description": "3-сложные: начало с 1го тона",
+          "examples": ["xīngqī yī", "bīngjīlíng", "xīngqī wǔ", "xīngqī liù", "qīngjiégōng", "zhuōmícáng", "chī píngguǒ", "Jiānádà", "gāojiǎobēi", "duī xuěrén", "huā yǔsǎn", "chī mǐfàn", "hāmiguā", "jīqìrén", "bōlànggǔ", "yīwùshì"]
+        },
+        {
+          "type": "tone_collocation_trisyllabic_2",
+          "description": "3-сложные: начало с 2го тона",
+          "examples": ["yánjiūshēng", "tán gāngqín", "túshūguǎn", "wéishēngsù", "yínhángjiā", "Hánguó rén", "Hánguó yǔ", "rénmínbì", "yóuyǒngyī", "yóuyǒngchí", "yóuyǒngguǎn", "niúzǎikù", "móshùshī", "fúwùyuán", "bówùguǎn", "míngxìnpiàn"]
+        },
+        {
+          "type": "tone_collocation_trisyllabic_3",
+          "description": "3-сложные: начало с 3го тона",
+          "examples": ["xǐyījī", "pǔtōng rén", "zǒngjīnglǐ", "huǒchē piào", "shǐxuéjiā", "jǐngchájú", "měinánzǐ", "měiróngyuàn", "biǎoyǎnjiā", "xiǎo yǎnyuán", "Mǐlǎoshǔ", "yǎnchànghuì", "dǎzìjī", "pǎobù xié", "měishùguǎn", "dǎ diànhuà"]
+        },
+        {
+          "type": "tone_collocation_trisyllabic_4",
+          "description": "3-сложные: начало с 4го тона",
+          "examples": ["diànbīngxiāng", "Màidāngláo", "jiànshēnguān", "bàngōngshì", "chàng guógē", "kàn zúqiú", "kuàngquánshuǐ", "shuànyángròu", "mìmǎxiāng", "qìguǎnyán", "dàshǐguǎn", "mièhuǒqì", "zhàoxiàngjī", "zànzhùrén", "diànhuàkǎ", "Àoyùnhuì"]
+        }
+      ]
+    },
+    {
+      "page": "3, 18, 26, 34, 42, 50",
+      "section": "汉字 (Китайские иероглифы)",
+      "strokes": [
+        {
+          "stroke": "一",
+          "name": "横 héng",
+          "direction": "horizontal",
+          "example_chars": ["一", "二"]
+        },
+        {
+          "stroke": "1",
+          "name": "竖 shù",
+          "direction": "vertical",
+          "example_chars": ["十", "工"]
+        },
+        {
+          "stroke": "丿",
+          "name": "撇 piě",
+          "direction": "left-falling",
+          "example_chars": ["人", "八"]
+        },
+        {
+          "stroke": "㇏",
+          "name": "捺 nà",
+          "direction": "right-falling",
+          "example_chars": ["大", "天"]
+        },
+        {
+          "stroke": "丶",
+          "name": "点 diǎn",
+          "direction": "dot",
+          "example_chars": ["不", "六"]
+        },
+        {
+          "stroke": "7",
+          "name": "横折 héngzhé",
+          "direction": "horizontal-turning",
+          "example_chars": ["口", "日"]
+        },
+        {
+          "stroke": "L",
+          "name": "竖折 shùzhé",
+          "direction": "vertical-turning",
+          "example_chars": ["山", "出"]
+        },
+        {
+          "stroke": "亅",
+          "name": "竖钩 shùgǒu",
+          "direction": "vertical-hook",
+          "example_chars": ["小", "丁"]
+        },
+        {
+          "stroke": "𠃌",
+          "name": "横折钩 héngzhégōu",
+          "direction": "horizontal-turning-hook",
+          "example_chars": ["门", "月"]
+        },
+        {
+          "stroke": "㇃",
+          "name": "卧钩 wògōu",
+          "direction": "lying-hook",
+          "example_chars": ["心", "您"]
+        },
+        {
+          "stroke": "乚",
+          "name": "竖弯钩 shùwāngōu",
+          "direction": "vertical-curved-hook",
+          "example_chars": ["七", "儿"]
+        },
+        {
+          "stroke": "⺄",
+          "name": "横折弯钩 héngzhéwāngōu",
+          "direction": "horizontal-turning-curved-hook",
+          "example_chars": ["九", "几"]
+        },
+        {
+          "stroke": "𠄎",
+          "name": "横撇 héngpiě",
+          "direction": "horizontal-to-left-falling",
+          "example_chars": ["水", "又"]
+        },
+        {
+          "stroke": "𡿨",
+          "name": "撇点 piědiǎn",
+          "direction": "left-falling-to-dot",
+          "example_chars": ["女", "好"]
+        },
+        {
+          "stroke": "ㄥ",
+          "name": "撇折 piězhé",
+          "direction": "left-falling-to-turning",
+          "example_chars": ["东", "么"]
+        },
+        {
+          "stroke": "㇂",
+          "name": "斜钩 xiégōu",
+          "direction": "slanting-hook",
+          "example_chars": ["我", "钱"]
+        },
+        {
+          "stroke": "㇀",
+          "name": "提 tí",
+          "direction": "rising",
+          "example_chars": ["我", "打"]
+        }
+      ],
+      "single_component_characters": [
+        { "character": "一", "meaning": "один", "lesson": 1 },
+        { "character": "二", "meaning": "два", "lesson": 1 },
+        { "character": "三", "meaning": "три", "lesson": 1 },
+        { "character": "十", "meaning": "десять", "lesson": 1 },
+        { "character": "八", "meaning": "восемь", "lesson": 1 },
+        { "character": "六", "meaning": "шесть", "lesson": 1 },
+        { "character": "口", "meaning": "рот", "lesson": 2 },
+        { "character": "见", "meaning": "видеть", "lesson": 2 },
+        { "character": "山", "meaning": "гора", "lesson": 2 },
+        { "character": "小", "meaning": "маленький", "lesson": 2 },
+        { "character": "不", "meaning": "нет, не", "lesson": 2 },
+        { "character": "月", "meaning": "луна, месяц", "lesson": 3 },
+        { "character": "心", "meaning": "сердце", "lesson": 3 },
+        { "character": "中", "meaning": "середина", "lesson": 3 },
+        { "character": "人", "meaning": "человек", "lesson": 3 },
+        { "character": "七", "meaning": "семь", "lesson": 4 },
+        { "character": "儿", "meaning": "ребёнок, сын", "lesson": 4 },
+        { "character": "几", "meaning": "сколько", "lesson": 4 },
+        { "character": "九", "meaning": "девять", "lesson": 4 },
+        { "character": "水", "meaning": "вода", "lesson": 5 },
+        { "character": "女", "meaning": "женщина", "lesson": 5 },
+        { "character": "了", "meaning": "частица", "lesson": 5 },
+        { "character": "大", "meaning": "большой", "lesson": 5 },
+        { "character": "东", "meaning": "восток", "lesson": 6 },
+        { "character": "我", "meaning": "я", "lesson": 6 },
+        { "character": "西", "meaning": "запад", "lesson": 6 },
+        { "character": "四", "meaning": "четыре", "lesson": 7 },
+        { "character": "五", "meaning": "пять", "lesson": 7 },
+        { "character": "书", "meaning": "книга", "lesson": 7 },
+        { "character": "少", "meaning": "мало", "lesson": 8 },
+        { "character": "个", "meaning": "счётное слово", "lesson": 8 },
+        { "character": "在", "meaning": "находиться", "lesson": 9 },
+        { "character": "子", "meaning": "ребёнок, сын", "lesson": 9 },
+        { "character": "工", "meaning": "работа", "lesson": 9 },
+        { "character": "上", "meaning": "верх", "lesson": 10 },
+        { "character": "下", "meaning": "низ", "lesson": 10 },
+        { "character": "本", "meaning": "корень, основа", "lesson": 10 },
+        { "character": "末", "meaning": "кончик, неважное", "lesson": 10 },
+        { "character": "午", "meaning": "полдень", "lesson": 11 },
+        { "character": "电", "meaning": "электричество", "lesson": 11 },
+        { "character": "天", "meaning": "небо", "lesson": 12 },
+        { "character": "气", "meaning": "воздух, газ", "lesson": 12 },
+        { "character": "雨", "meaning": "дождь", "lesson": 12 },
+        { "character": "日", "meaning": "солнце, день", "lesson": 13 },
+        { "character": "目", "meaning": "глаз", "lesson": 13 },
+        { "character": "习", "meaning": "учиться, повторять", "lesson": 13 },
+        { "character": "开", "meaning": "открывать, вести", "lesson": 14 },
+        { "character": "车", "meaning": "машина", "lesson": 14 },
+        { "character": "回", "meaning": "возвращаться", "lesson": 14 },
+        { "character": "年", "meaning": "год", "lesson": 15 },
+        { "character": "出", "meaning": "выходить", "lesson": 15 },
+        { "character": "飞", "meaning": "летать", "lesson": 15 }
+      ],
+      "stroke_order_rules": [
+        {
+          "rule": "先横后竖",
+          "description": "Горизонтальное предшествует вертикальному",
+          "example": "十, 工"
+        },
+        {
+          "rule": "先撇后捺",
+          "description": "Откидная влево предшествует откидной вправо",
+          "example": "八, 人"
+        },
+        {
+          "rule": "从上到下",
+          "description": "Сверху вниз",
+          "example": "二, 三"
+        },
+        {
+          "rule": "从左到右",
+          "description": "Слева направо",
+          "example": "几, 八"
+        },
+        {
+          "rule": "先外后内",
+          "description": "Снаружи внутрь",
+          "example": "月, 心"
+        },
+        {
+          "rule": "先中间后两边",
+          "description": "Центр затем стороны",
+          "example": "水, 小"
+        }
+      ],
+      "structures": [
+        {
+          "type": "独体结构",
+          "description": "Однокомпонентная структура",
+          "examples": ["人", "我", "中"]
+        },
+        {
+          "type": "合体结构",
+          "description": "Составная структура",
+          "subtypes": [
+            {
+              "type": "左右结构",
+              "description": "Лево-правая",
+              "examples": ["你", "好"]
+            },
+            {
+              "type": "左中右结构",
+              "description": "Лево-центр-право",
+              "examples": ["谢", "树"]
+            },
+            {
+              "type": "上下结构",
+              "description": "Верх-низ",
+              "examples": ["是", "爸"]
+            },
+            {
+              "type": "上中下结构",
+              "description": "Верх-центр-низ",
+              "examples": ["茶", "高"]
+            },
+            {
+              "type": "半包围结构",
+              "description": "Полузамкнутая",
+              "examples": ["店", "习", "这", "同", "凶", "医"]
+            },
+            {
+              "type": "全包围结构",
+              "description": "Полностью замкнутая",
+              "examples": ["四", "国"]
+            }
+          ]
+        }
+      ],
+      "radicals": [
+        { "radical": "氵", "name": "三点水", "meaning": "вода", "examples": ["汉", "没"], "lesson": 7 },
+        { "radical": "讠", "name": "言字旁", "meaning": "речь, язык", "examples": ["语", "谁"], "lesson": 7 },
+        { "radical": "亻", "name": "单人旁", "meaning": "человек", "examples": ["你", "他"], "lesson": 11 },
+        { "radical": "口", "name": "口字旁", "meaning": "рот", "examples": ["吃", "喝"], "lesson": 8 },
+        { "radical": "口", "name": "国字框", "meaning": "окружение", "examples": ["国", "困"], "lesson": 10 },
+        { "radical": "钅", "name": "金字旁", "meaning": "металл", "examples": ["钟", "钱"], "lesson": 8 },
+        { "radical": "辶", "name": "走之旁", "meaning": "ходить", "examples": ["这", "送"], "lesson": 9 },
+        { "radical": "门", "name": "门字框", "meaning": "дверь, комната", "examples": ["问", "间"], "lesson": 9 },
+        { "radical": "⻏", "name": "耳刀旁", "meaning": "местность, рельеф", "examples": ["院", "阳"], "lesson": 11 },
+        { "radical": "女", "name": "女字旁", "meaning": "женщина", "examples": ["姐", "妈"], "lesson": 12 },
+        { "radical": "饣", "name": "食字旁", "meaning": "еда", "examples": ["饭", "饮"], "lesson": 12 },
+        { "radical": "日", "name": "日字旁", "meaning": "время, солнце", "examples": ["明", "时"], "lesson": 13 },
+        { "radical": "目", "name": "目字旁", "meaning": "глаз", "examples": ["眼", "睡"], "lesson": 13 },
+        { "radical": "月", "name": "肉月旁", "meaning": "тело, плоть", "examples": ["服", "胖"], "lesson": 14 },
+        { "radical": "扌", "name": "提手旁", "meaning": "действие рукой", "examples": ["打", "找"], "lesson": 14 },
+        { "radical": "艹", "name": "草字头", "meaning": "трава, растение", "examples": ["茶", "菜"], "lesson": 15 },
+        { "radical": "宀", "name": "宝盖头", "meaning": "дом, крыша", "examples": ["安", "家"], "lesson": 15 },
+        { "radical": "礻", "name": "示字旁", "meaning": "божество, ритуал", "examples": ["视", "祝"], "lesson": 10 }
+      ]
+    },
+    {
+      "page": "126-133",
+      "section": "词语总表 (Общий словарь)",
+      "vocabulary": [
+        { "word": "爱", "pinyin": "ài", "part_of_speech": "v.", "meaning": "любить, нравиться", "lesson": 12 },
+        { "word": "八", "pinyin": "bā", "part_of_speech": "num.", "meaning": "восемь", "lesson": 5 },
+        { "word": "爸爸", "pinyin": "bàba", "part_of_speech": "n.", "meaning": "папа", "lesson": 9 },
+        { "word": "杯子", "pinyin": "bēizi", "part_of_speech": "n.", "meaning": "чашка, стакан", "lesson": 8 },
+        { "word": "本", "pinyin": "běn", "part_of_speech": "m.", "meaning": "сч. слово для книг", "lesson": 10 },
+        { "word": "不客气", "pinyin": "bú kèqi", "part_of_speech": "", "meaning": "пожалуйста (в ответ на спасибо)", "lesson": 2 },
+        { "word": "不", "pinyin": "bù", "part_of_speech": "adv.", "meaning": "нет, не", "lesson": 2 },
+        { "word": "菜", "pinyin": "cài", "part_of_speech": "n.", "meaning": "блюдо, кухня", "lesson": 6 },
+        { "word": "茶", "pinyin": "chá", "part_of_speech": "n.", "meaning": "чай", "lesson": 8 },
+        { "word": "吃", "pinyin": "chī", "part_of_speech": "v.", "meaning": "есть", "lesson": 8 },
+        { "word": "出租车", "pinyin": "chūzūchē", "part_of_speech": "n.", "meaning": "такси", "lesson": 15 },
+        { "word": "打电话", "pinyin": "dǎ diànhuà", "part_of_speech": "", "meaning": "звонить по телефону", "lesson": 13 },
+        { "word": "大", "pinyin": "dà", "part_of_speech": "adj.", "meaning": "(о возрасте) старый", "lesson": 5 },
+        { "word": "的", "pinyin": "de", "part_of_speech": "part.", "meaning": "служебное слово (определение)", "lesson": 4 },
+        { "word": "点", "pinyin": "diǎn", "part_of_speech": "m.", "meaning": "час (время)", "lesson": 11 },
+        { "word": "电脑", "pinyin": "diànnǎo", "part_of_speech": "n.", "meaning": "компьютер", "lesson": 10 },
+        { "word": "电视", "pinyin": "diànshì", "part_of_speech": "n.", "meaning": "телевизор", "lesson": 13 },
+        { "word": "电影", "pinyin": "diànyǐng", "part_of_speech": "n.", "meaning": "фильм", "lesson": 11 },
+        { "word": "东西", "pinyin": "dōngxi", "part_of_speech": "n.", "meaning": "вещь", "lesson": 14 },
+        { "word": "都", "pinyin": "dōu", "part_of_speech": "adv.", "meaning": "все, оба", "lesson": 14 },
+        { "word": "读", "pinyin": "dú", "part_of_speech": "v.", "meaning": "читать", "lesson": 6 },
+        { "word": "对不起", "pinyin": "duìbuqǐ", "part_of_speech": "v.", "meaning": "извините", "lesson": 1 },
+        { "word": "多", "pinyin": "duō", "part_of_speech": "adv.", "meaning": "много; как (в вопросе о степени)", "lesson": 5 },
+        { "word": "多少", "pinyin": "duōshao", "part_of_speech": "pron.", "meaning": "сколько", "lesson": 8 },
+        { "word": "儿子", "pinyin": "érzi", "part_of_speech": "n.", "meaning": "сын", "lesson": 9 },
+        { "word": "二", "pinyin": "èr", "part_of_speech": "num.", "meaning": "два", "lesson": 5 },
+        { "word": "饭店", "pinyin": "fàndiàn", "part_of_speech": "n.", "meaning": "отель, ресторан", "lesson": 15 },
+        { "word": "飞机", "pinyin": "fēijī", "part_of_speech": "n.", "meaning": "самолёт", "lesson": 15 },
+        { "word": "分钟", "pinyin": "fēnzhōng", "part_of_speech": "n.", "meaning": "минута", "lesson": 14 },
+        { "word": "高兴", "pinyin": "gāoxìng", "part_of_speech": "adj.", "meaning": "радостный, счастливый", "lesson": 15 },
+        { "word": "个", "pinyin": "gè", "part_of_speech": "m.", "meaning": "универсальное сч. слово", "lesson": 8 },
+        { "word": "工作", "pinyin": "gōngzuò", "part_of_speech": "v./n.", "meaning": "работать; работа", "lesson": 9 },
+        { "word": "狗", "pinyin": "gǒu", "part_of_speech": "n.", "meaning": "собака", "lesson": 9 },
+        { "word": "汉语", "pinyin": "Hànyǔ", "part_of_speech": "n.", "meaning": "китайский язык", "lesson": 4 },
+        { "word": "好", "pinyin": "hǎo", "part_of_speech": "adj.", "meaning": "хороший", "lesson": 1 },
+        { "word": "号", "pinyin": "hào", "part_of_speech": "n.", "meaning": "число (месяца)", "lesson": 7 },
+        { "word": "喝", "pinyin": "hē", "part_of_speech": "v.", "meaning": "пить", "lesson": 8 },
+        { "word": "和", "pinyin": "hé", "part_of_speech": "conj.", "meaning": "и", "lesson": 10 },
+        { "word": "很", "pinyin": "hěn", "part_of_speech": "adv.", "meaning": "очень", "lesson": 6 },
+        { "word": "后面", "pinyin": "hòumiàn", "part_of_speech": "n.", "meaning": "задняя сторона, позади", "lesson": 10 },
+        { "word": "回", "pinyin": "huí", "part_of_speech": "v.", "meaning": "возвращаться", "lesson": 11 },
+        { "word": "会", "pinyin": "huì", "part_of_speech": "mod.", "meaning": "уметь", "lesson": 6 },
+        { "word": "几", "pinyin": "jǐ", "part_of_speech": "pron.", "meaning": "сколько", "lesson": 5 },
+        { "word": "家", "pinyin": "jiā", "part_of_speech": "n.", "meaning": "семья", "lesson": 5 },
+        { "word": "叫", "pinyin": "jiào", "part_of_speech": "v.", "meaning": "звать, называться", "lesson": 3 },
+        { "word": "今天", "pinyin": "jīntiān", "part_of_speech": "n.", "meaning": "сегодня", "lesson": 7 },
+        { "word": "九", "pinyin": "jiǔ", "part_of_speech": "num.", "meaning": "девять", "lesson": 5 },
+        { "word": "开", "pinyin": "kāi", "part_of_speech": "v.", "meaning": "вести (машину)", "lesson": 14 },
+        { "word": "看", "pinyin": "kàn", "part_of_speech": "v.", "meaning": "смотреть, читать", "lesson": 7 },
+        { "word": "看见", "pinyin": "kànjiàn", "part_of_speech": "v.", "meaning": "увидеть", "lesson": 14 },
+        { "word": "块", "pinyin": "kuài", "part_of_speech": "m.", "meaning": "юань (деньги)", "lesson": 8 },
+        { "word": "来", "pinyin": "lái", "part_of_speech": "v.", "meaning": "приходить", "lesson": 12 },
+        { "word": "老师", "pinyin": "lǎoshī", "part_of_speech": "n.", "meaning": "учитель", "lesson": 3 },
+        { "word": "了", "pinyin": "le", "part_of_speech": "part.", "meaning": "частица изменения/новой ситуации", "lesson": 5 },
+        { "word": "冷", "pinyin": "lěng", "part_of_speech": "adj.", "meaning": "холодный", "lesson": 12 },
+        { "word": "里", "pinyin": "lǐ", "part_of_speech": "n.", "meaning": "внутри", "lesson": 10 },
+        { "word": "六", "pinyin": "liù", "part_of_speech": "num.", "meaning": "шесть", "lesson": 5 },
+        { "word": "妈妈", "pinyin": "māma", "part_of_speech": "n.", "meaning": "мама", "lesson": 6 },
+        { "word": "吗", "pinyin": "ma", "part_of_speech": "part.", "meaning": "вопрос. частица", "lesson": 3 },
+        { "word": "买", "pinyin": "mǎi", "part_of_speech": "v.", "meaning": "покупать", "lesson": 8 },
+        { "word": "猫", "pinyin": "māo", "part_of_speech": "n.", "meaning": "кошка", "lesson": 9 },
+        { "word": "没关系", "pinyin": "méi guānxi", "part_of_speech": "", "meaning": "ничего страшного", "lesson": 1 },
+        { "word": "没有", "pinyin": "méiyǒu", "part_of_speech": "adv.", "meaning": "не иметь, нет (наличия)", "lesson": 10 },
+        { "word": "米饭", "pinyin": "mǐfàn", "part_of_speech": "n.", "meaning": "рис (варёный)", "lesson": 8 },
+        { "word": "名字", "pinyin": "míngzi", "part_of_speech": "n.", "meaning": "имя", "lesson": 3 },
+        { "word": "明天", "pinyin": "míngtiān", "part_of_speech": "n.", "meaning": "завтра", "lesson": 7 },
+        { "word": "哪", "pinyin": "nǎ", "part_of_speech": "pron.", "meaning": "какой, который", "lesson": 4 },
+        { "word": "哪儿", "pinyin": "nǎr", "part_of_speech": "pron.", "meaning": "где, куда", "lesson": 9 },
+        { "word": "那", "pinyin": "nà", "part_of_speech": "pron.", "meaning": "тот", "lesson": 8 },
+        { "word": "呢", "pinyin": "ne", "part_of_speech": "part.", "meaning": "вопрос. частица", "lesson": 4 },
+        { "word": "能", "pinyin": "néng", "part_of_speech": "mod.", "meaning": "мочь, можно", "lesson": 10 },
+        { "word": "你", "pinyin": "nǐ", "part_of_speech": "pron.", "meaning": "ты", "lesson": 1 },
+        { "word": "年", "pinyin": "nián", "part_of_speech": "n.", "meaning": "год", "lesson": 15 },
+        { "word": "女儿", "pinyin": "nǚ'ér", "part_of_speech": "n.", "meaning": "дочь", "lesson": 5 },
+        { "word": "朋友", "pinyin": "péngyou", "part_of_speech": "n.", "meaning": "друг", "lesson": 4 },
+        { "word": "漂亮", "pinyin": "piàoliang", "part_of_speech": "adj.", "meaning": "красивый", "lesson": 14 },
+        { "word": "苹果", "pinyin": "píngguǒ", "part_of_speech": "n.", "meaning": "яблоко", "lesson": 14 },
+        { "word": "七", "pinyin": "qī", "part_of_speech": "num.", "meaning": "семь", "lesson": 5 },
+        { "word": "前面", "pinyin": "qiánmiàn", "part_of_speech": "n.", "meaning": "передняя сторона, впереди", "lesson": 10 },
+        { "word": "钱", "pinyin": "qián", "part_of_speech": "n.", "meaning": "деньги", "lesson": 8 },
+        { "word": "请", "pinyin": "qǐng", "part_of_speech": "v.", "meaning": "пожалуйста (просьба)", "lesson": 7 },
+        { "word": "去", "pinyin": "qù", "part_of_speech": "v.", "meaning": "идти, ехать", "lesson": 7 },
+        { "word": "热", "pinyin": "rè", "part_of_speech": "adj.", "meaning": "горячий, жаркий", "lesson": 12 },
+        { "word": "人", "pinyin": "rén", "part_of_speech": "n.", "meaning": "человек", "lesson": 3 },
+        { "word": "认识", "pinyin": "rènshi", "part_of_speech": "v.", "meaning": "знать, познакомиться", "lesson": 15 },
+        { "word": "三", "pinyin": "sān", "part_of_speech": "num.", "meaning": "три", "lesson": 5 },
+        { "word": "商店", "pinyin": "shāngdiàn", "part_of_speech": "n.", "meaning": "магазин", "lesson": 8 },
+        { "word": "上", "pinyin": "shàng", "part_of_speech": "n.", "meaning": "верх, наверху", "lesson": 10 },
+        { "word": "上午", "pinyin": "shàngwǔ", "part_of_speech": "n.", "meaning": "первая половина дня, до полудня", "lesson": 13 },
+        { "word": "少", "pinyin": "shǎo", "part_of_speech": "adj.", "meaning": "мало", "lesson": 14 },
+        { "word": "谁", "pinyin": "shéi", "part_of_speech": "pron.", "meaning": "кто", "lesson": 4 },
+        { "word": "什么", "pinyin": "shénme", "part_of_speech": "pron.", "meaning": "что", "lesson": 3 },
+        { "word": "十", "pinyin": "shí", "part_of_speech": "num.", "meaning": "десять", "lesson": 5 },
+        { "word": "时候", "pinyin": "shíhou", "part_of_speech": "n.", "meaning": "время", "lesson": 11 },
+        { "word": "是", "pinyin": "shì", "part_of_speech": "v.", "meaning": "быть, являться", "lesson": 3 },
+        { "word": "书", "pinyin": "shū", "part_of_speech": "n.", "meaning": "книга", "lesson": 7 },
+        { "word": "水", "pinyin": "shuǐ", "part_of_speech": "n.", "meaning": "вода", "lesson": 12 },
+        { "word": "水果", "pinyin": "shuǐguǒ", "part_of_speech": "n.", "meaning": "фрукты", "lesson": 12 },
+        { "word": "睡觉", "pinyin": "shuì jiào", "part_of_speech": "v.", "meaning": "спать", "lesson": 13 },
+        { "word": "说", "pinyin": "shuō", "part_of_speech": "v.", "meaning": "говорить", "lesson": 6 },
+        { "word": "四", "pinyin": "sì", "part_of_speech": "num.", "meaning": "четыре", "lesson": 5 },
+        { "word": "岁", "pinyin": "suì", "part_of_speech": "m.", "meaning": "год (возраст)", "lesson": 5 },
+        { "word": "他", "pinyin": "tā", "part_of_speech": "pron.", "meaning": "он", "lesson": 4 },
+        { "word": "她", "pinyin": "tā", "part_of_speech": "pron.", "meaning": "она", "lesson": 4 },
+        { "word": "太", "pinyin": "tài", "part_of_speech": "adv.", "meaning": "слишком", "lesson": 12 },
+        { "word": "天气", "pinyin": "tiānqì", "part_of_speech": "n.", "meaning": "погода", "lesson": 12 },
+        { "word": "听", "pinyin": "tīng", "part_of_speech": "v.", "meaning": "слушать", "lesson": 15 },
+        { "word": "同学", "pinyin": "tóngxué", "part_of_speech": "n.", "meaning": "однокурсник, одноклассник", "lesson": 4 },
+        { "word": "喂", "pinyin": "wèi", "part_of_speech": "int.", "meaning": "алло", "lesson": 13 },
+        { "word": "我", "pinyin": "wǒ", "part_of_speech": "pron.", "meaning": "я", "lesson": 3 },
+        { "word": "我们", "pinyin": "wǒmen", "part_of_speech": "pron.", "meaning": "мы", "lesson": 11 },
+        { "word": "五", "pinyin": "wǔ", "part_of_speech": "num.", "meaning": "пять", "lesson": 5 },
+        { "word": "喜欢", "pinyin": "xǐhuan", "part_of_speech": "v.", "meaning": "нравиться", "lesson": 13 },
+        { "word": "下", "pinyin": "xià", "part_of_speech": "n.", "meaning": "низ, под", "lesson": 9 },
+        { "word": "下午", "pinyin": "xiàwǔ", "part_of_speech": "n.", "meaning": "вторая половина дня, после полудня", "lesson": 8 },
+        { "word": "下雨", "pinyin": "xià yǔ", "part_of_speech": "v.", "meaning": "идёт дождь", "lesson": 12 },
+        { "word": "先生", "pinyin": "xiānsheng", "part_of_speech": "n.", "meaning": "господин, мистер", "lesson": 14 },
+        { "word": "现在", "pinyin": "xiànzài", "part_of_speech": "n.", "meaning": "сейчас", "lesson": 11 },
+        { "word": "想", "pinyin": "xiǎng", "part_of_speech": "mod.", "meaning": "хотеть", "lesson": 8 },
+        { "word": "小", "pinyin": "xiǎo", "part_of_speech": "adj.", "meaning": "маленький", "lesson": 9 },
+        { "word": "小姐", "pinyin": "xiǎojiě", "part_of_speech": "n.", "meaning": "барышня, мисс", "lesson": 12 },
+        { "word": "些", "pinyin": "xiē", "part_of_speech": "m.", "meaning": "несколько, немного", "lesson": 12 },
+        { "word": "写", "pinyin": "xiě", "part_of_speech": "v.", "meaning": "писать", "lesson": 6 },
+        { "word": "谢谢", "pinyin": "xièxie", "part_of_speech": "v.", "meaning": "спасибо", "lesson": 2 },
+        { "word": "星期", "pinyin": "xīngqī", "part_of_speech": "n.", "meaning": "неделя", "lesson": 7 },
+        { "word": "学生", "pinyin": "xuésheng", "part_of_speech": "n.", "meaning": "ученик, студент", "lesson": 3 },
+        { "word": "学习", "pinyin": "xuéxí", "part_of_speech": "v.", "meaning": "учиться", "lesson": 13 },
+        { "word": "学校", "pinyin": "xuéxiào", "part_of_speech": "n.", "meaning": "школа", "lesson": 7 },
+        { "word": "一", "pinyin": "yī", "part_of_speech": "num.", "meaning": "один", "lesson": 5 },
+        { "word": "衣服", "pinyin": "yīfu", "part_of_speech": "n.", "meaning": "одежда", "lesson": 14 },
+        { "word": "医生", "pinyin": "yīshēng", "part_of_speech": "n.", "meaning": "врач", "lesson": 9 },
+        { "word": "医院", "pinyin": "yīyuàn", "part_of_speech": "n.", "meaning": "больница", "lesson": 9 },
+        { "word": "椅子", "pinyin": "yǐzi", "part_of_speech": "n.", "meaning": "стул", "lesson": 9 },
+        { "word": "一点儿", "pinyin": "yīdiǎnr", "part_of_speech": "num.-m.", "meaning": "немного", "lesson": 14 },
+        { "word": "有", "pinyin": "yǒu", "part_of_speech": "v.", "meaning": "иметь, находиться (наличие)", "lesson": 5 },
+        { "word": "月", "pinyin": "yuè", "part_of_speech": "n.", "meaning": "месяц", "lesson": 7 },
+        { "word": "再见", "pinyin": "zàijiàn", "part_of_speech": "v.", "meaning": "до свидания", "lesson": 2 },
+        { "word": "在", "pinyin": "zài", "part_of_speech": "v./prep.", "meaning": "находиться; в, на", "lesson": 9 },
+        { "word": "怎么", "pinyin": "zěnme", "part_of_speech": "pron.", "meaning": "как", "lesson": 6 },
+        { "word": "怎么样", "pinyin": "zěnmeyàng", "part_of_speech": "pron.", "meaning": "как (каково)", "lesson": 12 },
+        { "word": "这", "pinyin": "zhè", "part_of_speech": "pron.", "meaning": "этот", "lesson": 8 },
+        { "word": "中午", "pinyin": "zhōngwǔ", "part_of_speech": "n.", "meaning": "полдень", "lesson": 11 },
+        { "word": "住", "pinyin": "zhù", "part_of_speech": "v.", "meaning": "жить, останавливаться", "lesson": 11 },
+        { "word": "桌子", "pinyin": "zhuōzi", "part_of_speech": "n.", "meaning": "стол", "lesson": 10 },
+        { "word": "字", "pinyin": "zì", "part_of_speech": "n.", "meaning": "иероглиф", "lesson": 6 },
+        { "word": "昨天", "pinyin": "zuótiān", "part_of_speech": "n.", "meaning": "вчера", "lesson": 7 },
+        { "word": "坐", "pinyin": "zuò", "part_of_speech": "v.", "meaning": "сидеть", "lesson": 10 },
+        { "word": "做", "pinyin": "zuò", "part_of_speech": "v.", "meaning": "делать, готовить", "lesson": 6 }
+      ],
+      "supplementary_words": [
+        { "word": "不少", "pinyin": "bùshǎo", "part_of_speech": "adj.", "meaning": "немало", "lesson": 14, "source": "不, 少" },
+        { "word": "车", "pinyin": "chē", "part_of_speech": "n.", "meaning": "машина", "lesson": 14, "source": "出租车" },
+        { "word": "吃饭", "pinyin": "chī fàn", "part_of_speech": "v.", "meaning": "принимать пищу", "lesson": 11, "source": "吃, 米饭" },
+        { "word": "大学", "pinyin": "dàxué", "part_of_speech": "n.", "meaning": "университет", "lesson": 15, "source": "大, 学校" },
+        { "word": "分", "pinyin": "fēn", "part_of_speech": "m.", "meaning": "минута", "lesson": 11, "source": "分钟" },
+        { "word": "国", "pinyin": "guó", "part_of_speech": "n.", "meaning": "страна", "lesson": 4, "source": "中国" },
+        { "word": "汉字", "pinyin": "Hànzì", "part_of_speech": "n.", "meaning": "китайский иероглиф", "lesson": 6, "source": "汉语, 字" },
+        { "word": "后", "pinyin": "hòu", "part_of_speech": "n.", "meaning": "после", "lesson": 14, "source": "后面" },
+        { "word": "回来", "pinyin": "huílái", "part_of_speech": "v.", "meaning": "возвращаться", "lesson": 14, "source": "回, 来" },
+        { "word": "今年", "pinyin": "jīnnián", "part_of_speech": "n.", "meaning": "этот год", "lesson": 5, "source": "今天, 年" },
+        { "word": "没", "pinyin": "méi", "part_of_speech": "adv.", "meaning": "не (отрицание)", "lesson": 10, "source": "没有" },
+        { "word": "那儿", "pinyin": "nàr", "part_of_speech": "pron.", "meaning": "там", "lesson": 9, "source": "那, 哪儿" },
+        { "word": "你们", "pinyin": "nǐmen", "part_of_speech": "pron.", "meaning": "вы", "lesson": 1, "source": "你, 我们" },
+        { "word": "前", "pinyin": "qián", "part_of_speech": "n.", "meaning": "до, перед", "lesson": 11, "source": "前面" },
+        { "word": "太……了", "pinyin": "tài……le", "part_of_speech": "", "meaning": "слишком", "lesson": 12, "source": "太, 了" },
+        { "word": "下", "pinyin": "xià", "part_of_speech": "v.", "meaning": "падать (об осадках)", "lesson": 12, "source": "下雨" },
+        { "word": "下面", "pinyin": "xiàmiàn", "part_of_speech": "n.", "meaning": "низ, под", "lesson": 9, "source": "下, 前面" },
+        { "word": "学", "pinyin": "xué", "part_of_speech": "v.", "meaning": "учиться", "lesson": 13, "source": "学习" },
+        { "word": "雨", "pinyin": "yǔ", "part_of_speech": "n.", "meaning": "дождь", "lesson": 12, "source": "下雨" },
+        { "word": "这儿", "pinyin": "zhèr", "part_of_speech": "pron.", "meaning": "здесь", "lesson": 10, "source": "这, 哪儿" },
+        { "word": "这些", "pinyin": "zhèxiē", "part_of_speech": "pron.", "meaning": "эти", "lesson": 14, "source": "这, 些" }
+      ],
+      "proper_nouns": [
+        { "word": "北京", "pinyin": "Běijīng", "meaning": "Пекин", "lesson": 11 },
+        { "word": "大卫", "pinyin": "Dàwèi", "meaning": "Дэвид", "lesson": 13 },
+        { "word": "李月", "pinyin": "Lǐ Yuè", "meaning": "Ли Юэ", "lesson": 3 },
+        { "word": "美国", "pinyin": "Měiguó", "meaning": "США", "lesson": 3 },
+        { "word": "王方", "pinyin": "Wáng Fāng", "meaning": "Ван Фан", "lesson": 10 },
+        { "word": "谢朋", "pinyin": "Xiè Péng", "meaning": "Се Пэн", "lesson": 10 },
+        { "word": "张", "pinyin": "Zhāng", "meaning": "Чжан (фамилия)", "lesson": 14 },
+        { "word": "中国", "pinyin": "Zhōngguó", "meaning": "Китай", "lesson": 3 }
+      ],
+      "words_not_in_syllabus": [
+        { "word": "啊", "pinyin": "a", "part_of_speech": "part.", "meaning": "междометие", "lesson": 14, "level": 3 },
+        { "word": "吧", "pinyin": "ba", "part_of_speech": "part.", "meaning": "частица (предложение)", "lesson": 13, "level": 2 },
+        { "word": "给", "pinyin": "gěi", "part_of_speech": "prep.", "meaning": "для, кому", "lesson": 13, "level": 2 },
+        { "word": "好吃", "pinyin": "hǎochī", "part_of_speech": "adj.", "meaning": "вкусный", "lesson": 6, "level": 2 },
+        { "word": "口", "pinyin": "kǒu", "part_of_speech": "m.", "meaning": "сч. слово (члены семьи)", "lesson": 5, "level": 3 },
+        { "word": "您", "pinyin": "nín", "part_of_speech": "pron.", "meaning": "Вы (вежл.)", "lesson": 1, "level": 2 },
+        { "word": "身体", "pinyin": "shēntǐ", "part_of_speech": "n.", "meaning": "тело, здоровье", "lesson": 12, "level": 2 },
+        { "word": "问", "pinyin": "wèn", "part_of_speech": "v.", "meaning": "спрашивать", "lesson": 7, "level": 2 },
+        { "word": "也", "pinyin": "yě", "part_of_speech": "adv.", "meaning": "тоже", "lesson": 13, "level": 2 },
+        { "word": "一起", "pinyin": "yìqǐ", "part_of_speech": "adv.", "meaning": "вместе", "lesson": 15, "level": 2 }
+      ]
+    },
+    {
+      "page": 134,
+      "section": "汉字总表 (Общая таблица иероглифов)",
+      "characters": [
+        { "character": "一", "lesson": 1 },
+        { "character": "二", "lesson": 1 },
+        { "character": "三", "lesson": 1 },
+        { "character": "十", "lesson": 1 },
+        { "character": "八", "lesson": 1 },
+        { "character": "六", "lesson": 1 },
+        { "character": "口", "lesson": 2 },
+        { "character": "见", "lesson": 2 },
+        { "character": "山", "lesson": 2 },
+        { "character": "小", "lesson": 2 },
+        { "character": "不", "lesson": 2 },
+        { "character": "月", "lesson": 3 },
+        { "character": "心", "lesson": 3 },
+        { "character": "中", "lesson": 3 },
+        { "character": "人", "lesson": 3 },
+        { "character": "七", "lesson": 4 },
+        { "character": "儿", "lesson": 4 },
+        { "character": "几", "lesson": 4 },
+        { "character": "九", "lesson": 4 },
+        { "character": "水", "lesson": 5 },
+        { "character": "女", "lesson": 5 },
+        { "character": "了", "lesson": 5 },
+        { "character": "大", "lesson": 5 },
+        { "character": "东", "lesson": 6 },
+        { "character": "我", "lesson": 6 },
+        { "character": "西", "lesson": 6 },
+        { "character": "四", "lesson": 7 },
+        { "character": "五", "lesson": 7 },
+        { "character": "书", "lesson": 7 },
+        { "character": "少", "lesson": 8 },
+        { "character": "个", "lesson": 8 },
+        { "character": "在", "lesson": 9 },
+        { "character": "子", "lesson": 9 },
+        { "character": "工", "lesson": 9 },
+        { "character": "上", "lesson": 10 },
+        { "character": "下", "lesson": 10 },
+        { "character": "本", "lesson": 10 },
+        { "character": "末", "lesson": 10 },
+        { "character": "午", "lesson": 11 },
+        { "character": "电", "lesson": 11 },
+        { "character": "天", "lesson": 12 },
+        { "character": "气", "lesson": 12 },
+        { "character": "雨", "lesson": 12 },
+        { "character": "日", "lesson": 13 },
+        { "character": "目", "lesson": 13 },
+        { "character": "习", "lesson": 13 },
+        { "character": "开", "lesson": 14 },
+        { "character": "车", "lesson": 14 },
+        { "character": "回", "lesson": 14 },
+        { "character": "年", "lesson": 15 },
+        { "character": "出", "lesson": 15 },
+        { "character": "飞", "lesson": 15 }
+      ]
+    },
+    {
+      "page": 135,
+      "section": "偏旁 (Радикалы)",
+      "radicals_by_lesson": [
+        { "radical": "土", "lesson": 7 },
+        { "radical": "车", "lesson": 8 },
+        { "radical": "口", "lesson": 8 },
+        { "radical": "辶", "lesson": 9 },
+        { "radical": "门", "lesson": 9 },
+        { "radical": "口", "lesson": 10 },
+        { "radical": "禾", "lesson": 10 },
+        { "radical": "⻏", "lesson": 11 },
+        { "radical": "亻", "lesson": 11 },
+        { "radical": "女", "lesson": 12 },
+        { "radical": "饣", "lesson": 12 },
+        { "radical": "日", "lesson": 13 },
+        { "radical": "目", "lesson": 13 },
+        { "radical": "月", "lesson": 14 },
+        { "radical": "扌", "lesson": 14 },
+        { "radical": "艹", "lesson": 15 },
+        { "radical": "宀", "lesson": 15 }
+      ]
+    }
+  ]
+}

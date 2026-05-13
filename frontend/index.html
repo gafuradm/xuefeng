@@ -4,369 +4,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Universal AI Teacher — Персональный ИИ учитель</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>学峰 · 巅峰智学 | AI 导师</title>
+    <!--  Фавикон (inline data) – избавляет от 404  -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23831f33'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23f0ced5' font-weight='bold'%3E学%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- MathJax – исправленный, надёжный CDN + резервное поведение -->
     <script>
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
                 displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady();
+                }
             }
         };
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+    <!--  Если Cloudflare не загрузится, подгрузим резерв (опционально) -->
+    <script>
+        window.addEventListener('load', function() {
+            if (typeof MathJax === 'undefined') {
+                var script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js';
+                script.async = true;
+                document.head.appendChild(script);
+            }
+        });
+    </script>
+    <style>
+        /* ==================================================
+           🔥 学峰 · 暗黑勃艮第 DESIGN — BOMB ASTIC STYLE 
+           所有原有样式，视觉炸裂，黑红色系 + 奢华细节
+        ================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            background: #0a0305 radial-gradient(circle at 20% 30%, #2c0e14 0%, #040102 100%);
+            min-height: 100vh;
+            padding: 24px;
+            color: #f0e9ec;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: radial-gradient(rgba(180, 40, 60, 0.08) 1px, transparent 1px);
+            background-size: 35px 35px;
+            z-index: 0;
+        }
+
+        .app-wrapper {
+            max-width: 1500px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .main-container {
+            background: rgba(10, 6, 8, 0.82);
+            backdrop-filter: blur(3px);
+            border-radius: 2.5rem;
+            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(139, 44, 61, 0.3) inset;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        .hero-section {
+            background: radial-gradient(ellipse at 70% 20%, #2f0a14, #050103);
+            position: relative;
+            padding: 2.8rem 2rem 3.5rem;
+            border-bottom: 2px solid #b83b4b;
+            overflow: hidden;
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            top: -30%;
+            left: -20%;
+            width: 140%;
+            height: 140%;
+            background: radial-gradient(circle, rgba(185, 47, 79, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+            pointer-events: none;
+        }
+
+        .xuefeng-master {
+            text-align: center;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 5;
+        }
+        .xuefeng-logo {
+            font-family: 'Noto Serif SC', 'Times New Roman', 'Cinema', 'Impact', cursive;
+            font-size: 5.8rem;
+            font-weight: 900;
+            letter-spacing: 12px;
+            display: inline-block;
+            background: linear-gradient(135deg, #e6b8c2 10%, #bc3f4b 50%, #630d1f 90%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 12px rgba(188, 63, 75, 0.7), 0 4px 20px rgba(0,0,0,0.5);
+            transform: skew(-6deg) scale(1.02);
+            transition: all 0.3s;
+            position: relative;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+        }
+        .xuefeng-logo::before {
+            content: "学峰";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #ffb7c5, #9e2538);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            opacity: 0.45;
+            transform: translate(5px, 3px);
+            z-index: -1;
+            filter: blur(6px);
+        }
+        .xuefeng-logo:hover {
+            letter-spacing: 15px;
+            transform: skew(-3deg) scale(1.05);
+            transition: 0.25s ease;
+        }
+        .xuefeng-sub {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            font-weight: 500;
+            color: #ca7a88;
+            border-top: 1px solid #862633;
+            display: inline-block;
+            padding-top: 8px;
+            margin-top: 6px;
+            backdrop-filter: blur(2px);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+        }
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(120deg, #f0e6e8, #dd9ba8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin-top: 0.2rem;
+        }
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #d1bfc3;
+            font-weight: 400;
+            margin-top: 0.5rem;
+            margin-bottom: 1.8rem;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 0.7rem 1.8rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.25s ease;
+            cursor: pointer;
+            border: none;
+            backdrop-filter: blur(4px);
+        }
+        .btn-primary {
+            background: linear-gradient(115deg, #9e2c3e, #551a26);
+            color: white;
+            box-shadow: 0 6px 18px rgba(100, 20, 30, 0.5);
+            border: 1px solid #c45466;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(115deg, #bc374b, #7d202f);
+            box-shadow: 0 12px 24px rgba(180, 40, 60, 0.5);
+        }
+        .btn-outline-light {
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid #b54a5b;
+            color: #f5e3e7;
+            backdrop-filter: blur(8px);
+        }
+        .btn-outline-light:hover {
+            background: #932c3e;
+            border-color: #e17a8b;
+            color: white;
+            transform: scale(0.98);
+        }
+        .btn-secondary {
+            background: #221217;
+            border: 1px solid #723242;
+            color: #f0cdd5;
+        }
+        .btn-secondary:hover {
+            background: #351b23;
+            border-color: #b75165;
+        }
+        .btn-icon, .quick-actions .btn-icon {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid #823544;
+            color: #f0ced5;
+            font-weight: 500;
+        }
+        .btn-icon:hover {
+            background: #902f42;
+            border-color: #dc7f8f;
+        }
+        .hero-wave {
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity="0.7" fill="%23260a10"/></svg>') repeat-x;
+            background-size: 1200px 50px;
+            z-index: 1;
+        }
+        .step-card {
+            background: rgba(18, 8, 11, 0.85);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            padding: 2rem;
+            border: 1px solid rgba(139, 44, 61, 0.6);
+            box-shadow: 0 12px 28px -12px black;
+            transition: all 0.3s;
+        }
+        .step-card:hover {
+            border-color: #b24b5e;
+            box-shadow: 0 20px 35px -12px #3f111b;
+        }
+        h2, h3 {
+            color: #f3dee3;
+            border-left: 5px solid #d45c6f;
+            padding-left: 1rem;
+        }
+        .modern-input, select.modern-input, textarea.modern-input {
+            background: #1f1217;
+            border: 1px solid #762f3e;
+            color: #f0e2e6;
+            border-radius: 1.2rem;
+            padding: 12px 18px;
+        }
+        .modern-input:focus {
+            border-color: #dc6f82;
+            box-shadow: 0 0 0 3px rgba(200, 70, 90, 0.3);
+            outline: none;
+        }
+        .progress-wrapper {
+            background: #2d1920;
+            border-radius: 2rem;
+        }
+        .progress-bar {
+            background: #331820;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #c95267, #871f34);
+        }
+        .results-container, .theory, .example, .task, .tips {
+            background: #1f0e13ee;
+            border-left: 4px solid #b3495d;
+        }
+        .question-card {
+            background: #1f1219;
+            border-color: #673546;
+        }
+        .question-card h3 {
+            color: #e7a5b4;
+        }
+        .course-card, .lesson-card, .test-card {
+            background: #180c10;
+            border: 1px solid #663142;
+            transition: all 0.2s;
+        }
+        .course-card:hover, .lesson-card:hover, .test-card:hover {
+            background: #28161e;
+            border-color: #c75f74;
+            transform: translateY(-5px);
+        }
+        #profileModal, #chatModal {
+            background: #1a0e12;
+            border: 1px solid #b14b60;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            color: #f0dbdf;
+        }
+        #chatModal button, .profile-actions button {
+            background: #2d171f;
+            color: #f0cfd8;
+        }
+        .quick-actions {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            gap: 12px;
+            z-index: 1050;
+        }
+        .profile-header, .profile-info {
+            background: #0f070b;
+        }
+        #userRoleDisplay {
+            background: #ad3f53;
+        }
+        .btn-outline {
+            border: 1px solid #ac4b5d;
+            color: #f5dce2;
+        }
+        .markdown-body {
+            color: #e7d6db;
+        }
+        code, pre {
+            background: #2b121b;
+        }
+        a {
+            color: #e28b9c;
+        }
+        button, .btn, [onclick] {
+            cursor: pointer;
+        }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animated-step {
+            animation: fadeSlideUp 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+    </style>
 </head>
 <body>
-    <div class="app-wrapper">
-        <div class="main-container">
-            <!-- Улучшенный хедер с градиентом и эффектом стекла -->
-            <header class="hero-section">
-                <div class="hero-content">
-                    <h1 class="hero-title">🎓 Universal AI Teacher</h1>
-                    <p class="hero-subtitle">Персональный ИИ-учитель для подготовки к любым экзаменам</p>
-                    <div class="hero-buttons">
-                        <button id="showTestCreatorBtn" class="btn btn-outline-light" onclick="showTestCreator()">✏️ Свой тест</button>
-                        <button onclick="window.open('http://localhost:8000/student', '_blank')" class="btn btn-outline-light">🎥 Присоединиться к лекции</button>
-                        <button onclick="window.open('http://localhost:8000/teacher', '_blank')" class="btn btn-outline-light">👨‍🏫 Начать лекцию (учитель)</button>
-                        <button onclick="showAuthModal()" id="loginBtn" class="btn btn-outline-light">🔑 Войти</button>
-                    </div>
+<div class="app-wrapper">
+    <div class="main-container">
+        <header class="hero-section">
+            <div class="hero-content">
+                <div class="xuefeng-master">
+                    <div class="xuefeng-logo">学峰</div>
+                    <div class="xuefeng-sub">XUEFENG · AI MENTOR</div>
                 </div>
-                <div class="hero-wave"></div>
-            </header>
+                <h1 class="hero-title">🎓 Universal AI Teacher</h1>
+                <p class="hero-subtitle">Персональный ИИ-учитель для подготовки к любым экзаменам</p>
+                <div class="hero-buttons">
+                    <button id="showTestCreatorBtn" class="btn btn-outline-light" onclick="showTestCreator()">✏️ Свой тест</button>
+                    <button onclick="window.open('http://localhost:8000/student', '_blank')" class="btn btn-outline-light">🎥 Присоединиться к лекции</button>
+                    <button onclick="window.open('http://localhost:8000/teacher', '_blank')" class="btn btn-outline-light">👨‍🏫 Начать лекцию (учитель)</button>
+                    <button onclick="showAuthModal()" id="loginBtn" class="btn btn-outline-light">🔑 Войти</button>
+                </div>
+            </div>
+            <div class="hero-wave"></div>
+        </header>
 
-            <!-- Шапка с профилем -->
-<div class="profile-header" id="profileHeader" style="display: none; justify-content: space-between; align-items: center; padding: 10px 20px; background: white; border-bottom: 1px solid #eee;">
-    <div class="profile-info" style="display: flex; align-items: center; gap: 15px;">
-        <img id="avatarImg" src="" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-        <span id="userNameDisplay"></span>
-        <span id="userRoleDisplay" style="background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;"></span>
-    </div>
-    <div class="profile-actions">
-        <button onclick="showProfileModal()" class="btn-secondary" style="margin-right: 10px;">👤 Профиль</button>
-        <button onclick="logout()" class="btn-secondary" style="background: #dc3545;">🚪 Выйти</button>
-    </div>
-</div>
+        <div class="profile-header" id="profileHeader" style="display: none; justify-content: space-between; align-items: center; padding: 10px 20px; background: #0f070b; border-bottom: 1px solid #6f2c3b;">
+            <div class="profile-info" style="display: flex; align-items: center; gap: 15px;">
+                <img id="avatarImg" src="" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                <span id="userNameDisplay" style="color:#f3e2e7;"></span>
+                <span id="userRoleDisplay" style="background: #ad3f53; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;"></span>
+            </div>
+            <div class="profile-actions">
+                <button onclick="showProfileModal()" class="btn-secondary" style="margin-right: 10px;">👤 Профиль</button>
+                <button onclick="logout()" class="btn-secondary" style="background: #831f33;">🚪 Выйти</button>
+            </div>
+        </div>
 
-<!-- Модальное окно профиля (скрыто) -->
-<div id="profileModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; z-index: 1002;">
-    <h3>Мой профиль</h3>
-    <div style="text-align: center; margin-bottom: 20px;">
-        <img id="modalAvatar" src="" style="width: 100px; height: 100px; border-radius: 50%; cursor: pointer; border: 2px solid #667eea;">
-        <p style="font-size: 12px; color: #666;">Нажмите на аватар, чтобы изменить</p>
-        <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
-    </div>
-    <p><strong>Имя:</strong> <span id="profileName"></span></p>
-    <p><strong>Email:</strong> <span id="profileEmail"></span></p>
-    <p><strong>Роль:</strong> <span id="profileRole"></span></p>
-    <p><strong>Username:</strong> <span id="profileUsername"></span></p>
-    <button onclick="closeProfileModal()" class="btn-secondary">Закрыть</button>
-</div>
+        <div id="profileModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a0e12; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; z-index: 1002; border: 1px solid #c95267;">
+            <h3 style="color:#f3dee3;">Мой профиль</h3>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img id="modalAvatar" src="" style="width: 100px; height: 100px; border-radius: 50%; cursor: pointer; border: 2px solid #c75f74;">
+                <p style="font-size: 12px; color: #c28b98;">Нажмите на аватар, чтобы изменить</p>
+                <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
+            </div>
+            <p><strong style="color:#e7b5c1;">Имя:</strong> <span id="profileName"></span></p>
+            <p><strong style="color:#e7b5c1;">Email:</strong> <span id="profileEmail"></span></p>
+            <p><strong style="color:#e7b5c1;">Роль:</strong> <span id="profileRole"></span></p>
+            <p><strong style="color:#e7b5c1;">Username:</strong> <span id="profileUsername"></span></p>
+            <button onclick="closeProfileModal()" class="btn-secondary">Закрыть</button>
+        </div>
 
-            <main class="content-panel">
-                <!-- Шаг 1: Регистрация -->
-                <div class="video-download-section step-card" style="margin-top: 30px;">
-                    <h2>🎥 Извлечь и перевести текст из видео</h2>
+        <main class="content-panel">
+            <div class="video-download-section step-card" style="margin-top: 30px;">
+                <h2>🎥 Извлечь и перевести текст из видео</h2>
+                <div class="form-group">
+                    <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео" class="modern-input">
+                    <select id="targetLang" class="modern-input">
+                        <option value="ru">Русский</option>
+                        <option value="en">Английский</option>
+                        <option value="kk">Казахский</option>
+                        <option value="zh">Китайский</option>
+                    </select>
+                    <button onclick="processVideo()" class="btn btn-primary">Обработать</button>
+                </div>
+                <div id="videoResult" class="video-result"></div>
+            </div>
+
+            <div id="step1" class="step animated-step">
+                <div class="step-card">
+                    <h2>🚀 Начните обучение</h2>
                     <div class="form-group">
-                        <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео" class="modern-input">
-                        <select id="targetLang" class="modern-input">
-                            <option value="ru">Русский</option>
-                            <option value="en">Английский</option>
-                            <option value="kk">Казахский</option>
-                            <option value="zh">Китайский</option>
+                        <label>Тип аккаунта:</label>
+                        <select id="userRole" onchange="setRole(this.value)" style="background:#1f1217; border:1px solid #762f3e; color:#f0e2e6; padding:12px; border-radius:1rem;">
+                            <option value="student">🎓 Студент (учусь)</option>
+                            <option value="teacher">👨‍🏫 Учитель (создаю школу)</option>
                         </select>
-                        <button onclick="processVideo()" class="btn btn-primary">Обработать</button>
                     </div>
-                    <div id="videoResult" class="video-result"></div>
-                </div>
-
-                <div id="step1" class="step animated-step">
-                    <div class="step-card">
-                        <h2>🚀 Начните обучение</h2>
-                        <div class="form-group">
-                            <label>Тип аккаунта:</label>
-                            <select id="userRole" onchange="setRole(this.value)">
-                                <option value="student">🎓 Студент (учусь)</option>
-                                <option value="teacher">👨‍🏫 Учитель (создаю школу)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="userName" placeholder="Ваше имя" class="modern-input" required>
-                            <input type="email" id="userEmail" placeholder="Email" class="modern-input" required>
-                            <input type="text" id="examName" placeholder="Что изучаем? (например: ЕНТ математика, SAT, IELTS)" class="modern-input" required>
-                            <button onclick="startLearning()" class="btn btn-primary btn-block">Начать</button>
-                        </div>
-                        <div id="errorMessage" class="error-message"></div>
+                    <div class="form-group">
+                        <input type="text" id="userName" placeholder="Ваше имя" class="modern-input" required>
+                        <input type="email" id="userEmail" placeholder="Email" class="modern-input" required>
+                        <input type="text" id="examName" placeholder="Что изучаем? (например: ЕНТ математика, SAT, IELTS)" class="modern-input" required>
+                        <button onclick="startLearning()" class="btn btn-primary btn-block">Начать</button>
                     </div>
+                    <div id="errorMessage" class="error-message"></div>
                 </div>
+            </div>
 
-                <!-- Шаг 2: Тестирование -->
-                <div id="step2" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📝 Начальное тестирование</h2>
-                        <div id="testQuestions"></div>
-                        <button onclick="submitTest()" class="btn btn-primary">Отправить ответы</button>
-                    </div>
-                </div>
+            <div id="step2" class="step animated-step" style="display:none"><div class="step-card"><h2>📝 Начальное тестирование</h2><div id="testQuestions"></div><button onclick="submitTest()" class="btn btn-primary">Отправить ответы</button></div></div>
+            <div id="step3" class="step animated-step" style="display:none"><div class="step-card"><h2>📊 Результаты тестирования</h2><div id="testResults" class="results-container"></div><div class="form-group"><label>Сколько дней у вас есть на подготовку?</label><input type="number" id="daysAvailable" placeholder="Количество дней" class="modern-input"><button onclick="setTimeAndPlan()" class="btn btn-primary">Создать план</button></div></div></div>
+            <div id="step4" class="step animated-step" style="display:none"><div class="step-card"><h2>📚 Ваш план обучения</h2><div id="studyPlan"></div><button id="startLearningBtn" class="btn btn-primary">Начать обучение</button></div></div>
+            <div id="step5" class="step animated-step" style="display:none"><div class="learning-header"><h2>📖 Обучение</h2><div class="progress-wrapper"><div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div><div id="progressStats" class="progress-stats"></div></div></div><div id="lessonContent"></div><div id="testContent" style="display:none"></div></div>
+            <div id="step6" class="step animated-step" style="display:none"><div class="step-card"><h2>📝 Создать свой тест</h2><div class="form-group"><label>Название теста:</label><input type="text" id="customTestName" placeholder="например: Моя контрольная по тригонометрии" class="modern-input"></div><div class="form-group"><label>Описание (необязательно):</label><textarea id="customTestDesc" rows="2" placeholder="Краткое описание теста" class="modern-input"></textarea></div><div id="questionsList" class="questions-list"></div><div class="button-group"><button onclick="addQuestionField()" class="btn btn-secondary">➕ Добавить вопрос</button><button onclick="saveCustomTest()" class="btn btn-primary">💾 Сохранить тест</button><button onclick="trainCustomTest()" class="btn btn-primary">🤖 Обучить ИИ</button><button onclick="showCustomTestsList()" class="btn btn-secondary">📋 Мои тесты</button><button onclick="backToMainMenu()" class="btn btn-outline">← Главное меню</button></div></div></div>
+            <div id="step7" class="step animated-step" style="display:none"><div class="step-card"><h2>📋 Мои тесты</h2><div id="customTestsList" class="tests-grid"></div><div class="button-group"><button onclick="showTestCreator()" class="btn btn-secondary">➕ Создать новый</button><button onclick="backToMainMenu()" class="btn btn-outline">← Главное меню</button></div></div></div>
+            <div id="step8" class="step animated-step" style="display:none"><div class="step-card"><h2 id="takingTestName"></h2><div id="takingTestQuestions"></div><div class="button-group"><button onclick="submitCustomTest()" class="btn btn-primary">Отправить ответы</button><button onclick="showCustomTestsList()" class="btn btn-outline">← К списку тестов</button></div></div></div>
+            <div id="step9" class="step animated-step" style="display:none"><div class="step-card"><h2>📊 Результаты теста</h2><div id="customTestResults"></div><button onclick="showCustomTestsList()" class="btn btn-outline">← К списку тестов</button></div></div>
+            <div id="step10" class="step animated-step" style="display:none"><div class="step-card"><h2>📚 Мои курсы</h2><div id="userCoursesList" class="courses-grid"></div><div class="button-group"><button onclick="showCreateCourseForm()" class="btn btn-secondary">➕ Создать новый курс</button><button onclick="showMainMenu()" class="btn btn-outline">← Главное меню</button></div></div></div>
+            <div id="step11" class="step animated-step" style="display:none"><div class="step-card"><h2 id="courseViewTitle"></h2><p id="courseViewDescription" class="course-description"></p><p><strong>Критерии успеха:</strong> <span id="courseViewCriteria"></span></p><div id="courseModulesList" class="modules-list"></div><div class="button-group"><button onclick="showCoursesList()" class="btn btn-outline">← К списку курсов</button><button onclick="generateAllLessonsContent()" class="btn btn-primary">✨ Сгенерировать всё содержание</button></div></div></div>
+            <div id="step12" class="step animated-step" style="display:none"><div class="step-card"><h2 id="lessonViewTitle"></h2><p><strong>Предмет:</strong> <span id="lessonViewSubject"></span></p><div id="lessonViewContent" class="lesson-view-content markdown-body"></div><div id="lessonViewHomework"></div><div id="lessonViewYoutube"></div><div class="button-group"><button onclick="generatePresentation()" class="btn btn-primary">📊 Скачать презентацию</button><button onclick="backToLessonsList()" class="btn btn-outline">← К списку уроков</button></div></div></div>
+            <div id="step13" class="step animated-step" style="display:none"><div class="step-card"><h2>📚 Создать новый курс</h2><div class="form-group"><label>Название курса:</label><input type="text" id="newCourseName" placeholder="например: Python для начинающих" class="modern-input"></div><div class="form-group"><label>Описание:</label><textarea id="newCourseDesc" rows="3" placeholder="Краткое описание курса" class="modern-input"></textarea></div><div class="form-group"><label>Критерии успеха (необязательно):</label><textarea id="newCourseCriteria" rows="2" placeholder="Что должен знать и уметь студент после курса" class="modern-input"></textarea></div><div class="button-group"><button onclick="createCourse()" class="btn btn-primary">🚀 Создать курс</button><button onclick="showCoursesList()" class="btn btn-outline">← Отмена</button></div></div></div>
+            <div id="step14" class="step animated-step" style="display:none"><div class="step-card"><h2>📖 Мои уроки</h2><div id="userLessonsList" class="lessons-grid"></div><div class="button-group"><button onclick="showCreateLessonForm()" class="btn btn-secondary">➕ Создать новый урок</button><button onclick="showMainMenu()" class="btn btn-outline">← Главное меню</button></div></div></div>
+            <div id="step15" class="step animated-step" style="display:none"><div class="step-card"><h2>📖 Создать новый урок</h2><div class="form-group"><label>Название урока:</label><input type="text" id="newLessonTitle" placeholder="например: Введение в переменные" class="modern-input"></div><div class="form-group"><label>Предмет:</label><input type="text" id="newLessonSubject" placeholder="например: Программирование" class="modern-input"></div><div class="form-group"><label>Описание (необязательно):</label><textarea id="newLessonDesc" rows="3" placeholder="Дополнительные требования" class="modern-input"></textarea></div><div class="button-group"><button onclick="createLesson()" class="btn btn-primary">🚀 Создать урок</button><button onclick="showLessonsList()" class="btn btn-outline">← Отмена</button></div></div></div>
 
-                <!-- Шаг 3: Результаты теста и время -->
-                <div id="step3" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📊 Результаты тестирования</h2>
-                        <div id="testResults" class="results-container"></div>
-                        <div class="form-group">
-                            <label>Сколько дней у вас есть на подготовку?</label>
-                            <input type="number" id="daysAvailable" placeholder="Количество дней" class="modern-input">
-                            <button onclick="setTimeAndPlan()" class="btn btn-primary">Создать план</button>
-                        </div>
-                    </div>
-                </div>
+            <div id="teacherPanel" style="display: none; margin-bottom: 20px;"><div class="step-card"><h3>👨‍🏫 Панель учителя</h3><div class="button-group"><button onclick="showCreateSchoolForm()" class="btn btn-secondary">🏫 Создать школу</button><button onclick="showJoinSchoolForm()" class="btn btn-secondary">🔗 Присоединиться к школе</button><button onclick="showMySchools()" class="btn btn-secondary">📋 Мои школы</button><button onclick="showSchoolStats()" class="btn btn-secondary">📊 Статистика школы</button><button onclick="showTeacherGraphs()" class="btn btn-secondary">📈 Графы знаний</button><button onclick="buildTargetGraph()" class="btn btn-primary">🎯 Построить целевой граф</button></div></div></div>
+            <div id="studentPanel" style="display: none; margin-bottom: 20px;"><div class="step-card"><h3>🎓 Панель ученика</h3><div class="button-group"><button onclick="showMySchoolsStudent()" class="btn btn-secondary">🏫 Мои школы</button><button onclick="joinSchool()" class="btn btn-secondary">🔗 Вступить в школу</button><button onclick="showStudentGraphs()" class="btn btn-secondary">📊 Мой прогресс</button><button onclick="showStudentPlan()" class="btn btn-secondary">📅 Мой план</button></div></div></div>
 
-                <!-- Шаг 4: План обучения -->
-                <div id="step4" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📚 Ваш план обучения</h2>
-                        <div id="studyPlan"></div>
-                        <button id="startLearningBtn" class="btn btn-primary">Начать обучение</button>
-                    </div>
-                </div>
+            <div class="quick-actions">
+                <button onclick="showCoursesList()" class="btn btn-icon">📚 Мои курсы</button>
+                <button onclick="showLessonsList()" class="btn btn-icon">📖 Мои уроки</button>
+                <button onclick="showCreateCourseForm()" class="btn btn-icon">➕ Создать курс</button>
+                <button onclick="showCreateLessonForm()" class="btn btn-icon">➕ Создать урок</button>
+                <button onclick="showMySchoolsStudent()" class="btn btn-icon">🏫 Мои школы</button>
+                <button onclick="joinSchool()" class="btn btn-icon">🔗 Вступить в школу</button>
+                <button onclick="showStudentGraphs()" class="btn btn-icon">📊 Мой прогресс</button>
+                <button onclick="openChatModal()" class="btn btn-icon">💬 Чат школы</button>
+                <button onclick="showStudentPlan()" class="btn btn-icon">📅 Мой план</button>
+                <a href="/hsk" target="_blank" class="btn btn-icon" style="background: #c0392b; color: white; text-decoration: none;">
+                    🇨🇳 Поступление в Китай
+                </a>
+            </div>
 
-                <!-- Шаг 5: Режим обучения -->
-                <div id="step5" class="step animated-step" style="display:none">
-                    <div class="learning-header">
-                        <h2>📖 Обучение</h2>
-                        <div class="progress-wrapper">
-                            <div class="progress-bar">
-                                <div id="progressFill" class="progress-fill"></div>
-                            </div>
-                            <div id="progressStats" class="progress-stats"></div>
-                        </div>
-                    </div>
-                    <div id="lessonContent"></div>
-                    <div id="testContent" style="display:none"></div>
+            <div id="chatModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a0e12; border-radius: 20px; width: 500px; max-width: 90%; height: 600px; max-height: 80vh; display: flex; flex-direction: column; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid #a24558;">
+                <div style="padding: 15px; border-bottom: 1px solid #883c4b; display: flex; justify-content: space-between;">
+                    <div><button id="chatTabGeneral" onclick="switchChatTab('general')" style="margin-right: 10px; padding: 5px 10px; background: #b34b60; color: white; border: none; border-radius: 5px;">Общий чат</button><button id="chatTabPrivate" onclick="switchChatTab('private')" style="padding: 5px 10px; background: #2a151d; border: none; border-radius: 5px; color:#eecbd3;">Личные сообщения</button></div>
+                    <button onclick="closeChatModal()" style="background: none; border: none; font-size: 20px; color:#e7b5c1;">✕</button>
                 </div>
-
-                <!-- Шаг 6: Создание пользовательского теста -->
-                <div id="step6" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📝 Создать свой тест</h2>
-                        <div class="form-group">
-                            <label>Название теста:</label>
-                            <input type="text" id="customTestName" placeholder="например: Моя контрольная по тригонометрии" class="modern-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Описание (необязательно):</label>
-                            <textarea id="customTestDesc" rows="2" placeholder="Краткое описание теста" class="modern-input"></textarea>
-                        </div>
-                        <div id="questionsList" class="questions-list"></div>
-                        <div class="button-group">
-                            <button onclick="addQuestionField()" class="btn btn-secondary">➕ Добавить вопрос</button>
-                            <button onclick="saveCustomTest()" class="btn btn-primary">💾 Сохранить тест</button>
-                            <button onclick="trainCustomTest()" class="btn btn-primary">🤖 Обучить ИИ</button>
-                            <button onclick="showCustomTestsList()" class="btn btn-secondary">📋 Мои тесты</button>
-                            <button onclick="backToMainMenu()" class="btn btn-outline">← Главное меню</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Шаг 7: Список пользовательских тестов -->
-                <div id="step7" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📋 Мои тесты</h2>
-                        <div id="customTestsList" class="tests-grid"></div>
-                        <div class="button-group">
-                            <button onclick="showTestCreator()" class="btn btn-secondary">➕ Создать новый</button>
-                            <button onclick="backToMainMenu()" class="btn btn-outline">← Главное меню</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Шаг 8: Прохождение пользовательского теста -->
-                <div id="step8" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2 id="takingTestName"></h2>
-                        <div id="takingTestQuestions"></div>
-                        <div class="button-group">
-                            <button onclick="submitCustomTest()" class="btn btn-primary">Отправить ответы</button>
-                            <button onclick="showCustomTestsList()" class="btn btn-outline">← К списку тестов</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Шаг 9: Результаты пользовательского теста -->
-                <div id="step9" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📊 Результаты теста</h2>
-                        <div id="customTestResults"></div>
-                        <button onclick="showCustomTestsList()" class="btn btn-outline">← К списку тестов</button>
-                    </div>
-                </div>
-
-                <!-- Шаг 10: Список курсов -->
-                <div id="step10" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📚 Мои курсы</h2>
-                        <div id="userCoursesList" class="courses-grid"></div>
-                        <div class="button-group">
-                            <button onclick="showCreateCourseForm()" class="btn btn-secondary">➕ Создать новый курс</button>
-                            <button onclick="showMainMenu()" class="btn btn-outline">← Главное меню</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Шаг 11: Просмотр курса -->
-                <div id="step11" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2 id="courseViewTitle"></h2>
-                        <p id="courseViewDescription" class="course-description"></p>
-                        <p><strong>Критерии успеха:</strong> <span id="courseViewCriteria"></span></p>
-                        <div id="courseModulesList" class="modules-list"></div>
-                        <div class="button-group">
-                            <button onclick="showCoursesList()" class="btn btn-outline">← К списку курсов</button>
-                            <button onclick="generateAllLessonsContent()" class="btn btn-primary">✨ Сгенерировать всё содержание</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Шаг 12: Просмотр урока -->
-                <div id="step12" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2 id="lessonViewTitle"></h2>
-                        <p><strong>Предмет:</strong> <span id="lessonViewSubject"></span></p>
-                        <div id="lessonViewContent" class="lesson-view-content markdown-body"></div>
-                        <div id="lessonViewHomework"></div>
-                        <div id="lessonViewYoutube"></div>
-                        <div class="button-group">
-                            <button onclick="generatePresentation()" class="btn btn-primary">📊 Скачать презентацию</button>
-                            <button onclick="backToLessonsList()" class="btn btn-outline">← К списку уроков</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Шаг 13: Создание курса -->
-                <div id="step13" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📚 Создать новый курс</h2>
-                        <div class="form-group">
-                            <label>Название курса:</label>
-                            <input type="text" id="newCourseName" placeholder="например: Python для начинающих" class="modern-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Описание:</label>
-                            <textarea id="newCourseDesc" rows="3" placeholder="Краткое описание курса" class="modern-input"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Критерии успеха (необязательно):</label>
-                            <textarea id="newCourseCriteria" rows="2" placeholder="Что должен знать и уметь студент после курса" class="modern-input"></textarea>
-                        </div>
-                        <div class="button-group">
-                            <button onclick="createCourse()" class="btn btn-primary">🚀 Создать курс</button>
-                            <button onclick="showCoursesList()" class="btn btn-outline">← Отмена</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Шаг 14: Список уроков -->
-                <div id="step14" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📖 Мои уроки</h2>
-                        <div id="userLessonsList" class="lessons-grid"></div>
-                        <div class="button-group">
-                            <button onclick="showCreateLessonForm()" class="btn btn-secondary">➕ Создать новый урок</button>
-                            <button onclick="showMainMenu()" class="btn btn-outline">← Главное меню</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Шаг 15: Создание урока -->
-                <div id="step15" class="step animated-step" style="display:none">
-                    <div class="step-card">
-                        <h2>📖 Создать новый урок</h2>
-                        <div class="form-group">
-                            <label>Название урока:</label>
-                            <input type="text" id="newLessonTitle" placeholder="например: Введение в переменные" class="modern-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Предмет:</label>
-                            <input type="text" id="newLessonSubject" placeholder="например: Программирование" class="modern-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Описание (необязательно):</label>
-                            <textarea id="newLessonDesc" rows="3" placeholder="Дополнительные требования" class="modern-input"></textarea>
-                        </div>
-                        <div class="button-group">
-                            <button onclick="createLesson()" class="btn btn-primary">🚀 Создать урок</button>
-                            <button onclick="showLessonsList()" class="btn btn-outline">← Отмена</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Панель учителя (скрыта по умолчанию) -->
-                <div id="teacherPanel" style="display: none; margin-bottom: 20px;">
-                    <div class="step-card">
-                        <h3>👨‍🏫 Панель учителя</h3>
-                        <div class="button-group">
-                            <button onclick="showCreateSchoolForm()" class="btn btn-secondary">🏫 Создать школу</button>
-                            <button onclick="showJoinSchoolForm()" class="btn btn-secondary">🔗 Присоединиться к школе</button>
-                            <button onclick="showMySchools()" class="btn btn-secondary">📋 Мои школы</button>
-                            <button onclick="showSchoolStats()" class="btn btn-secondary">📊 Статистика школы</button>
-                            <button onclick="showTeacherGraphs()" class="btn btn-secondary">📈 Графы знаний</button>
-                            <button onclick="buildTargetGraph()" class="btn btn-primary">🎯 Построить целевой граф</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Панель ученика (показывается для студентов) -->
-                <div id="studentPanel" style="display: none; margin-bottom: 20px;">
-                    <div class="step-card">
-                        <h3>🎓 Панель ученика</h3>
-                        <div class="button-group">
-                            <button onclick="showMySchoolsStudent()" class="btn btn-secondary">🏫 Мои школы</button>
-                            <button onclick="joinSchool()" class="btn btn-secondary">🔗 Вступить в школу</button>
-                            <button onclick="showStudentGraphs()" class="btn btn-secondary">📊 Мой прогресс</button>
-                            <!-- Новая кнопка: Мой план -->
-                            <button onclick="showStudentPlan()" class="btn btn-secondary">📅 Мой план</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Блок быстрых действий -->
-                <div class="quick-actions">
-                    <button onclick="showCoursesList()" class="btn btn-icon">📚 Мои курсы</button>
-                    <button onclick="showLessonsList()" class="btn btn-icon">📖 Мои уроки</button>
-                    <button onclick="showCreateCourseForm()" class="btn btn-icon">➕ Создать курс</button>
-                    <button onclick="showCreateLessonForm()" class="btn btn-icon">➕ Создать урок</button>
-                    <button onclick="showMySchoolsStudent()" class="btn btn-icon">🏫 Мои школы</button>
-                    <button onclick="joinSchool()" class="btn btn-icon">🔗 Вступить в школу</button>
-                    <button onclick="showStudentGraphs()" class="btn btn-icon">📊 Мой прогресс</button>
-                    <!-- Новая кнопка: Мой план -->
-                    <button onclick="openChatModal()" class="btn btn-icon">💬 Чат школы</button>
-                    <button onclick="showStudentPlan()" class="btn btn-icon">📅 Мой план</button>
-                </div>
-                <!-- Модальное окно чата -->
-<div id="chatModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 20px; width: 500px; max-width: 90%; height: 600px; max-height: 80vh; display: flex; flex-direction: column; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-    <div style="padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between;">
-        <div>
-            <button id="chatTabGeneral" onclick="switchChatTab('general')" style="margin-right: 10px; padding: 5px 10px; background: #667eea; color: white; border: none; border-radius: 5px;">Общий чат</button>
-            <button id="chatTabPrivate" onclick="switchChatTab('private')" style="padding: 5px 10px; background: #ccc; border: none; border-radius: 5px;">Личные сообщения</button>
-        </div>
-        <button onclick="closeChatModal()" style="background: none; border: none; font-size: 20px;">✕</button>
-    </div>
-    <div id="chatMessagesContainer" style="flex: 1; overflow-y: auto; padding: 15px;"></div>
-    <div style="padding: 15px; border-top: 1px solid #ddd; display: flex;">
-        <input type="text" id="chatInput" placeholder="Введите сообщение..." style="flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd;">
-        <button onclick="sendChatMessage()" style="margin-left: 10px; background: #667eea; color: white; border: none; border-radius: 20px; padding: 0 20px;">Отправить</button>
-    </div>
-    <div id="chatRecipientSelect" style="display: none; padding: 10px; border-bottom: 1px solid #ddd;">
-        <select id="privateRecipientId">
-            <option value="">Выберите получателя</option>
-        </select>
+                <div id="chatMessagesContainer" style="flex: 1; overflow-y: auto; padding: 15px;"></div>
+                <div style="padding: 15px; border-top: 1px solid #572a36; display: flex;"><input type="text" id="chatInput" placeholder="Введите сообщение..." style="flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #a04559; background:#221218; color:white;"><button onclick="sendChatMessage()" style="margin-left: 10px; background: #ac4158; color: white; border: none; border-radius: 20px; padding: 0 20px;">Отправить</button></div>
+                <div id="chatRecipientSelect" style="display: none; padding: 10px; border-bottom: 1px solid #783545;"><select id="privateRecipientId" style="background:#2f171f; color:white;"><option value="">Выберите получателя</option></select></div>
+            </div>
+        </main>
     </div>
 </div>
-            </main>
-        </div>
-    </div>
-
-    <script src="/script.js"></script>
+<script src="/static/script.js"></script>
 </body>
 </html>

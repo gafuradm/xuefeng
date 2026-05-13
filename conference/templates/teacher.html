@@ -2,7 +2,8 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Lecture - Teacher Panel</title>
+    <title>学峰 · Панель преподавателя | Живая лекция</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23831f33'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23f0ced5' font-weight='bold'%3E学%3C/text%3E%3C/svg%3E">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -11,59 +12,130 @@
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', 'Segoe UI', 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            background: #0a0305 radial-gradient(circle at 20% 30%, #2c0e14 0%, #040102 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 24px;
+            color: #f0e9ec;
         }
-        .container {
-            max-width: 1400px;
+
+        /* декоративный шум */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: radial-gradient(rgba(180, 40, 60, 0.08) 1px, transparent 1px);
+            background-size: 35px 35px;
+            z-index: 0;
+        }
+
+        .app-wrapper {
+            max-width: 1500px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .container {
+            background: rgba(10, 6, 8, 0.82);
+            backdrop-filter: blur(3px);
+            border-radius: 2.5rem;
+            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(139, 44, 61, 0.3) inset;
             overflow: hidden;
         }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
+
+        /* Шапка с логотипом 学峰 */
+        .hero-header {
+            background: radial-gradient(ellipse at 70% 20%, #2f0a14, #050103);
+            border-bottom: 2px solid #b83b4b;
+            padding: 1.5rem 2rem;
             text-align: center;
         }
-        .header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
+        .xuefeng-master {
+            margin-bottom: 0.5rem;
         }
+        .xuefeng-logo {
+            font-family: 'Noto Serif SC', 'Times New Roman', 'Cinema', 'Impact', cursive;
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: 12px;
+            display: inline-block;
+            background: linear-gradient(135deg, #e6b8c2 10%, #bc3f4b 50%, #630d1f 90%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 12px rgba(188, 63, 75, 0.7), 0 4px 20px rgba(0,0,0,0.5);
+            transform: skew(-6deg) scale(1.02);
+            transition: all 0.3s;
+        }
+        .xuefeng-logo:hover {
+            letter-spacing: 15px;
+            transform: skew(-3deg) scale(1.05);
+        }
+        .xuefeng-sub {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            font-weight: 500;
+            color: #ca7a88;
+            border-top: 1px solid #862633;
+            display: inline-block;
+            padding-top: 6px;
+        }
+        .hero-header h1 {
+            font-size: 1.6rem;
+            margin-top: 0.5rem;
+            background: linear-gradient(120deg, #f0e6e8, #dd9ba8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .hero-header p {
+            color: #d1bfc3;
+            font-size: 0.85rem;
+        }
+
+        /* Status bar */
         .status-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 30px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 24px;
+            background: rgba(18, 8, 11, 0.75);
+            border-bottom: 1px solid #4f2a36;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
         .status-badge {
             display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
+            padding: 5px 14px;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: #2d1920;
         }
-        .status-online {
-            background: #d4edda;
-            color: #155724;
+        .status-online { background: #1e4a2f; color: #bbf0cf; }
+        .status-offline { background: #5a2a2a; color: #f5bfbf; }
+        .lang-select, #userNameInput {
+            background: #1f1217;
+            border: 1px solid #762f3e;
+            color: #f0e2e6;
+            border-radius: 2rem;
+            padding: 6px 12px;
         }
-        .status-offline {
-            background: #f8d7da;
-            color: #721c24;
-        }
+        .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
+
+        /* Основной контент */
         .main-content {
             display: flex;
-            padding: 30px;
-            gap: 30px;
+            padding: 24px;
+            gap: 24px;
             flex-wrap: wrap;
         }
         .screen-share-panel {
@@ -72,925 +144,547 @@
         }
         .chat-and-camera {
             flex: 1;
-            min-width: 300px;
+            min-width: 320px;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
         .video-container {
-            background: #1a1a1a;
-            border-radius: 15px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            padding: 10px;
+            background: #0a0508;
+            border-radius: 1.5rem;
+            padding: 12px;
+            border: 1px solid #823544;
         }
-        #localScreenVideo {
-            width: 100%;
+        #localScreenVideo, #localCameraVideo {
             background: #000;
-            border-radius: 10px;
+            border-radius: 1rem;
+            width: 100%;
         }
         #localCameraVideo {
-            width: 100%;
-            max-width: 300px;
-            background: #000;
-            border-radius: 10px;
-            margin-top: 10px;
+            max-width: 280px;
+            margin-top: 12px;
         }
         .share-controls {
             display: flex;
-            gap: 15px;
-            margin-top: 15px;
+            gap: 12px;
+            margin-top: 16px;
             flex-wrap: wrap;
         }
+        /* Универсальные кнопки */
         .btn {
-            padding: 12px 24px;
+            padding: 10px 22px;
+            border-radius: 3rem;
+            font-weight: 600;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: 0.2s;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(115deg, #9e2c3e, #551a26);
             color: white;
+            border: 1px solid #c45466;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        .btn-primary:hover { transform: translateY(-2px); background: linear-gradient(115deg, #bc374b, #7d202f); }
+        .btn-danger { background: #962b3e; color: white; }
+        .btn-danger:hover { background: #b53f54; }
+        .btn-success { background: #2d7a4b; color: white; }
+        .btn-success:hover { background: #3f9a60; }
+
+        /* Карточки */
+        .qr-code, .student-list, .translation-box, .history-box, .chat-panel, .stats-panel {
+            background: rgba(18, 8, 11, 0.75);
+            backdrop-filter: blur(2px);
+            border-radius: 1.5rem;
+            border: 1px solid #5c2e3c;
+            padding: 1rem 1.2rem;
         }
-        .btn-danger {
-            background: #dc3545;
-            color: white;
+        .qr-code { text-align: center; }
+        .code-display {
+            font-size: 2rem;
+            letter-spacing: 6px;
+            font-weight: bold;
+            color: #f0ced5;
+            background: #0f070b;
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            margin: 10px 0;
         }
-        .btn-danger:hover {
-            background: #c82333;
+        .timer { color: #e68a9c; font-size: 0.8rem; }
+        .student-list h3, .translation-box h3, .history-box h3, .chat-panel h3 {
+            color: #e7a5b4;
+            border-left: 4px solid #d45c6f;
+            padding-left: 10px;
+            margin-bottom: 12px;
         }
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        .translation-box {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            min-height: 150px;
-            border: 1px solid #e0e0e0;
-        }
-        .translation-box h3 {
-            margin-bottom: 15px;
-            color: #333;
+        .student-item {
+            background: #0f070b80;
+            margin: 6px 0;
+            padding: 6px;
+            border-radius: 1rem;
         }
         #currentTranslation {
-            font-size: 18px;
-            line-height: 1.5;
-            color: #2c3e50;
-        }
-        #originalText {
-            margin-top: 10px;
-            color: #666;
-            font-size: 14px;
-            font-style: italic;
-        }
-        .history-box {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            max-height: 200px;
-            overflow-y: auto;
+            background: #1f1219;
+            padding: 10px;
+            border-radius: 1rem;
+            font-size: 1rem;
         }
         .history-item {
-            padding: 10px;
-            border-bottom: 1px solid #e0e0e0;
-            margin-bottom: 10px;
-        }
-        .history-time {
-            font-size: 11px;
-            color: #999;
-        }
-        .history-translation {
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .history-original {
-            font-size: 12px;
-            color: #666;
-        }
-        .chat-panel {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 15px;
-            border: 1px solid #e0e0e0;
+            border-bottom: 1px solid #3f212d;
+            margin-bottom: 6px;
+            padding: 6px;
         }
         .chat-messages {
-            height: 250px;
+            background: #0d060a;
+            border-radius: 1rem;
+            border: 1px solid #602f3e;
+            height: 200px;
             overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-            background: #fafafa;
-            border-radius: 10px;
+            padding: 8px;
         }
         .chat-input-area {
             display: flex;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-top: 10px;
         }
         .chat-input-area input {
             flex: 1;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            background: #1f1217;
+            border: 1px solid #762f3e;
+            border-radius: 2rem;
+            padding: 8px 15px;
+            color: white;
         }
         .stats-panel {
             display: flex;
-            gap: 20px;
-            margin: 20px 0;
+            gap: 15px;
+            justify-content: center;
         }
         .stat-card {
-            flex: 1;
+            background: #1f1219;
+            border-radius: 1rem;
+            padding: 8px;
             text-align: center;
-            padding: 15px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
         }
         .stat-number {
-            font-size: 28px;
+            font-size: 1.8rem;
             font-weight: bold;
-            color: #667eea;
+            color: #dd7f91;
         }
-        .qr-code {
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            margin-top: 20px;
-        }
-        .code-display {
-            font-size: 36px;
-            font-weight: bold;
-            letter-spacing: 8px;
-            color: #2c3e50;
-            margin: 10px 0;
-        }
-        .timer {
-            font-size: 18px;
-            color: #dc3545;
-        }
-        .student-list {
-            max-height: 150px;
-            overflow-y: auto;
-            margin-top: 10px;
-        }
-        .student-item {
-            padding: 8px;
-            border-bottom: 1px solid #e0e0e0;
-            font-size: 14px;
-        }
-        .lang-select {
-            padding: 8px 12px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-        }
-        /* Стили для доски */
+        /* Доска */
         .whiteboard-container {
-            background: white;
-            border-radius: 15px;
             margin: 20px;
-            border: 1px solid #e0e0e0;
+            background: #140a0e;
+            border-radius: 1.5rem;
+            border: 1px solid #823544;
             overflow: hidden;
         }
         .whiteboard-toolbar {
+            background: #1a0e12;
             padding: 10px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #ddd;
+            gap: 8px;
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
+            border-bottom: 1px solid #602f3e;
+        }
+        .whiteboard-toolbar button, .whiteboard-toolbar input {
+            background: #2d171f;
+            border: 1px solid #823544;
+            color: #f0cdd5;
+            border-radius: 2rem;
+            padding: 5px 12px;
+            cursor: pointer;
         }
         .whiteboard-canvas {
-            display: block;
             background: white;
-            cursor: crosshair;
+            border-radius: 1rem;
             width: 100%;
             height: auto;
-            background-size: 20px 20px;
-            background-image: linear-gradient(to right, #f0f0f0 1px, transparent 1px), linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
         }
-        .whiteboard-page {
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 20px;
-        }
-        .whiteboard-page-header {
-            padding: 5px 10px;
-            background: #f0f0f0;
-            font-size: 12px;
-        }
+
         @media (max-width: 768px) {
             .main-content { flex-direction: column; }
             .screen-share-panel { min-width: auto; }
+            .hero-header h1 { font-size: 1.2rem; }
+            .xuefeng-logo { font-size: 2rem; letter-spacing: 6px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>👨‍🏫 Панель преподавателя</h1>
-            <p>Трансляция экрана | Видео с камеры | Чат с автопереводом | Интерактивная доска</p>
+<div class="app-wrapper">
+<div class="container">
+    <div class="hero-header">
+        <div class="xuefeng-master">
+            <div class="xuefeng-logo">学峰</div>
+            <div class="xuefeng-sub">XUEFENG · LIVE LECTURE · TEACHER</div>
         </div>
-
-        <div class="status-bar">
-            <div>
-                <span class="status-badge" id="connectionStatus">🟡 Подключение...</span>
-                <span class="status-badge" id="screenStatus" style="margin-left: 10px;">📺 Экран: выкл</span>
-                <span class="status-badge" id="cameraStatus" style="margin-left: 10px;">📷 Камера: выкл</span>
-            </div>
-            <div>
-                <select id="myLanguage" class="lang-select">
-                    <option value="en">🇺🇸 English</option>
-                    <option value="ru">🇷🇺 Русский</option>
-                    <option value="kk">🇰🇿 Қазақша</option>
-                    <option value="de">🇩🇪 Deutsch</option>
-                    <option value="ja">🇯🇵 日本語</option>
-                    <option value="ko">🇰🇷 한국어</option>
-                    <option value="zh">🇨🇳 中文</option>
-                </select>
-                <span style="margin-left: 15px;">👤 Имя: <input type="text" id="userNameInput" placeholder="Ваше имя" value="Преподаватель" style="width: 120px;"></span>
-                <button onclick="setName()" class="btn btn-success btn-sm">OK</button>
-            </div>
-            <div>
-                <span>📊 Фраз: <strong id="phraseCount">0</strong></span>
-                <span style="margin-left: 15px;">👥 Подключено: <strong id="clientCount">0</strong></span>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="screen-share-panel">
-                <div class="video-container">
-                    <video id="localScreenVideo" autoplay playsinline muted style="width: 100%;"></video>
-                    <video id="localCameraVideo" autoplay playsinline muted style="width: 100%; max-width: 300px; margin-top: 10px;"></video>
-                </div>
-                <div class="share-controls">
-                    <button id="startScreenBtn" class="btn btn-primary">🎥 Начать трансляцию экрана</button>
-                    <button id="stopScreenBtn" class="btn btn-danger" style="display: none;">⏹ Остановить экран</button>
-                    <button id="startCameraBtn" class="btn btn-success">📷 Включить камеру</button>
-                    <button id="stopCameraBtn" class="btn btn-danger" style="display: none;">📷 Выключить камеру</button>
-                    <button onclick="refreshQR()" class="btn btn-primary">🔄 Обновить QR-код</button>
-                    <button id="toggleWhiteboardBtn" class="btn btn-primary">📝 Открыть доску</button>
-                </div>
-                
-                <div class="qr-code">
-                    <h3>📱 QR-код для студентов</h3>
-                    <div id="qrCodeImage"></div>
-                    <div class="code-display" id="currentCode"></div>
-                    <div class="timer" id="timerDisplay"></div>
-                </div>
-                
-                <div class="student-list" style="background: #f8f9fa; border-radius: 15px; padding: 15px; margin-top: 20px;">
-                    <h3>✅ Подтверждённые студенты</h3>
-                    <div id="verifiedStudentsList"><em>Никого пока нет</em></div>
-                </div>
-            </div>
-
-            <div class="chat-and-camera">
-                <div class="translation-box">
-                    <h3>📝 Текущий перевод речи</h3>
-                    <div id="currentTranslation"><em>Ожидание начала лекции...</em></div>
-                    <div id="originalText"></div>
-                </div>
-
-                <div class="history-box">
-                    <h3>📜 История перевода</h3>
-                    <div id="historyList"><em>История будет здесь...</em></div>
-                </div>
-
-                <div class="stats-panel">
-                    <div class="stat-card"><div class="stat-number" id="verifiedCount">0</div><div>Студентов</div></div>
-                    <div class="stat-card"><div class="stat-number" id="historyCount">0</div><div>Записей</div></div>
-                </div>
-
-                <div class="chat-panel">
-                    <h3>💬 Чат (автоперевод)</h3>
-                    <div class="chat-messages" id="chatMessages"><div style="color:#999; text-align:center;">Сообщения будут здесь</div></div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chatInput" placeholder="Введите сообщение..." autocomplete="off">
-                        <button onclick="sendChatMessage()" class="btn btn-primary">Отправить</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div id="whiteboardContainer" style="display: none;"></div>
+        <h1>👨‍🏫 Панель преподавателя</h1>
+        <p>Трансляция экрана | Видео камера | Чат с автопереводом | Интерактивная доска</p>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
-    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-    <script>
-        // ================== ОСНОВНОЙ СКРИПТ (трансляция, перевод, чат) ==================
-        const socket = io();
-        let screenStream = null;
-        let cameraStream = null;
-        let screenPeerConnections = {};
-        let cameraPeerConnections = {};
-        let isScreenSharing = false;
-        let isCameraOn = false;
-        let history = [];
-        let whiteboardInstance = null;
+    <div class="status-bar">
+        <div>
+            <span class="status-badge" id="connectionStatus">🟡 Подключение...</span>
+            <span class="status-badge" id="screenStatus" style="margin-left: 8px;">📺 Экран: выкл</span>
+            <span class="status-badge" id="cameraStatus" style="margin-left: 8px;">📷 Камера: выкл</span>
+        </div>
+        <div>
+            <select id="myLanguage" class="lang-select">
+                <option value="en">🇺🇸 English</option>
+                <option value="ru">🇷🇺 Русский</option>
+                <option value="kk">🇰🇿 Қазақша</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="ko">🇰🇷 한국어</option>
+                <option value="zh">🇨🇳 中文</option>
+            </select>
+            <span style="margin-left: 12px;">👤 Имя: <input type="text" id="userNameInput" placeholder="Ваше имя" value="Преподаватель" style="width: 120px;"></span>
+            <button onclick="setName()" class="btn btn-success btn-sm">OK</button>
+        </div>
+        <div>
+            <span>📊 Фраз: <strong id="phraseCount">0</strong></span>
+            <span style="margin-left: 15px;">👥 Подключено: <strong id="clientCount">0</strong></span>
+        </div>
+    </div>
 
-        const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+    <div class="main-content">
+        <div class="screen-share-panel">
+            <div class="video-container">
+                <video id="localScreenVideo" autoplay playsinline muted></video>
+                <video id="localCameraVideo" autoplay playsinline muted></video>
+            </div>
+            <div class="share-controls">
+                <button id="startScreenBtn" class="btn btn-primary">🎥 Начать трансляцию экрана</button>
+                <button id="stopScreenBtn" class="btn btn-danger" style="display: none;">⏹ Остановить экран</button>
+                <button id="startCameraBtn" class="btn btn-success">📷 Включить камеру</button>
+                <button id="stopCameraBtn" class="btn btn-danger" style="display: none;">📷 Выключить камеру</button>
+                <button onclick="refreshQR()" class="btn btn-primary">🔄 Обновить QR-код</button>
+                <button id="toggleWhiteboardBtn" class="btn btn-primary">📝 Открыть доску</button>
+            </div>
 
-        // DOM элементы
-        const startScreenBtn = document.getElementById('startScreenBtn');
-        const stopScreenBtn = document.getElementById('stopScreenBtn');
-        const startCameraBtn = document.getElementById('startCameraBtn');
-        const stopCameraBtn = document.getElementById('stopCameraBtn');
-        const localScreenVideo = document.getElementById('localScreenVideo');
-        const localCameraVideo = document.getElementById('localCameraVideo');
-        const whiteboardContainer = document.getElementById('whiteboardContainer');
-        const toggleWhiteboardBtn = document.getElementById('toggleWhiteboardBtn');
+            <div class="qr-code">
+                <h3>📱 QR-код для студентов</h3>
+                <div id="qrCodeImage"></div>
+                <div class="code-display" id="currentCode"></div>
+                <div class="timer" id="timerDisplay"></div>
+            </div>
 
-        // Обновление статусов
-        function updateConnectionStatus(connected) {
-            const el = document.getElementById('connectionStatus');
-            if (connected) {
-                el.innerHTML = '🟢 Подключено';
-                el.className = 'status-badge status-online';
-            } else {
-                el.innerHTML = '🔴 Отключено';
-                el.className = 'status-badge status-offline';
-            }
-        }
+            <div class="student-list">
+                <h3>✅ Подтверждённые студенты</h3>
+                <div id="verifiedStudentsList"><em>Никого пока нет</em></div>
+            </div>
+        </div>
 
-        function updateScreenStatus(active) {
-            const el = document.getElementById('screenStatus');
-            if (active) {
-                el.innerHTML = '📺 Экран: вкл';
-                el.style.background = '#d4edda';
-                el.style.color = '#155724';
-            } else {
-                el.innerHTML = '📺 Экран: выкл';
-                el.style.background = '#f8f9fa';
-                el.style.color = '#333';
-            }
-        }
+        <div class="chat-and-camera">
+            <div class="translation-box">
+                <h3>📝 Текущий перевод речи</h3>
+                <div id="currentTranslation"><em>Ожидание начала лекции...</em></div>
+                <div id="originalText"></div>
+            </div>
 
-        function updateCameraStatus(active) {
-            const el = document.getElementById('cameraStatus');
-            if (active) {
-                el.innerHTML = '📷 Камера: вкл';
-                el.style.background = '#d4edda';
-                el.style.color = '#155724';
-            } else {
-                el.innerHTML = '📷 Камера: выкл';
-                el.style.background = '#f8f9fa';
-                el.style.color = '#333';
-            }
-        }
+            <div class="history-box">
+                <h3>📜 История перевода</h3>
+                <div id="historyList"><em>Пусто</em></div>
+            </div>
 
-        // Peer Connections
-        function createScreenPeerConnection(studentId) {
-            const pc = new RTCPeerConnection(configuration);
-            if (screenStream) {
-                screenStream.getTracks().forEach(track => pc.addTrack(track, screenStream));
-            }
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('webrtc_ice_candidate', { studentId: studentId, candidate: event.candidate, target: 'student', type: 'screen' });
-                }
-            };
-            return pc;
-        }
+            <div class="stats-panel">
+                <div class="stat-card"><div class="stat-number" id="verifiedCount">0</div><div>Студентов</div></div>
+                <div class="stat-card"><div class="stat-number" id="historyCount">0</div><div>Записей</div></div>
+            </div>
 
-        function createCameraPeerConnection(studentId) {
-            const pc = new RTCPeerConnection(configuration);
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => pc.addTrack(track, cameraStream));
-            }
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('webrtc_ice_candidate', { studentId: studentId, candidate: event.candidate, target: 'student', type: 'camera' });
-                }
-            };
-            return pc;
-        }
-
-        async function sendOfferToStudent(studentId, pc, type) {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit('webrtc_offer', { studentId: studentId, offer: pc.localDescription, type: type });
-        }
-
-        // Запуск трансляции экрана
-        async function startScreenShare() {
-            try {
-                screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-                localScreenVideo.srcObject = screenStream;
-                localScreenVideo.play();
-                
-                const students = await fetch('/api/verified_students').then(r => r.json());
-                for (const student of students.students) {
-                    const pc = createScreenPeerConnection(student.id);
-                    screenPeerConnections[student.id] = pc;
-                    await sendOfferToStudent(student.id, pc, 'screen');
-                }
-                
-                startScreenBtn.style.display = 'none';
-                stopScreenBtn.style.display = 'inline-block';
-                isScreenSharing = true;
-                updateScreenStatus(true);
-                socket.emit('start_screen_share');
-                
-                screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
-            } catch (err) {
-                console.error(err);
-                alert('Не удалось начать трансляцию экрана');
-            }
-        }
-
-        function stopScreenShare() {
-            if (screenStream) {
-                screenStream.getTracks().forEach(track => track.stop());
-                screenStream = null;
-            }
-            localScreenVideo.srcObject = null;
-            Object.values(screenPeerConnections).forEach(pc => pc.close());
-            screenPeerConnections = {};
-            startScreenBtn.style.display = 'inline-block';
-            stopScreenBtn.style.display = 'none';
-            isScreenSharing = false;
-            updateScreenStatus(false);
-            socket.emit('stop_screen_share');
-        }
-
-        // Запуск камеры (независимо от экрана)
-        async function startCamera() {
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                localCameraVideo.srcObject = cameraStream;
-                localCameraVideo.style.display = 'block';
-                startCameraBtn.style.display = 'none';
-                stopCameraBtn.style.display = 'inline-block';
-                isCameraOn = true;
-                updateCameraStatus(true);
-                
-                const students = await fetch('/api/verified_students').then(r => r.json());
-                for (const student of students.students) {
-                    const pc = createCameraPeerConnection(student.id);
-                    cameraPeerConnections[student.id] = pc;
-                    await sendOfferToStudent(student.id, pc, 'camera');
-                }
-                socket.emit('camera_toggled', { enabled: true });
-            } catch (err) {
-                console.error(err);
-                alert('Не удалось включить камеру');
-            }
-        }
-
-        function stopCamera() {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
-            }
-            localCameraVideo.srcObject = null;
-            localCameraVideo.style.display = 'none';
-            Object.values(cameraPeerConnections).forEach(pc => pc.close());
-            cameraPeerConnections = {};
-            startCameraBtn.style.display = 'inline-block';
-            stopCameraBtn.style.display = 'none';
-            isCameraOn = false;
-            updateCameraStatus(false);
-            socket.emit('camera_toggled', { enabled: false });
-        }
-
-        // Чат и язык
-        function setName() {
-            const name = document.getElementById('userNameInput').value.trim();
-            if (name) socket.emit('set_name', { name: name });
-        }
-
-        function sendChatMessage() {
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            if (message) {
-                socket.emit('send_message', { message: message });
-                input.value = '';
-            }
-        }
-
-        function addToHistory(translation, original) {
-            const time = new Date().toLocaleTimeString();
-            history.unshift({ time, translation, original });
-            if (history.length > 20) history.pop();
-            document.getElementById('historyList').innerHTML = history.map(item => `
-                <div class="history-item">
-                    <div class="history-time">${item.time}</div>
-                    <div class="history-translation">${item.translation}</div>
-                    <div class="history-original">${item.original || ''}</div>
+            <div class="chat-panel">
+                <h3>💬 Чат (автоперевод)</h3>
+                <div class="chat-messages" id="chatMessages"><div style="color:#b38492; text-align:center;">Сообщения будут здесь</div></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Введите сообщение..." autocomplete="off">
+                    <button onclick="sendChatMessage()" class="btn btn-primary">Отправить</button>
                 </div>
-            `).join('');
-            document.getElementById('historyCount').innerText = history.length;
+            </div>
+        </div>
+    </div>
+    <div id="whiteboardContainer" style="display: none;"></div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+<script>
+    // ================== ФУНКЦИОНАЛ ПОЛНОСТЬЮ СОХРАНЁН ==================
+    const socket = io();
+    let screenStream = null;
+    let cameraStream = null;
+    let screenPeerConnections = {};
+    let cameraPeerConnections = {};
+    let isScreenSharing = false;
+    let isCameraOn = false;
+    let history = [];
+    let whiteboardInstance = null;
+
+    const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+
+    // DOM
+    const startScreenBtn = document.getElementById('startScreenBtn');
+    const stopScreenBtn = document.getElementById('stopScreenBtn');
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const stopCameraBtn = document.getElementById('stopCameraBtn');
+    const localScreenVideo = document.getElementById('localScreenVideo');
+    const localCameraVideo = document.getElementById('localCameraVideo');
+    const whiteboardContainer = document.getElementById('whiteboardContainer');
+    const toggleWhiteboardBtn = document.getElementById('toggleWhiteboardBtn');
+
+    function updateConnectionStatus(connected) {
+        const el = document.getElementById('connectionStatus');
+        if (connected) {
+            el.innerHTML = '🟢 Подключено';
+            el.className = 'status-badge status-online';
+        } else {
+            el.innerHTML = '🔴 Отключено';
+            el.className = 'status-badge status-offline';
         }
+    }
+    function updateScreenStatus(active) {
+        const el = document.getElementById('screenStatus');
+        if (active) { el.innerHTML = '📺 Экран: вкл'; el.style.background = '#1e4a2f'; el.style.color = '#bbf0cf'; }
+        else { el.innerHTML = '📺 Экран: выкл'; el.style.background = '#2d1920'; el.style.color = '#f0e2e6'; }
+    }
+    function updateCameraStatus(active) {
+        const el = document.getElementById('cameraStatus');
+        if (active) { el.innerHTML = '📷 Камера: вкл'; el.style.background = '#1e4a2f'; el.style.color = '#bbf0cf'; }
+        else { el.innerHTML = '📷 Камера: выкл'; el.style.background = '#2d1920'; el.style.color = '#f0e2e6'; }
+    }
 
-        // ================== ДОСКА (Whiteboard) ==================
-        class Whiteboard {
-            constructor(containerId, socket, isTeacher, roomName) {
-                this.container = document.getElementById(containerId);
-                this.socket = socket;
-                this.isTeacher = isTeacher;
-                this.roomName = roomName;
-                this.currentPage = 0;
-                this.pages = [];
-                this.ctx = null;
-                this.drawing = false;
-                this.lastX = 0;
-                this.lastY = 0;
-                this.currentColor = '#000000';
-                this.currentSize = 2;
-                this.eraserMode = false;
-                this.init();
+    function createScreenPeerConnection(studentId) {
+        const pc = new RTCPeerConnection(configuration);
+        if (screenStream) screenStream.getTracks().forEach(track => pc.addTrack(track, screenStream));
+        pc.onicecandidate = (event) => {
+            if (event.candidate) socket.emit('webrtc_ice_candidate', { studentId, candidate: event.candidate, target: 'student', type: 'screen' });
+        };
+        return pc;
+    }
+    function createCameraPeerConnection(studentId) {
+        const pc = new RTCPeerConnection(configuration);
+        if (cameraStream) cameraStream.getTracks().forEach(track => pc.addTrack(track, cameraStream));
+        pc.onicecandidate = (event) => {
+            if (event.candidate) socket.emit('webrtc_ice_candidate', { studentId, candidate: event.candidate, target: 'student', type: 'camera' });
+        };
+        return pc;
+    }
+    async function sendOfferToStudent(studentId, pc, type) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('webrtc_offer', { studentId, offer: pc.localDescription, type });
+    }
+
+    async function startScreenShare() {
+        try {
+            screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            localScreenVideo.srcObject = screenStream;
+            const students = await fetch('/api/verified_students').then(r => r.json());
+            for (const student of students.students) {
+                const pc = createScreenPeerConnection(student.id);
+                screenPeerConnections[student.id] = pc;
+                await sendOfferToStudent(student.id, pc, 'screen');
             }
-
-            init() {
-                // Создаём элементы управления
-                this.toolbar = document.createElement('div');
-                this.toolbar.className = 'whiteboard-toolbar';
-                this.toolbar.innerHTML = `
-                    <button class="wb-color" data-color="#000000" style="background:#000; color:white;">Чёрный</button>
-                    <button class="wb-color" data-color="#ff0000" style="background:#ff0000;">Красный</button>
-                    <button class="wb-color" data-color="#0000ff" style="background:#0000ff;">Синий</button>
-                    <button class="wb-color" data-color="#00aa00" style="background:#00aa00;">Зелёный</button>
-                    <button class="wb-eraser">🧽 Ластик</button>
-                    <input type="range" class="wb-size" min="1" max="20" value="2" title="Размер">
-                    <button class="wb-clear">🗑 Очистить страницу</button>
-                    <button class="wb-newpage">📄 Новая страница</button>
-                    <button class="wb-prevpage" ${this.currentPage === 0 ? 'disabled' : ''}>◀ Пред.</button>
-                    <span class="wb-pageinfo">Страница 1</span>
-                    <button class="wb-nextpage" ${this.pages.length <= 1 ? 'disabled' : ''}>След. ▶</button>
-                    <button class="wb-savepdf">📑 Сохранить PDF</button>
-                `;
-                this.container.appendChild(this.toolbar);
-                this.canvasContainer = document.createElement('div');
-                this.canvasContainer.className = 'whiteboard-canvas-container';
-                this.container.appendChild(this.canvasContainer);
-                this.addNewPage();
-
-                // Подписка на события
-                this.socket.on('whiteboard_draw', (data) => {
-                    if (data.room === this.roomName && !this.isTeacher) {
-                        this.applyDrawEvent(data);
-                    }
-                });
-                this.socket.on('whiteboard_clear', (data) => {
-                    if (data.room === this.roomName && !this.isTeacher && this.pages[this.currentPage]) {
-                        this.clearCanvas(this.pages[this.currentPage].canvas);
-                    }
-                });
-                this.socket.on('whiteboard_new_page', (data) => {
-                    if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) {
-                        while (this.pages.length <= data.pageIndex) this.addNewPage(false);
-                        this.switchToPage(data.pageIndex);
-                    }
-                });
-                this.socket.on('whiteboard_switch_page', (data) => {
-                    if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) {
-                        this.switchToPage(data.pageIndex);
-                    }
-                });
-
-                // Обработчики UI
-                this.toolbar.querySelectorAll('.wb-color').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        this.eraserMode = false;
-                        this.currentColor = btn.dataset.color;
-                        this.updateToolbarUI();
-                    });
-                });
-                this.toolbar.querySelector('.wb-eraser').addEventListener('click', () => {
-                    this.eraserMode = true;
-                    this.updateToolbarUI();
-                });
-                this.toolbar.querySelector('.wb-size').addEventListener('input', (e) => {
-                    this.currentSize = parseInt(e.target.value);
-                });
-                this.toolbar.querySelector('.wb-clear').addEventListener('click', () => {
-                    if (confirm('Очистить текущую страницу?')) {
-                        this.clearCanvas(this.pages[this.currentPage].canvas);
-                        this.broadcastDraw({ type: 'clear' });
-                    }
-                });
-                this.toolbar.querySelector('.wb-newpage').addEventListener('click', () => {
-                    this.addNewPage(true);
-                    this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length - 1 });
-                    this.switchToPage(this.pages.length - 1);
-                });
-                this.toolbar.querySelector('.wb-prevpage').addEventListener('click', () => {
-                    if (this.currentPage > 0) this.switchToPage(this.currentPage - 1);
-                });
-                this.toolbar.querySelector('.wb-nextpage').addEventListener('click', () => {
-                    if (this.currentPage < this.pages.length - 1) this.switchToPage(this.currentPage + 1);
-                });
-                this.toolbar.querySelector('.wb-savepdf').addEventListener('click', () => this.saveAsPDF());
+            startScreenBtn.style.display = 'none';
+            stopScreenBtn.style.display = 'inline-block';
+            isScreenSharing = true;
+            updateScreenStatus(true);
+            socket.emit('start_screen_share');
+            screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
+        } catch (err) { console.error(err); alert('Не удалось начать трансляцию экрана'); }
+    }
+    function stopScreenShare() {
+        if (screenStream) { screenStream.getTracks().forEach(track => track.stop()); screenStream = null; }
+        localScreenVideo.srcObject = null;
+        Object.values(screenPeerConnections).forEach(pc => pc.close());
+        screenPeerConnections = {};
+        startScreenBtn.style.display = 'inline-block';
+        stopScreenBtn.style.display = 'none';
+        isScreenSharing = false;
+        updateScreenStatus(false);
+        socket.emit('stop_screen_share');
+    }
+    async function startCamera() {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            localCameraVideo.srcObject = cameraStream;
+            localCameraVideo.style.display = 'block';
+            startCameraBtn.style.display = 'none';
+            stopCameraBtn.style.display = 'inline-block';
+            isCameraOn = true;
+            updateCameraStatus(true);
+            const students = await fetch('/api/verified_students').then(r => r.json());
+            for (const student of students.students) {
+                const pc = createCameraPeerConnection(student.id);
+                cameraPeerConnections[student.id] = pc;
+                await sendOfferToStudent(student.id, pc, 'camera');
             }
+            socket.emit('camera_toggled', { enabled: true });
+        } catch (err) { console.error(err); alert('Не удалось включить камеру'); }
+    }
+    function stopCamera() {
+        if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; }
+        localCameraVideo.srcObject = null;
+        localCameraVideo.style.display = 'none';
+        Object.values(cameraPeerConnections).forEach(pc => pc.close());
+        cameraPeerConnections = {};
+        startCameraBtn.style.display = 'inline-block';
+        stopCameraBtn.style.display = 'none';
+        isCameraOn = false;
+        updateCameraStatus(false);
+        socket.emit('camera_toggled', { enabled: false });
+    }
 
-            updateToolbarUI() {
-                const eraserBtn = this.toolbar.querySelector('.wb-eraser');
-                if (this.eraserMode) {
-                    eraserBtn.style.background = '#ddd';
-                    eraserBtn.style.color = '#000';
-                } else {
-                    eraserBtn.style.background = '';
-                    eraserBtn.style.color = '';
-                }
-            }
+    function setName() {
+        const name = document.getElementById('userNameInput').value.trim();
+        if (name) socket.emit('set_name', { name });
+    }
+    function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        if (message) { socket.emit('send_message', { message }); input.value = ''; }
+    }
+    function addToHistory(translation, original) {
+        const time = new Date().toLocaleTimeString();
+        history.unshift({ time, translation, original });
+        if (history.length > 20) history.pop();
+        const historyList = document.getElementById('historyList');
+        if (historyList.children[0]?.innerText === 'Пусто') historyList.innerHTML = '';
+        historyList.innerHTML = history.map(item => `
+            <div class="history-item">
+                <div class="history-time" style="font-size:10px; color:#bc8f9b;">${item.time}</div>
+                <div class="history-translation">${item.translation}</div>
+                <div class="history-original" style="font-size:12px;">${item.original || ''}</div>
+            </div>
+        `).join('');
+        document.getElementById('historyCount').innerText = history.length;
+    }
 
-            addNewPage(broadcast = false) {
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'whiteboard-page';
-                pageDiv.style.display = this.pages.length === this.currentPage ? 'block' : 'none';
-                const canvas = document.createElement('canvas');
-                canvas.className = 'whiteboard-canvas';
-                canvas.width = 800;
-                canvas.height = 500;
-                canvas.style.width = '100%';
-                canvas.style.height = 'auto';
-                canvas.style.border = '1px solid #ccc';
-                canvas.style.cursor = 'crosshair';
-                pageDiv.appendChild(canvas);
-                this.canvasContainer.appendChild(pageDiv);
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                this.setupCanvasEvents(canvas, ctx);
-                this.pages.push({ canvas, ctx, div: pageDiv });
-                if (broadcast && this.isTeacher) {
-                    this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length - 1 });
-                }
-                this.updateNavButtons();
-            }
-
-            setupCanvasEvents(canvas, ctx) {
-                const getCoords = (e) => {
-                    const rect = canvas.getBoundingClientRect();
-                    const scaleX = canvas.width / rect.width;
-                    const scaleY = canvas.height / rect.height;
-                    let clientX, clientY;
-                    if (e.touches) {
-                        clientX = e.touches[0].clientX;
-                        clientY = e.touches[0].clientY;
-                    } else {
-                        clientX = e.clientX;
-                        clientY = e.clientY;
-                    }
-                    let x = (clientX - rect.left) * scaleX;
-                    let y = (clientY - rect.top) * scaleY;
-                    x = Math.min(Math.max(0, x), canvas.width);
-                    y = Math.min(Math.max(0, y), canvas.height);
-                    return { x, y };
-                };
-
-                const startDraw = (e) => {
-                    e.preventDefault();
-                    this.drawing = true;
-                    const { x, y } = getCoords(e);
-                    this.lastX = x;
-                    this.lastY = y;
-                    ctx.beginPath();
-                    ctx.arc(x, y, this.currentSize / 2, 0, 2 * Math.PI);
-                    ctx.fillStyle = this.eraserMode ? 'white' : this.currentColor;
-                    ctx.fill();
-                    this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor, size: this.currentSize, isStart: true });
-                };
-                const draw = (e) => {
-                    if (!this.drawing) return;
-                    e.preventDefault();
-                    const { x, y } = getCoords(e);
-                    ctx.beginPath();
-                    ctx.moveTo(this.lastX, this.lastY);
-                    ctx.lineTo(x, y);
-                    ctx.strokeStyle = this.eraserMode ? 'white' : this.currentColor;
-                    ctx.lineWidth = this.currentSize;
-                    ctx.lineCap = 'round';
-                    ctx.stroke();
-                    this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor, size: this.currentSize, fromX: this.lastX, fromY: this.lastY });
-                    this.lastX = x;
-                    this.lastY = y;
-                };
-                const endDraw = () => {
-                    this.drawing = false;
-                };
-                canvas.addEventListener('mousedown', startDraw);
-                canvas.addEventListener('mousemove', draw);
-                canvas.addEventListener('mouseup', endDraw);
-                canvas.addEventListener('mouseleave', endDraw);
-                canvas.addEventListener('touchstart', startDraw);
-                canvas.addEventListener('touchmove', draw);
-                canvas.addEventListener('touchend', endDraw);
-            }
-
-            clearCanvas(canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            applyDrawEvent(data) {
-                if (data.type === 'draw') {
-                    const canvasObj = this.pages[this.currentPage];
-                    if (!canvasObj) return;
-                    const ctx = canvasObj.ctx;
-                    if (data.isStart) {
-                        ctx.beginPath();
-                        ctx.arc(data.x, data.y, data.size / 2, 0, 2 * Math.PI);
-                        ctx.fillStyle = data.color;
-                        ctx.fill();
-                    } else if (data.fromX !== undefined) {
-                        ctx.beginPath();
-                        ctx.moveTo(data.fromX, data.fromY);
-                        ctx.lineTo(data.x, data.y);
-                        ctx.strokeStyle = data.color;
-                        ctx.lineWidth = data.size;
-                        ctx.lineCap = 'round';
-                        ctx.stroke();
-                    }
-                } else if (data.type === 'clear') {
-                    this.clearCanvas(this.pages[this.currentPage].canvas);
-                }
-            }
-
-            broadcastDraw(data) {
-                data.room = this.roomName;
-                this.socket.emit('whiteboard_draw', data);
-            }
-
-            switchToPage(index) {
-                if (index < 0 || index >= this.pages.length) return;
-                this.pages[this.currentPage].div.style.display = 'none';
-                this.currentPage = index;
-                this.pages[this.currentPage].div.style.display = 'block';
-                this.toolbar.querySelector('.wb-pageinfo').innerText = `Страница ${this.currentPage + 1}`;
-                this.updateNavButtons();
-                if (this.isTeacher) {
-                    this.socket.emit('whiteboard_switch_page', { room: this.roomName, pageIndex: this.currentPage });
-                }
-            }
-
-            updateNavButtons() {
-                const prevBtn = this.toolbar.querySelector('.wb-prevpage');
-                const nextBtn = this.toolbar.querySelector('.wb-nextpage');
-                if (prevBtn) prevBtn.disabled = (this.currentPage === 0);
-                if (nextBtn) nextBtn.disabled = (this.currentPage >= this.pages.length - 1);
-            }
-
-            async saveAsPDF() {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('landscape');
-                for (let i = 0; i < this.pages.length; i++) {
-                    const canvas = this.pages[i].canvas;
-                    try {
-                        const imgData = canvas.toDataURL('image/png');
-                        const imgProps = pdf.getImageProperties(imgData);
-                        const pdfWidth = pdf.internal.pageSize.getWidth();
-                        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                        if (i !== 0) pdf.addPage();
-                        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                    } catch (err) {
-                        console.error('Ошибка добавления страницы', err);
-                    }
-                }
-                pdf.save(`whiteboard_${new Date().toISOString().slice(0,19)}.pdf`);
-            }
+    // ================== ДОСКА (аналогично) ==================
+    class Whiteboard {
+        constructor(containerId, socket, isTeacher, roomName) {
+            this.container = document.getElementById(containerId);
+            this.socket = socket;
+            this.isTeacher = isTeacher;
+            this.roomName = roomName;
+            this.currentPage = 0;
+            this.pages = [];
+            this.drawing = false;
+            this.lastX = 0; this.lastY = 0;
+            this.currentColor = '#000000';
+            this.currentSize = 2;
+            this.eraserMode = false;
+            this.init();
         }
+        init() {
+            this.toolbar = document.createElement('div');
+            this.toolbar.className = 'whiteboard-toolbar';
+            this.toolbar.innerHTML = `
+                <button class="wb-color" data-color="#000000" style="background:#000; color:white;">Чёрный</button>
+                <button class="wb-color" data-color="#ff0000" style="background:#ff0000;">Красный</button>
+                <button class="wb-color" data-color="#0000ff" style="background:#0000ff;">Синий</button>
+                <button class="wb-color" data-color="#00aa00" style="background:#00aa00;">Зелёный</button>
+                <button class="wb-eraser">🧽 Ластик</button>
+                <input type="range" class="wb-size" min="1" max="20" value="2" title="Размер">
+                <button class="wb-clear">🗑 Очистить страницу</button>
+                <button class="wb-newpage">📄 Новая страница</button>
+                <button class="wb-prevpage" disabled>◀ Пред.</button>
+                <span class="wb-pageinfo">Страница 1</span>
+                <button class="wb-nextpage" disabled>След. ▶</button>
+                <button class="wb-savepdf">📑 Сохранить PDF</button>
+            `;
+            this.container.appendChild(this.toolbar);
+            this.canvasContainer = document.createElement('div');
+            this.container.appendChild(this.canvasContainer);
+            this.addNewPage();
 
-        // Управление доской
-        toggleWhiteboardBtn.addEventListener('click', () => {
-            if (whiteboardContainer.style.display === 'none') {
-                whiteboardContainer.style.display = 'block';
-                toggleWhiteboardBtn.textContent = '📝 Закрыть доску';
-                if (!whiteboardInstance) {
-                    whiteboardInstance = new Whiteboard('whiteboardContainer', socket, true, 'teacher_room');
-                }
-            } else {
-                whiteboardContainer.style.display = 'none';
-                toggleWhiteboardBtn.textContent = '📝 Открыть доску';
-            }
-        });
+            this.socket.on('whiteboard_draw', (data) => { if (data.room === this.roomName && !this.isTeacher) this.applyDrawEvent(data); });
+            this.socket.on('whiteboard_clear', (data) => { if (data.room === this.roomName && !this.isTeacher && this.pages[this.currentPage]) this.clearCanvas(this.pages[this.currentPage].canvas); });
+            this.socket.on('whiteboard_new_page', (data) => { if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) { while (this.pages.length <= data.pageIndex) this.addNewPage(false); this.switchToPage(data.pageIndex); } });
+            this.socket.on('whiteboard_switch_page', (data) => { if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) this.switchToPage(data.pageIndex); });
 
-        // Socket события
-        socket.on('connect', () => {
-            updateConnectionStatus(true);
-            fetchCurrentCode();
-            fetchVerifiedStudents();
-            setInterval(fetchVerifiedStudents, 5000);
-            const savedLang = localStorage.getItem('teacher_lang') || 'en';
-            document.getElementById('myLanguage').value = savedLang;
-            socket.emit('set_language', { lang: savedLang });
-        });
-
-        socket.on('disconnect', () => updateConnectionStatus(false));
-
-        socket.on('stats', (data) => {
-            document.getElementById('phraseCount').innerText = data.phrases;
-            document.getElementById('clientCount').innerText = data.connected;
-        });
-
-        socket.on('new_translation', (data) => {
-            document.getElementById('currentTranslation').innerHTML = `<strong>${data.translation}</strong>`;
-            if (data.original) document.getElementById('originalText').innerHTML = `<i>Оригинал: "${data.original}"</i>`;
-            if (data.is_final) addToHistory(data.translation, data.original);
-        });
-
-        socket.on('chat_message', (data) => {
-            const chatDiv = document.getElementById('chatMessages');
-            if (chatDiv.children[0]?.innerText.includes('Сообщения будут здесь')) chatDiv.innerHTML = '';
-            chatDiv.innerHTML += `<div><strong>${data.sender === 'me' ? 'Я' : data.sender}:</strong> ${data.translated}<br><small>${data.original}</small></div>`;
-            chatDiv.scrollTop = chatDiv.scrollHeight;
-        });
-
-        socket.on('webrtc_answer', async (data) => {
-            let pc = data.type === 'screen' ? screenPeerConnections[data.studentId] : cameraPeerConnections[data.studentId];
-            if (pc && data.answer) {
-                await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-            }
-        });
-
-        socket.on('webrtc_ice_candidate', (data) => {
-            let pc = data.type === 'screen' ? screenPeerConnections[data.studentId] : cameraPeerConnections[data.studentId];
-            if (pc && data.candidate) {
-                pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.error(e));
-            }
-        });
-
-        socket.on('student_joined', async (data) => {
-            if (isScreenSharing && screenStream) {
-                const pc = createScreenPeerConnection(data.studentId);
-                screenPeerConnections[data.studentId] = pc;
-                await sendOfferToStudent(data.studentId, pc, 'screen');
-            }
-            if (isCameraOn && cameraStream) {
-                const pc = createCameraPeerConnection(data.studentId);
-                cameraPeerConnections[data.studentId] = pc;
-                await sendOfferToStudent(data.studentId, pc, 'camera');
-            }
-        });
-
-        socket.on('request_webrtc_restart', async (data) => {
-            if (isScreenSharing && screenStream && screenPeerConnections[data.studentId]) {
-                await sendOfferToStudent(data.studentId, screenPeerConnections[data.studentId], 'screen');
-            }
-            if (isCameraOn && cameraStream && cameraPeerConnections[data.studentId]) {
-                await sendOfferToStudent(data.studentId, cameraPeerConnections[data.studentId], 'camera');
-            }
-        });
-
-        document.getElementById('myLanguage').addEventListener('change', (e) => {
-            localStorage.setItem('teacher_lang', e.target.value);
-            socket.emit('set_language', { lang: e.target.value });
-        });
-
-        startScreenBtn.addEventListener('click', startScreenShare);
-        stopScreenBtn.addEventListener('click', stopScreenShare);
-        startCameraBtn.addEventListener('click', startCamera);
-        stopCameraBtn.addEventListener('click', stopCamera);
-        socket.emit('join_teacher_room', {});
-
-        // QR и студенты
-        async function fetchCurrentCode() {
-            const resp = await fetch('/api/current_code');
-            const data = await resp.json();
-            document.getElementById('currentCode').innerText = data.code;
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/student?code=' + data.code)}`;
-            document.getElementById('qrCodeImage').innerHTML = `<img src="${qrUrl}" width="150" height="150">`;
-            startTimer(data.expires_in);
+            this.toolbar.querySelectorAll('.wb-color').forEach(btn => { btn.addEventListener('click', () => { this.eraserMode = false; this.currentColor = btn.dataset.color; this.updateToolbarUI(); }); });
+            this.toolbar.querySelector('.wb-eraser').addEventListener('click', () => { this.eraserMode = true; this.updateToolbarUI(); });
+            this.toolbar.querySelector('.wb-size').addEventListener('input', (e) => { this.currentSize = parseInt(e.target.value); });
+            this.toolbar.querySelector('.wb-clear').addEventListener('click', () => { if (confirm('Очистить страницу?')) { this.clearCanvas(this.pages[this.currentPage].canvas); this.broadcastDraw({ type: 'clear' }); } });
+            this.toolbar.querySelector('.wb-newpage').addEventListener('click', () => { this.addNewPage(true); this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length - 1 }); this.switchToPage(this.pages.length - 1); });
+            this.toolbar.querySelector('.wb-prevpage').addEventListener('click', () => { if (this.currentPage > 0) this.switchToPage(this.currentPage - 1); });
+            this.toolbar.querySelector('.wb-nextpage').addEventListener('click', () => { if (this.currentPage < this.pages.length - 1) this.switchToPage(this.currentPage + 1); });
+            this.toolbar.querySelector('.wb-savepdf').addEventListener('click', () => this.saveAsPDF());
         }
-
-        function startTimer(expiresIn) {
-            let t = expiresIn;
-            const interval = setInterval(() => {
-                t--;
-                document.getElementById('timerDisplay').innerText = `Код действителен: ${t} сек`;
-                if (t <= 0) { clearInterval(interval); fetchCurrentCode(); }
-            }, 1000);
+        updateToolbarUI() { const btn = this.toolbar.querySelector('.wb-eraser'); if (this.eraserMode) { btn.style.background = '#ddd'; btn.style.color = '#000'; } else { btn.style.background = ''; btn.style.color = ''; } }
+        addNewPage(broadcast = false) {
+            const pageDiv = document.createElement('div'); pageDiv.className = 'whiteboard-page'; pageDiv.style.display = this.pages.length === this.currentPage ? 'block' : 'none';
+            const canvas = document.createElement('canvas'); canvas.className = 'whiteboard-canvas'; canvas.width = 800; canvas.height = 500; canvas.style.width = '100%'; canvas.style.height = 'auto'; canvas.style.border = '1px solid #823544'; canvas.style.borderRadius = '12px';
+            pageDiv.appendChild(canvas); this.canvasContainer.appendChild(pageDiv);
+            const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            this.setupCanvasEvents(canvas, ctx);
+            this.pages.push({ canvas, ctx, div: pageDiv });
+            if (broadcast && this.isTeacher) this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length - 1 });
+            this.updateNavButtons();
         }
-
-        async function fetchVerifiedStudents() {
-            const resp = await fetch('/api/verified_students');
-            const data = await resp.json();
-            document.getElementById('verifiedCount').innerText = data.count;
-            if (data.students.length) {
-                document.getElementById('verifiedStudentsList').innerHTML = data.students.map(s => `<div class="student-item">✅ ${s.id} - ${s.time}</div>`).join('');
-            }
+        setupCanvasEvents(canvas, ctx) {
+            const getCoords = (e) => { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height; let clientX, clientY; if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } else { clientX = e.clientX; clientY = e.clientY; } let x = (clientX - rect.left) * scaleX; let y = (clientY - rect.top) * scaleY; x = Math.min(Math.max(0, x), canvas.width); y = Math.min(Math.max(0, y), canvas.height); return { x, y }; };
+            const startDraw = (e) => { e.preventDefault(); this.drawing = true; const { x, y } = getCoords(e); this.lastX = x; this.lastY = y; ctx.beginPath(); ctx.arc(x, y, this.currentSize/2, 0, 2*Math.PI); ctx.fillStyle = this.eraserMode ? 'white' : this.currentColor; ctx.fill(); this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor, size: this.currentSize, isStart: true }); };
+            const draw = (e) => { if (!this.drawing) return; e.preventDefault(); const { x, y } = getCoords(e); ctx.beginPath(); ctx.moveTo(this.lastX, this.lastY); ctx.lineTo(x, y); ctx.strokeStyle = this.eraserMode ? 'white' : this.currentColor; ctx.lineWidth = this.currentSize; ctx.lineCap = 'round'; ctx.stroke(); this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor, size: this.currentSize, fromX: this.lastX, fromY: this.lastY }); this.lastX = x; this.lastY = y; };
+            const endDraw = () => { this.drawing = false; };
+            canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseleave', endDraw); canvas.addEventListener('touchstart', startDraw); canvas.addEventListener('touchmove', draw); canvas.addEventListener('touchend', endDraw);
         }
+        clearCanvas(canvas) { const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        applyDrawEvent(data) { if (data.type === 'draw') { const canvasObj = this.pages[this.currentPage]; if (!canvasObj) return; const ctx = canvasObj.ctx; if (data.isStart) { ctx.beginPath(); ctx.arc(data.x, data.y, data.size/2, 0, 2*Math.PI); ctx.fillStyle = data.color; ctx.fill(); } else if (data.fromX !== undefined) { ctx.beginPath(); ctx.moveTo(data.fromX, data.fromY); ctx.lineTo(data.x, data.y); ctx.strokeStyle = data.color; ctx.lineWidth = data.size; ctx.stroke(); } } else if (data.type === 'clear') this.clearCanvas(this.pages[this.currentPage].canvas); }
+        broadcastDraw(data) { data.room = this.roomName; this.socket.emit('whiteboard_draw', data); }
+        switchToPage(index) { if (index < 0 || index >= this.pages.length) return; this.pages[this.currentPage].div.style.display = 'none'; this.currentPage = index; this.pages[this.currentPage].div.style.display = 'block'; this.toolbar.querySelector('.wb-pageinfo').innerText = `Страница ${this.currentPage+1}`; this.updateNavButtons(); if (this.isTeacher) this.socket.emit('whiteboard_switch_page', { room: this.roomName, pageIndex: this.currentPage }); }
+        updateNavButtons() { const prev = this.toolbar.querySelector('.wb-prevpage'); const next = this.toolbar.querySelector('.wb-nextpage'); if (prev) prev.disabled = (this.currentPage === 0); if (next) next.disabled = (this.currentPage >= this.pages.length - 1); }
+        async saveAsPDF() { const { jsPDF } = window.jspdf; const pdf = new jsPDF('landscape'); for (let i=0; i<this.pages.length; i++) { const canvas = this.pages[i].canvas; try { const imgData = canvas.toDataURL('image/png'); const imgProps = pdf.getImageProperties(imgData); const pdfWidth = pdf.internal.pageSize.getWidth(); const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width; if (i !== 0) pdf.addPage(); pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); } catch(e) { console.error(e); } } pdf.save(`whiteboard_${new Date().toISOString().slice(0,19)}.pdf`); }
+    }
 
-        function refreshQR() { fetchCurrentCode(); }
+    toggleWhiteboardBtn.addEventListener('click', () => {
+        if (whiteboardContainer.style.display === 'none') {
+            whiteboardContainer.style.display = 'block';
+            toggleWhiteboardBtn.textContent = '📝 Закрыть доску';
+            if (!whiteboardInstance) whiteboardInstance = new Whiteboard('whiteboardContainer', socket, true, 'teacher_room');
+        } else { whiteboardContainer.style.display = 'none'; toggleWhiteboardBtn.textContent = '📝 Открыть доску'; }
+    });
 
-        fetchCurrentCode();
-        fetchVerifiedStudents();
-        setInterval(fetchVerifiedStudents, 5000);
-    </script>
+    // Socket handlers
+    socket.on('connect', () => { updateConnectionStatus(true); fetchCurrentCode(); fetchVerifiedStudents(); setInterval(fetchVerifiedStudents, 5000); const savedLang = localStorage.getItem('teacher_lang') || 'en'; document.getElementById('myLanguage').value = savedLang; socket.emit('set_language', { lang: savedLang }); });
+    socket.on('disconnect', () => updateConnectionStatus(false));
+    socket.on('stats', (data) => { document.getElementById('phraseCount').innerText = data.phrases; document.getElementById('clientCount').innerText = data.connected; });
+    socket.on('new_translation', (data) => { document.getElementById('currentTranslation').innerHTML = `<strong>${data.translation}</strong>`; if (data.original) document.getElementById('originalText').innerHTML = `<i>Оригинал: "${data.original}"</i>`; if (data.is_final) addToHistory(data.translation, data.original); });
+    socket.on('chat_message', (data) => { const chatDiv = document.getElementById('chatMessages'); if (chatDiv.children[0]?.innerText.includes('Сообщения будут здесь')) chatDiv.innerHTML = ''; chatDiv.innerHTML += `<div><strong>${data.sender === 'me' ? 'Я' : data.sender}:</strong> ${data.translated}<br><small style="color:#bf8f9b;">${data.original}</small></div>`; chatDiv.scrollTop = chatDiv.scrollHeight; });
+    socket.on('webrtc_answer', async (data) => { let pc = data.type === 'screen' ? screenPeerConnections[data.studentId] : cameraPeerConnections[data.studentId]; if (pc && data.answer) await pc.setRemoteDescription(new RTCSessionDescription(data.answer)); });
+    socket.on('webrtc_ice_candidate', (data) => { let pc = data.type === 'screen' ? screenPeerConnections[data.studentId] : cameraPeerConnections[data.studentId]; if (pc && data.candidate) pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e=>console.error(e)); });
+    socket.on('student_joined', async (data) => { if (isScreenSharing && screenStream) { const pc = createScreenPeerConnection(data.studentId); screenPeerConnections[data.studentId] = pc; await sendOfferToStudent(data.studentId, pc, 'screen'); } if (isCameraOn && cameraStream) { const pc = createCameraPeerConnection(data.studentId); cameraPeerConnections[data.studentId] = pc; await sendOfferToStudent(data.studentId, pc, 'camera'); } });
+    socket.on('request_webrtc_restart', async (data) => { if (isScreenSharing && screenStream && screenPeerConnections[data.studentId]) await sendOfferToStudent(data.studentId, screenPeerConnections[data.studentId], 'screen'); if (isCameraOn && cameraStream && cameraPeerConnections[data.studentId]) await sendOfferToStudent(data.studentId, cameraPeerConnections[data.studentId], 'camera'); });
+    document.getElementById('myLanguage').addEventListener('change', (e) => { localStorage.setItem('teacher_lang', e.target.value); socket.emit('set_language', { lang: e.target.value }); });
+    startScreenBtn.addEventListener('click', startScreenShare);
+    stopScreenBtn.addEventListener('click', stopScreenShare);
+    startCameraBtn.addEventListener('click', startCamera);
+    stopCameraBtn.addEventListener('click', stopCamera);
+    socket.emit('join_teacher_room', {});
+
+    async function fetchCurrentCode() {
+        const resp = await fetch('/api/current_code');
+        const data = await resp.json();
+        document.getElementById('currentCode').innerText = data.code;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/student?code=' + data.code)}`;
+        document.getElementById('qrCodeImage').innerHTML = `<img src="${qrUrl}" width="140" height="140" style="border-radius:1rem;">`;
+        let t = data.expires_in;
+        const interval = setInterval(() => { t--; document.getElementById('timerDisplay').innerText = `Код действителен: ${t} сек`; if (t <= 0) { clearInterval(interval); fetchCurrentCode(); } }, 1000);
+    }
+    async function fetchVerifiedStudents() {
+        const resp = await fetch('/api/verified_students');
+        const data = await resp.json();
+        document.getElementById('verifiedCount').innerText = data.count;
+        if (data.students.length) document.getElementById('verifiedStudentsList').innerHTML = data.students.map(s => `<div class="student-item">✅ ${s.id} - ${s.time}</div>`).join('');
+        else document.getElementById('verifiedStudentsList').innerHTML = '<em>Никого пока нет</em>';
+    }
+    function refreshQR() { fetchCurrentCode(); }
+    fetchCurrentCode();
+    fetchVerifiedStudents();
+    setInterval(fetchVerifiedStudents, 5000);
+</script>
 </body>
 </html>
