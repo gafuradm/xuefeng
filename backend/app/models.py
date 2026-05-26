@@ -1,8 +1,70 @@
 # backend/app/models.py
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON, Boolean, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON, Boolean, Text, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
+
+# ========== СЛУЖЕБНЫЕ ТАБЛИЦЫ (REFRESH TOKENS, PASSWORD RESETS) ==========
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    device_info = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="refresh_tokens")
+
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    used_at = Column(DateTime, nullable=True)
+    
+    user = relationship("User", back_populates="password_resets")
+
+class UserAction(Base):
+    __tablename__ = "user_actions"
+    __table_args__ = (
+        Index('ix_user_actions_user_timestamp', 'user_id', 'timestamp'),
+    )
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    action_type = Column(String, index=True, nullable=False)
+    action_data = Column(JSON, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    url = Column(String, nullable=True)
+    method = Column(String, nullable=True)
+    duration_ms = Column(Integer, nullable=True)
+    
+    user = relationship("User", back_populates="actions")
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    thread_id = Column(String, nullable=False, index=True)
+    role = Column(String, nullable=False)          # user, assistant
+    content = Column(Text, nullable=False)
+    message_metadata = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="chat_messages")
+
+# ========== ОСНОВНАЯ ТАБЛИЦА ПОЛЬЗОВАТЕЛЯ ==========
 
 class User(Base):
     __tablename__ = 'users'
@@ -11,25 +73,27 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    user_courses = relationship('UserCourse', back_populates='user', cascade='all, delete-orphan')
-    user_lessons = relationship('UserLesson', back_populates='user', cascade='all, delete-orphan')
-    sessions = relationship('Session', back_populates='user', cascade="all, delete-orphan")
-    custom_tests = relationship('CustomTest', back_populates='user', cascade="all, delete-orphan")
-    interactions = relationship('UserInteraction', back_populates='user', cascade='all, delete-orphan')
-    performances = relationship('UserPerformance', back_populates='user', cascade='all, delete-orphan')
-    topic_time_stats = relationship('TopicTimeStats', back_populates='user', cascade='all, delete-orphan')
-    auth = relationship('UserAuth', back_populates='user', uselist=False, cascade='all, delete-orphan')
     role = Column(String, default='student')
-    school_members = relationship('SchoolMember', back_populates='user', cascade='all, delete-orphan')
-    owned_schools = relationship('School', foreign_keys='School.owner_id', cascade='all, delete-orphan')
-    # В класс User (models.py) добавить:
-    # HSK/языковые поля
+    
+    username = Column(String, unique=True, index=True, nullable=True)
+    hashed_password = Column(String, nullable=True)
+    full_name = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login = Column(DateTime, nullable=True)
+    avatar_url = Column(String, nullable=True)
+    bio = Column(Text, nullable=True)
+    country = Column(String, nullable=True)
+    city = Column(String, nullable=True)
+    timezone = Column(String, default="UTC")
+    language = Column(String, default="en")
+    
     current_hsk_level = Column(Integer, default=1)
     target_hsk_level = Column(Integer, default=4)
     exam_date = Column(DateTime, nullable=True)
     daily_goal = Column(Integer, default=20)
     
-    # Статистика (будет обновляться автоматически)
     total_points = Column(Integer, default=0)
     study_streak = Column(Integer, default=0)
     longest_streak = Column(Integer, default=0)
@@ -39,22 +103,56 @@ class User(Base):
     total_tests_taken = Column(Integer, default=0)
     average_test_score = Column(Float, default=0.0)
     
-    # Настройки пользователя
-    language = Column(String, default="ru")
-    theme = Column(String, default="light")
     email_notifications = Column(Boolean, default=True)
+    theme = Column(String, default="light")
     
-    # Для поступления
     education_background = Column(Text, nullable=True)
     university_target = Column(String, nullable=True)
     program_target = Column(String, nullable=True)
+    department_target = Column(String, nullable=True)
     work_experience = Column(Text, nullable=True)
     projects = Column(Text, nullable=True)
+    languages = Column(Text, nullable=True)
     technical_skills = Column(Text, nullable=True)
     achievements = Column(Text, nullable=True)
     letter_style = Column(JSON, nullable=True)
+    
+    # Связи (все — с back_populates, без backref)
+    user_courses = relationship('UserCourse', back_populates='user', cascade='all, delete-orphan')
+    user_lessons = relationship('UserLesson', back_populates='user', cascade='all, delete-orphan')
+    sessions = relationship('Session', back_populates='user', cascade="all, delete-orphan")
+    custom_tests = relationship('CustomTest', back_populates='user', cascade="all, delete-orphan")
+    interactions = relationship('UserInteraction', back_populates='user', cascade='all, delete-orphan')
+    performances = relationship('UserPerformance', back_populates='user', cascade='all, delete-orphan')
+    topic_time_stats = relationship('TopicTimeStats', back_populates='user', cascade='all, delete-orphan')
+    auth = relationship('UserAuth', back_populates='user', uselist=False, cascade='all, delete-orphan')
+    school_members = relationship('SchoolMember', back_populates='user', cascade='all, delete-orphan')
+    owned_schools = relationship('School', foreign_keys='School.owner_id', cascade='all, delete-orphan')
+    
+    interview_sessions = relationship('InterviewSessionDB', back_populates='user', cascade='all, delete-orphan')
+    refresh_tokens = relationship('RefreshToken', back_populates='user', cascade='all, delete-orphan')
+    password_resets = relationship('PasswordReset', back_populates='user', cascade='all, delete-orphan')
+    actions = relationship('UserAction', back_populates='user', cascade='all, delete-orphan', order_by='desc(UserAction.timestamp)')
+    words = relationship('UserWord', back_populates='user', cascade='all, delete-orphan')
+    tests = relationship('UserTest', back_populates='user', cascade='all, delete-orphan')
+    chat_messages = relationship('ChatMessage', back_populates='user', cascade='all, delete-orphan')
+    study_sessions = relationship('StudySession', back_populates='user', cascade='all, delete-orphan')
+    
+    # Добавленные отношения для SchoolChatMessage
+    sent_messages = relationship(
+        "SchoolChatMessage",
+        foreign_keys="SchoolChatMessage.user_id",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    received_messages = relationship(
+        "SchoolChatMessage",
+        foreign_keys="SchoolChatMessage.recipient_id",
+        back_populates="recipient",
+        cascade="all, delete-orphan"
+    )
 
-# Добавить после класса User
+
 class UserAuth(Base):
     __tablename__ = 'user_auth'
     
@@ -69,17 +167,13 @@ class UserAuth(Base):
     
     user = relationship('User', back_populates='auth')
 
-# В классе User добавить:
-auth = relationship('UserAuth', back_populates='user', uselist=False, cascade='all, delete-orphan')
 
 class StudentPerformance(Base):
-    """Расширенная статистика ученика с графами знаний"""
     __tablename__ = 'student_performances'
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     school_id = Column(Integer, ForeignKey('schools.id', ondelete='SET NULL'), nullable=True)
-    
     target_graph = Column(JSON, default={})
     current_graph = Column(JSON, default={})
     topics_progress = Column(JSON, default={})
@@ -123,8 +217,8 @@ class TestResult(Base):
     evaluation = Column(JSON, default={})
     score = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
-    time_spent_seconds = Column(Integer, default=0)      # общее время на тест
-    question_times = Column(JSON, default={})            # {question_index: seconds}
+    time_spent_seconds = Column(Integer, default=0)
+    question_times = Column(JSON, default={})
     
     session = relationship('Session', back_populates='test_results')
 
@@ -265,7 +359,6 @@ class UserInteraction(Base):
 
 
 class UserPerformance(Base):
-    """Статистика успеваемости пользователя по темам"""
     __tablename__ = 'user_performances'
     
     id = Column(Integer, primary_key=True, index=True)
@@ -275,20 +368,19 @@ class UserPerformance(Base):
     total_count = Column(Integer, default=0)
     last_attempt = Column(DateTime, default=datetime.utcnow)
     mastery_level = Column(Float, default=0.0)
-    total_time_spent = Column(Integer, default=0)          # секунды, потраченные на эту тему
+    total_time_spent = Column(Integer, default=0)
     
     user = relationship('User', back_populates='performances')
 
 
 class TopicTimeStats(Base):
-    """Детальная статистика времени по темам"""
     __tablename__ = 'topic_time_stats'
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     topic = Column(String, nullable=False)
     total_seconds = Column(Integer, default=0)
-    sessions_count = Column(Integer, default=0)            # сколько раз занимался
+    sessions_count = Column(Integer, default=0)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = relationship('User', back_populates='topic_time_stats')
@@ -303,6 +395,7 @@ class School(Base):
     owner_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     created_at = Column(DateTime, default=datetime.utcnow)
     invite_code = Column(String, unique=True, nullable=True)
+    
     owner = relationship('User', foreign_keys=[owner_id], back_populates='owned_schools')
     members = relationship('SchoolMember', back_populates='school', cascade='all, delete-orphan')
 
@@ -319,6 +412,7 @@ class SchoolMember(Base):
     school = relationship('School', back_populates='members')
     user = relationship('User', back_populates='school_members')
 
+
 class SchoolChatMessage(Base):
     __tablename__ = "school_chat_messages"
     
@@ -327,26 +421,28 @@ class SchoolChatMessage(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    is_private = Column(Boolean, default=False)  # False = общий чат школы, True = личное сообщение
-    recipient_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)  # для личных сообщений
+    is_private = Column(Boolean, default=False)
+    recipient_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     
     school = relationship("School")
-    user = relationship("User", foreign_keys=[user_id], backref="sent_messages")
-    recipient = relationship("User", foreign_keys=[recipient_id], backref="received_messages")
+    user = relationship("User", foreign_keys=[user_id], back_populates="sent_messages")
+    recipient = relationship("User", foreign_keys=[recipient_id], back_populates="received_messages")
 
-# ========== МОДУЛИ ИЗ HSK TUTOR ==========
+
+# ========== СЛОВА, ТЕСТЫ, СЕССИИ (HSK TUTOR) ==========
 
 class UserWord(Base):
-    """Слова пользователя (для HSK и языков)"""
     __tablename__ = "user_words"
+    __table_args__ = (
+        Index('ix_user_words_user_word', 'user_id', 'word_id', unique=True),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    word_id = Column(String, nullable=False)  # например "你好_1"
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    word_id = Column(String, nullable=False)
     word_text = Column(String, nullable=True)
-    language = Column(String, default="zh")  # zh, en, ru и т.д.
-    hsk_level = Column(Integer, default=1)
-    status = Column(String, default="new")  # new, learning, learned, review
+    hsk_level = Column(Integer, nullable=True)
+    status = Column(String, default="new")          # new, learning, learned, review
     difficulty = Column(Integer, default=3)
     views_count = Column(Integer, default=0)
     practice_count = Column(Integer, default=0)
@@ -357,17 +453,17 @@ class UserWord(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    user = relationship("User", backref="words")
+    user = relationship("User", back_populates="words")
+
 
 class UserTest(Base):
-    """История тестов пользователя"""
     __tablename__ = "user_tests"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     test_id = Column(String, nullable=True)
-    test_type = Column(String, nullable=False)  # hsk, grammar, vocabulary, listening, csca_math, csca_physics, csca_chemistry
-    test_level = Column(Integer, default=1)
+    test_type = Column(String, nullable=False)      # hsk, grammar, vocabulary, listening, csca_math, ...
+    test_level = Column(Integer, nullable=False)
     score = Column(Integer, nullable=True)
     max_score = Column(Integer, nullable=True)
     percentage = Column(Float, nullable=True)
@@ -375,18 +471,19 @@ class UserTest(Base):
     questions_count = Column(Integer, nullable=True)
     correct_count = Column(Integer, nullable=True)
     wrong_count = Column(Integer, nullable=True)
+    skipped_count = Column(Integer, nullable=True)
     answers = Column(JSON, nullable=True)
     results = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    user = relationship("User", backref="tests")
+    user = relationship("User", back_populates="tests")
+
 
 class StudySession(Base):
-    """Сессии обучения (для статистики времени)"""
     __tablename__ = "study_sessions"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     start_time = Column(DateTime, default=datetime.utcnow)
     end_time = Column(DateTime, nullable=True)
     duration_minutes = Column(Integer, default=0)
@@ -395,10 +492,10 @@ class StudySession(Base):
     tests_taken = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
     
-    user = relationship("User", backref="study_sessions")
+    user = relationship("User", back_populates="study_sessions")
+
 
 class GrammarTopic(Base):
-    """Темы грамматики"""
     __tablename__ = "grammar_topics"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -406,14 +503,14 @@ class GrammarTopic(Base):
     name_zh = Column(String, nullable=False)
     name_en = Column(String, nullable=False)
     name_ru = Column(String, nullable=True)
-    level = Column(String, nullable=False)  # A1, A2, B1, B2, C1, HSK1-6
+    level = Column(String, nullable=False)          # A1, A2, B1, B2, C1, HSK1-6
     category = Column(String, nullable=True)
     explanation = Column(Text, nullable=True)
     examples = Column(JSON, default=[])
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
 class HSKWord(Base):
-    """Словарь HSK (общий)"""
     __tablename__ = "hsk_words"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -426,20 +523,20 @@ class HSKWord(Base):
     example = Column(String, nullable=True)
     example_translation = Column(String, nullable=True)
 
+
 class CSCATopic(Base):
-    """Темы CSCA (математика, физика, химия)"""
     __tablename__ = "csca_topics"
     
     id = Column(Integer, primary_key=True, index=True)
     topic_id = Column(String, unique=True, index=True, nullable=False)
     name_zh = Column(String, nullable=False)
     name_en = Column(String, nullable=False)
-    subject = Column(String, nullable=False)  # math, physics, chemistry
+    subject = Column(String, nullable=False)       # math, physics, chemistry
     difficulty = Column(String, default="Intermediate")
     order = Column(Integer, default=0)
 
+
 class InterviewSessionDB(Base):
-    """Сессии интервью"""
     __tablename__ = "interview_sessions"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -455,10 +552,10 @@ class InterviewSessionDB(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    user = relationship("User", backref="interview_sessions")
+    user = relationship("User", back_populates="interview_sessions")
+
 
 class University(Base):
-    """Университеты для поиска"""
     __tablename__ = "universities"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -467,9 +564,25 @@ class University(Base):
     city = Column(String, nullable=True)
     province = Column(String, nullable=True)
     ranking = Column(Integer, nullable=True)
-    type = Column(String, nullable=True)  # 综合性, 理工类, 语言类 и т.д.
+    type = Column(String, nullable=True)
     website = Column(String, nullable=True)
     tuition_cny = Column(Integer, nullable=True)
     scholarships = Column(JSON, default=[])
     programs = Column(JSON, default=[])
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class IELTSAttempt(Base):
+    __tablename__ = "ielts_attempts"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    task_type = Column(String)                     # speaking_part1, writing_task2, ...
+    audio_path = Column(String, nullable=True)
+    transcript = Column(Text, nullable=True)
+    answer_text = Column(Text, nullable=True)
+    scores = Column(JSON, default={})
+    overall_band = Column(Float, nullable=True)
+    feedback = Column(Text, nullable=True)
+    suggestions = Column(JSON, default=[])
+    created_at = Column(DateTime, default=datetime.utcnow)
+    user = relationship("User")

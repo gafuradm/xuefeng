@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Prep - AI Tutor</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .ielts-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .ielts-header {
+            background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .ielts-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .ielts-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .ielts-card {
+            background: #1f1219;
+            border: 1px solid #3d2a30;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: all 0.3s;
+        }
+        .ielts-card:hover {
+            border-color: #c0392b;
+            transform: translateY(-3px);
+        }
+        .ielts-card h3 {
+            color: #e8a0ab;
+            margin-bottom: 15px;
+            border-left: 4px solid #c0392b;
+            padding-left: 15px;
+        }
+        .btn-ielts {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-ielts:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(192, 57, 43, 0.4);
+        }
+        .btn-secondary-ielts {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+        .recording-section {
+            background: #2a1a20;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .recording-indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            background: #e74c3c;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+        .band-score {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            border-radius: 20px;
+            color: white;
+        }
+        .criteria-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .criteria-item {
+            background: #2a1a20;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .criteria-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e8a0ab;
+        }
+        .suggestions-list {
+            list-style: none;
+            padding: 0;
+        }
+        .suggestions-list li {
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .suggestions-list li:before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+        .transcript-box {
+            background: #2a1a20;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            font-style: italic;
+            color: #c9aeb6;
+        }
+        .task-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .task-btn {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .task-btn.active {
+            background: #c0392b;
+        }
+        .writing-section textarea {
+            width: 100%;
+            min-height: 250px;
+            background: #2a1a20;
+            border: 1px solid #3d2a30;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+<div class="app-wrapper">
+    <div class="main-container">
+        <!-- Шапка профиля -->
+        <div class="profile-header" id="profileHeader" style="display: none; justify-content: space-between; align-items: center; padding: 10px 20px; background: #0f070b; border-bottom: 1px solid #6f2c3b;">
+            <div class="profile-info" style="display: flex; align-items: center; gap: 15px;">
+                <img id="avatarImg" src="" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                <span id="userNameDisplay" style="color:#f3e2e7;"></span>
+                <span id="userRoleDisplay" style="background: #ad3f53; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;"></span>
+            </div>
+            <div class="profile-actions">
+                <button onclick="showProfileModal()" class="btn-secondary" style="margin-right: 10px;">👤 Профиль</button>
+                <button onclick="logout()" class="btn-secondary" style="background: #831f33;">🚪 Выйти</button>
+            </div>
+        </div>
+
+        <div class="ielts-container">
+            <div class="ielts-header">
+                <h1>🇬🇧 IELTS Preparation</h1>
+                <p>Practice with AI | Real-time evaluation by IELTS criteria | Band scores 0-9</p>
+                <a href="/" class="btn-secondary-ielts" style="display: inline-block; margin-top: 15px;">← На главную</a>
+            </div>
+
+            <!-- Вкладки -->
+            <div class="task-selector">
+                <button class="task-btn active" onclick="switchTask('speaking', this)">🎙️ Speaking Practice</button>
+                <button class="task-btn" onclick="switchTask('writing', this)">✍️ Writing Practice</button>
+                <button class="task-btn" onclick="switchTask('history', this)">📜 My Attempts</button>
+            </div>
+
+            <!-- Speaking Section -->
+            <div id="speakingSection" class="ielts-card">
+                <h3>🎙️ IELTS Speaking Practice</h3>
+                <div class="task-selector" style="margin-bottom: 15px;">
+                    <button class="task-btn speaking-part active" onclick="selectSpeakingPart(1, this)">Part 1 (4-5 min)</button>
+                    <button class="task-btn speaking-part" onclick="selectSpeakingPart(2, this)">Part 2 (3-4 min)</button>
+                    <button class="task-btn speaking-part" onclick="selectSpeakingPart(3, this)">Part 3 (4-5 min)</button>
+                </div>
+                <div id="part2Topic" style="display: none; background: #2a1a20; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                    <strong>🎯 Cue Card:</strong>
+                    <p id="cueCardText">Describe a person who has influenced you. You should say:<br>
+                    - Who this person is<br>
+                    - How you know them<br>
+                    - What they do<br>
+                    - And explain why they influenced you</p>
+                    <button onclick="generateRandomTopic()" class="btn-secondary-ielts" style="margin-top: 10px;">🔄 Random Topic</button>
+                </div>
+                <div class="recording-section">
+                    <div id="recordingStatus"></div>
+                    <button id="startRecordBtn" class="btn-ielts" onclick="startRecording()">🎙️ Начать запись</button>
+                    <button id="stopRecordBtn" class="btn-secondary-ielts" onclick="stopRecording()" style="display: none;">⏹️ Остановить</button>
+                    <audio id="audioPlayback" controls style="margin-top: 15px; width: 100%; display: none;"></audio>
+                </div>
+                <button id="analyzeBtn" class="btn-ielts" onclick="analyzeSpeaking()" style="width: 100%;" disabled>📊 Получить оценку</button>
+                <div id="speakingResult" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- Writing Section -->
+            <div id="writingSection" class="ielts-card" style="display: none;">
+                <h3>✍️ IELTS Writing Practice</h3>
+                <div class="task-selector" style="margin-bottom: 15px;">
+                    <button class="task-btn writing-part active" onclick="selectWritingPart(1, this)">Task 1 (150 words)</button>
+                    <button class="task-btn writing-part" onclick="selectWritingPart(2, this)">Task 2 (250 words)</button>
+                </div>
+                <div id="task1Prompt" class="writing-section">
+                    <p><strong>Task 1 Prompt:</strong> The chart below shows the percentage of households in owned and rented accommodation in England and Wales between 1918 and 2011.</p>
+                    <textarea id="writingAnswer" placeholder="Write your answer here..."></textarea>
+                    <div style="margin-top: 10px; display: flex; justify-content: space-between;">
+                        <span>Word count: <span id="wordCount">0</span></span>
+                        <button onclick="analyzeWriting()" class="btn-ielts">📊 Оценить</button>
+                    </div>
+                </div>
+                <div id="task2Prompt" class="writing-section" style="display: none;">
+                    <p><strong>Task 2 Prompt:</strong> Some people believe that unpaid community service should be a compulsory part of high school programs. To what extent do you agree or disagree?</p>
+                    <textarea id="writingAnswer2" placeholder="Write your answer here..."></textarea>
+                    <div style="margin-top: 10px; display: flex; justify-content: space-between;">
+                        <span>Word count: <span id="wordCount2">0</span></span>
+                        <button onclick="analyzeWriting()" class="btn-ielts">📊 Оценить</button>
+                    </div>
+                </div>
+                <div id="writingResult" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- History Section -->
+            <div id="historySection" class="ielts-card" style="display: none;">
+                <h3>📜 История попыток</h3>
+                <div id="attemptsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно профиля -->
+<div id="profileModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a0e12; padding: 30px; border-radius: 20px; z-index: 1002; border: 1px solid #c95267;">
+    <h3>Мой профиль</h3>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img id="modalAvatar" src="" style="width: 100px; height: 100px; border-radius: 50%; cursor: pointer;">
+        <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
+    </div>
+    <p><strong>Имя:</strong> <span id="profileName"></span></p>
+    <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+    <p><strong>Роль:</strong> <span id="profileRole"></span></p>
+    <p><strong>Username:</strong> <span id="profileUsername"></span></p>
+    <button onclick="closeProfileModal()" class="btn-secondary">Закрыть</button>
+</div>
+
+<!-- Подключаем основной script.js (там есть API_URL, функции профиля) -->
+<script src="/static/script.js"></script>
+
+<!-- IELTS логика (глобальные функции) -->
+<script>
+    // Глобальные переменные для IELTS
+    window.currentPart = 1;
+    window.currentWritingTask = 1;
+    window.audioChunks = [];
+    window.mediaRecorder = null;
+    window.audioBlob = null;
+    window.currentUserId = null;
+
+    // Загрузка профиля и получение user_id
+    async function loadIELTSProfile() {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) return;
+        try {
+            const resp = await fetch('/api/auth/profile', {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (resp.ok) {
+                const profile = await resp.json();
+                window.currentUserId = profile.id;
+                document.getElementById('userNameDisplay').textContent = profile.name;
+                document.getElementById('userRoleDisplay').textContent = profile.role === 'teacher' ? 'Учитель' : 'Ученик';
+                document.getElementById('avatarImg').src = profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+                document.getElementById('profileHeader').style.display = 'flex';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // Функции профиля (используют из script.js, но на всякий случай дублируем)
+    window.showProfileModal = function() {
+        const modal = document.getElementById('profileModal');
+        if (!modal) return;
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) { alert('Сначала войдите'); return; }
+        fetch('/api/auth/profile', { headers: { 'Authorization': `Bearer ${authToken}` } })
+            .then(r => r.json())
+            .then(profile => {
+                document.getElementById('modalAvatar').src = profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+                document.getElementById('profileName').textContent = profile.name;
+                document.getElementById('profileEmail').textContent = profile.email;
+                document.getElementById('profileRole').textContent = profile.role === 'teacher' ? 'Учитель' : 'Ученик';
+                document.getElementById('profileUsername').textContent = profile.username;
+                modal.style.display = 'block';
+            });
+    };
+    window.closeProfileModal = function() {
+        document.getElementById('profileModal').style.display = 'none';
+    };
+    window.logout = function() {
+        localStorage.removeItem('authToken');
+        window.location.href = '/';
+    };
+
+    // Обработка выбора вкладок
+    window.switchTask = function(task, btnElement) {
+        document.getElementById('speakingSection').style.display = task === 'speaking' ? 'block' : 'none';
+        document.getElementById('writingSection').style.display = task === 'writing' ? 'block' : 'none';
+        document.getElementById('historySection').style.display = task === 'history' ? 'block' : 'none';
+        document.querySelectorAll('.task-btn').forEach(btn => btn.classList.remove('active'));
+        if (btnElement) {
+            btnElement.classList.add('active');
+        } else {
+            // fallback – найти активную по data-атрибуту (необязательно)
+            const fallback = document.querySelector(`.task-btn[data-task="${task}"]`);
+            if (fallback) fallback.classList.add('active');
+        }
+        if (task === 'history') loadAttempts();
+    };
+
+    window.selectSpeakingPart = function(part, btnElement) {
+        window.currentPart = part;
+        document.querySelectorAll('.speaking-part').forEach(btn => btn.classList.remove('active'));
+        if (btnElement) btnElement.classList.add('active');
+        document.getElementById('part2Topic').style.display = part === 2 ? 'block' : 'none';
+    };
+
+    window.selectWritingPart = function(part, btnElement) {
+        window.currentWritingTask = part;
+        document.querySelectorAll('.writing-part').forEach(btn => btn.classList.remove('active'));
+        if (btnElement) btnElement.classList.add('active');
+        document.getElementById('task1Prompt').style.display = part === 1 ? 'block' : 'none';
+        document.getElementById('task2Prompt').style.display = part === 2 ? 'block' : 'none';
+    };
+
+    window.generateRandomTopic = function() {
+        const topics = [
+            "Describe a book that had a major influence on you.",
+            "Describe a memorable journey you have taken.",
+            "Describe a person who has significantly influenced your career choice.",
+            "Describe a technological device you find most useful in your daily life.",
+            "Describe a traditional celebration in your country."
+        ];
+        const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+        document.getElementById('cueCardText').innerHTML = randomTopic + '<br>You should say:<br>- What it is<br>- How you know about it<br>- Why it is important<br>- And explain how it influenced you';
+    };
+
+    window.startRecording = function() {
+        window.audioChunks = [];
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                window.mediaRecorder = new MediaRecorder(stream);
+                window.mediaRecorder.ondataavailable = e => window.audioChunks.push(e.data);
+                window.mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(window.audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audioPlayback = document.getElementById('audioPlayback');
+                    audioPlayback.src = audioUrl;
+                    audioPlayback.style.display = 'block';
+                    window.audioBlob = audioBlob;
+                    document.getElementById('analyzeBtn').disabled = false;
+                };
+                window.mediaRecorder.start();
+                document.getElementById('startRecordBtn').style.display = 'none';
+                document.getElementById('stopRecordBtn').style.display = 'inline-block';
+                document.getElementById('recordingStatus').innerHTML = '<span class="recording-indicator"></span> 🔴 Запись...';
+                stream.getTracks().forEach(track => track.onended = () => window.stopRecording());
+            })
+            .catch(err => alert('Ошибка доступа к микрофону: ' + err.message));
+    };
+
+    window.stopRecording = function() {
+        if (window.mediaRecorder && window.mediaRecorder.state !== 'inactive') {
+            window.mediaRecorder.stop();
+            if (window.mediaRecorder.stream) {
+                window.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+        document.getElementById('startRecordBtn').style.display = 'inline-block';
+        document.getElementById('stopRecordBtn').style.display = 'none';
+        document.getElementById('recordingStatus').innerHTML = '✅ Запись завершена';
+    };
+
+    window.analyzeSpeaking = async function() {
+        if (!window.audioBlob) {
+            alert('Сначала запишите ответ');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file', window.audioBlob, 'recording.wav');
+        formData.append('task_type', `part${window.currentPart}`);
+
+        document.getElementById('speakingResult').innerHTML = '<div style="text-align:center">⏳ Анализ ответа...</div>';
+
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) { alert('Пожалуйста, войдите в систему'); return; }
+        try {
+            const response = await fetch('/ielts/speaking/analyze', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+                body: formData
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const result = await response.json();
+            displaySpeakingResult(result);
+        } catch (err) {
+            document.getElementById('speakingResult').innerHTML = `<div style="color:red">Ошибка: ${err.message}</div>`;
+        }
+    };
+
+    window.analyzeWriting = async function() {
+        const isTask1 = window.currentWritingTask === 1;
+        const answer = isTask1 ? document.getElementById('writingAnswer').value : document.getElementById('writingAnswer2').value;
+        if (!answer.trim()) {
+            alert('Введите ответ');
+            return;
+        }
+        document.getElementById('writingResult').innerHTML = '<div style="text-align:center">⏳ Анализ эссе...</div>';
+
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) { alert('Пожалуйста, войдите в систему'); return; }
+        try {
+            const response = await fetch('/ielts/writing/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify({
+                    task_type: isTask1 ? 'task1' : 'task2',
+                    answer: answer
+                })
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const result = await response.json();
+            displayWritingResult(result);
+        } catch (err) {
+            document.getElementById('writingResult').innerHTML = `<div style="color:red">Ошибка: ${err.message}</div>`;
+        }
+    };
+
+    function displaySpeakingResult(result) {
+        const scores = result.scores;
+        const overall = result.overall_band;
+        const bandColor = overall >= 7 ? '#27ae60' : (overall >= 5 ? '#f39c12' : '#e74c3c');
+        let html = `
+            <div class="band-score" style="background: linear-gradient(135deg, ${bandColor}, ${bandColor}cc);">
+                Overall Band Score: ${overall}
+            </div>
+            <div class="criteria-grid">
+                <div class="criteria-item"><div>✅ Task Achievement</div><div class="criteria-score">${scores.task_achievement || 'N/A'}</div></div>
+                <div class="criteria-item"><div>🗣️ Fluency & Coherence</div><div class="criteria-score">${scores.fluency_coherence}</div></div>
+                <div class="criteria-item"><div>📚 Lexical Resource</div><div class="criteria-score">${scores.lexical_resource}</div></div>
+                <div class="criteria-item"><div>📖 Grammar</div><div class="criteria-score">${scores.grammatical_range_accuracy}</div></div>
+                <div class="criteria-item"><div>🎤 Pronunciation</div><div class="criteria-score">${scores.pronunciation}</div></div>
+                <div class="criteria-item"><div>🎵 Intonation</div><div class="criteria-score">${scores.intonation || 'N/A'}</div></div>
+                <div class="criteria-item"><div>🌍 Accent Impact</div><div class="criteria-score">${scores.accent_impact || 'N/A'}</div></div>
+            </div>
+            <div class="ielts-card" style="margin-top:15px;"><strong>📝 Feedback:</strong><p>${result.feedback}</p></div>
+            <div class="ielts-card" style="margin-top:15px;"><strong>💡 Suggestions:</strong><ul class="suggestions-list">${result.suggestions.map(s => `<li>${s}</li>`).join('')}</ul></div>
+            <div class="transcript-box"><strong>📜 Transcribed text:</strong><br><em>"${result.transcript}"</em></div>
+        `;
+        document.getElementById('speakingResult').innerHTML = html;
+    }
+
+    function displayWritingResult(result) {
+        const scores = result.scores;
+        const overall = result.overall_band;
+        const bandColor = overall >= 7 ? '#27ae60' : (overall >= 5 ? '#f39c12' : '#e74c3c');
+        let html = `
+            <div class="band-score" style="background: linear-gradient(135deg, ${bandColor}, ${bandColor}cc);">
+                Overall Band Score: ${overall}
+            </div>
+            <div class="criteria-grid">
+                <div class="criteria-item"><div>📝 Task Achievement</div><div class="criteria-score">${scores.task_achievement}</div></div>
+                <div class="criteria-item"><div>🔗 Coherence & Cohesion</div><div class="criteria-score">${scores.coherence_cohesion}</div></div>
+                <div class="criteria-item"><div>📚 Lexical Resource</div><div class="criteria-score">${scores.lexical_resource}</div></div>
+                <div class="criteria-item"><div>📖 Grammatical Range</div><div class="criteria-score">${scores.grammatical_range_accuracy}</div></div>
+            </div>
+            <div class="ielts-card" style="margin-top:15px;"><strong>📝 Feedback:</strong><p>${result.feedback}</p></div>
+            <div class="ielts-card" style="margin-top:15px;"><strong>💡 Suggestions:</strong><ul class="suggestions-list">${result.suggestions.map(s => `<li>${s}</li>`).join('')}</ul></div>
+        `;
+        document.getElementById('writingResult').innerHTML = html;
+    }
+
+    window.loadAttempts = async function() {
+        if (!window.currentUserId) {
+            await loadIELTSProfile();
+            if (!window.currentUserId) {
+                document.getElementById('attemptsList').innerHTML = '<p>Пожалуйста, войдите в систему.</p>';
+                return;
+            }
+        }
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) { alert('Пожалуйста, войдите'); return; }
+        try {
+            const response = await fetch(`/ielts/attempts?user_id=${window.currentUserId}`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const attempts = await response.json();
+            const container = document.getElementById('attemptsList');
+            if (!attempts || !Array.isArray(attempts) || attempts.length === 0) {
+                container.innerHTML = '<p>Пока нет попыток. Пройдите Speaking или Writing практику!</p>';
+                return;
+            }
+            container.innerHTML = attempts.map(a => `
+                <div class="ielts-card">
+                    <div style="display: flex; justify-content: space-between;">
+                        <strong>${a.task_type}</strong>
+                        <span>Band: ${a.overall_band}</span>
+                    </div>
+                    <div>${new Date(a.created_at).toLocaleString()}</div>
+                    <button onclick="viewAttempt(${a.id})" class="btn-secondary-ielts">Подробнее</button>
+                </div>
+            `).join('');
+        } catch (err) {
+            document.getElementById('attemptsList').innerHTML = `<div style="color:red">Ошибка: ${err.message}</div>`;
+        }
+    };
+
+    window.viewAttempt = async function(id) {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) { alert('Пожалуйста, войдите'); return; }
+        try {
+            const response = await fetch(`/ielts/attempt/${id}`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const attempt = await response.json();
+            if (attempt.task_type.includes('speaking')) {
+                displaySpeakingResult(attempt);
+                document.getElementById('speakingSection').scrollIntoView();
+            } else {
+                displayWritingResult(attempt);
+                document.getElementById('writingSection').scrollIntoView();
+            }
+        } catch (err) {
+            alert('Ошибка загрузки: ' + err.message);
+        }
+    };
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        loadIELTSProfile();
+
+        // Word count для writing
+        const textarea1 = document.getElementById('writingAnswer');
+        const textarea2 = document.getElementById('writingAnswer2');
+        if (textarea1) {
+            textarea1.addEventListener('input', () => {
+                const words = textarea1.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+                document.getElementById('wordCount').innerText = words;
+            });
+        }
+        if (textarea2) {
+            textarea2.addEventListener('input', () => {
+                const words = textarea2.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+                document.getElementById('wordCount2').innerText = words;
+            });
+        }
+        // Активация speaking по умолчанию без передачи кнопки (используем прямую установку)
+        document.getElementById('speakingSection').style.display = 'block';
+        document.getElementById('writingSection').style.display = 'none';
+        document.getElementById('historySection').style.display = 'none';
+        // Убедимся, что активная кнопка уже имеет класс active (первая кнопка)
+        const activeBtn = document.querySelector('.task-btn.active');
+        if (!activeBtn) {
+            document.querySelectorAll('.task-btn')[0]?.classList.add('active');
+        }
+    });
+</script>
+</body>
+</html>

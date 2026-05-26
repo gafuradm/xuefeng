@@ -6,13 +6,11 @@ from .models import (
     Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
     UserCourse, CourseModule, CourseLesson, UserLesson,
     UserInteraction, UserPerformance, CustomTest,
-    School, SchoolMember, LessonVideo, IELTSAttempt,
-    RefreshToken, PasswordReset, UserAction, ChatMessage
+    School, SchoolMember, LessonVideo, IELTSAttempt  # ← добавить IELTSAttempt
 )
 from fastapi import FastAPI, Depends, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from .database import engine, get_db, SessionLocal
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import json
@@ -1003,7 +1001,7 @@ async def conference_teacher_redirect():
 async def conference_student_redirect():
     return RedirectResponse(url="http://localhost:8000/student")
 
-from .auth import get_password_hash, verify_password, create_access_token, get_current_user, get_current_active_user
+from .auth import get_password_hash, verify_password, create_access_token, get_current_user
 
 # Регистрация
 @app.post("/api/auth/register")
@@ -1341,6 +1339,20 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from datetime import timezone
 from enum import Enum
+
+SECRET_KEY = "hsk_tutor_super_secret_key_2024_change_in_production_1234567890"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+PASSWORD_RESET_TOKEN_EXPIRE_HOURS = 24
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+SQLALCHEMY_DATABASE_URL = "sqlite:///./hsk_tutor.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
 from pathlib import Path
 import os
 
@@ -1357,6 +1369,24 @@ class Subject(str, Enum):
     PHYSICS = "physics"
     CHEMISTRY = "chemistry"
 
+class InterviewSessionDB(Base):
+    __tablename__ = "interview_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Связь с пользователем, может быть NULL для гостей
+    university = Column(String, nullable=False)
+    program = Column(String, nullable=False)
+    degree = Column(String, nullable=False)
+    professors = Column(JSON, nullable=True)  # Хранить список профессоров
+    tech_expert = Column(JSON, nullable=True)
+    messages = Column(JSON, nullable=True, default=list)  # Хранить всю историю сообщений
+    ended = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", back_populates="interview_sessions")
+
 class EducationData(BaseModel):
     university: Optional[str] = None
     program: Optional[str] = None
@@ -1371,6 +1401,38 @@ class EducationData(BaseModel):
     tone: Optional[str] = "professional"
     length: Optional[str] = "medium"
     instructions: Optional[str] = None
+
+# Dependencies for authorization
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: int = payload.get("user_id")  # IMPORTANT: use user_id
+        if user_id is None:
+            raise credentials_exception
+    except jwt.JWTError:
+        raise credentials_exception
+    
+    user = db.query(User).filter(User.id == user_id).first()  # Search by ID
+    if user is None:
+        raise credentials_exception
+    return user
+
+def get_current_active_user(current_user: User = Depends(get_current_user)):
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
 
 users_access = {}
 users_db = {}
@@ -1950,6 +2012,7 @@ def format_ai_response(text: str, section: str = "general") -> dict:
             "section": section,
             "timestamp": datetime.now().isoformat()
         }
+    
 
 @app.post("/user/education/save")
 async def save_education_data(
@@ -3553,6 +3616,9 @@ async def get_user_threads(
 class ChatMessageInput(BaseModel):
     message: str
     user_id: Optional[str] = None
+    
+def hash_password(password: str) -> str:
+    return hashlib.sha256(f"hsk_{password}_salt".encode()).hexdigest()
 
 @app.post("/payment/donationalerts/webhook")
 async def donationalerts_webhook(data: dict):
@@ -3642,6 +3708,56 @@ Life hack examples:
 
 Student context: {context}
 """
+
+@app.post("/auth/user")
+async def auth_user(auth_data: AuthRequest):
+    """User authorization or registration"""
+    
+    # Find existing user by name
+    user_id = None
+    for uid, user in users_db.items():
+        if user.get("name", "").lower() == auth_data.username.lower():
+            user_id = uid
+            break
+    
+    # If user not found, create new
+    if not user_id:
+        user_id = f"user_{len(users_db) + 1}_{hashlib.md5(auth_data.username.encode()).hexdigest()[:8]}"
+        
+        # Create new user
+        users_db[user_id] = {
+            "user_id": user_id,
+            "name": auth_data.username,
+            "current_level": 1,
+            "target_level": 4,
+            "exam_date": (datetime.now() + timedelta(days=90)).isoformat()[:10],
+            "exam_location": "Moscow",
+            "exam_format": "computer",
+            "interests": ["Chinese", "HSK"],
+            "daily_time": 30,
+            "learning_style": "visual",
+            "registered_at": datetime.now().isoformat(),
+            "daily_words": 10
+        }
+        
+        # Create progress
+        if user_id not in word_progress_db:
+            word_progress_db[user_id] = {}
+        
+        save_user_data()
+        message = "registered"
+    else:
+        message = "logged_in"
+    
+    # Return user data (without password)
+    user_data = users_db[user_id].copy()
+    
+    return {
+        "success": True,
+        "message": message,
+        "user_id": user_id,
+        **user_data
+    }
 
 from fastapi import Body
 from typing import Dict
@@ -12668,6 +12784,24 @@ Return ONLY JSON, no other text.
 async def test_topics():
     return {"topics": csca_math_topics, "total": len(csca_math_topics)}
 
+# Password hashing
+def hash_password(password: str) -> str:
+    """Hash password using bcrypt"""
+    # Convert password to bytes and truncate to 72 bytes (bcrypt limit)
+    password_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify password"""
+    try:
+        plain_bytes = plain_password.encode('utf-8')[:72]
+        hashed_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(plain_bytes, hashed_bytes)
+    except:
+        return False
+    
 # Email settings
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
@@ -12798,6 +12932,123 @@ async def refresh_my_statistics(
     }
 
 # ==================== Database Models ====================
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    device_info = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="refresh_tokens")
+
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    used_at = Column(DateTime, nullable=True)
+    
+    user = relationship("User", back_populates="password_resets")
+
+class UserAction(Base):
+    __tablename__ = "user_actions"
+    __table_args__ = (
+        Index('ix_user_actions_user_timestamp', 'user_id', 'timestamp'),
+    )
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    action_type = Column(String, index=True, nullable=False)
+    action_data = Column(JSON, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    url = Column(String, nullable=True)
+    method = Column(String, nullable=True)
+    duration_ms = Column(Integer, nullable=True)  # request execution time
+    
+    user = relationship("User", back_populates="actions")
+
+class UserWord(Base):
+    __tablename__ = "user_words"
+    __table_args__ = (
+        Index('ix_user_words_user_word', 'user_id', 'word_id', unique=True),
+    )
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    word_id = Column(String, nullable=False)
+    word_text = Column(String, nullable=True)
+    hsk_level = Column(Integer, nullable=True)
+    status = Column(String, default="new")  # new, learning, learned, review
+    difficulty = Column(Integer, default=3)  # 1-5
+    views_count = Column(Integer, default=0)
+    practice_count = Column(Integer, default=0)
+    correct_count = Column(Integer, default=0)
+    wrong_count = Column(Integer, default=0)
+    last_viewed = Column(DateTime, nullable=True)
+    last_practiced = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", back_populates="words")
+
+class UserTest(Base):
+    __tablename__ = "user_tests"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    test_id = Column(String, nullable=True)  # Test ID from frontend
+    test_type = Column(String, nullable=False)  # hsk, grammar, vocabulary, listening
+    test_level = Column(Integer, nullable=False)
+    score = Column(Integer, nullable=True)
+    max_score = Column(Integer, nullable=True)
+    time_spent = Column(Integer, nullable=True)  # seconds
+    questions_count = Column(Integer, nullable=True)
+    correct_count = Column(Integer, nullable=True)
+    wrong_count = Column(Integer, nullable=True)
+    skipped_count = Column(Integer, nullable=True)
+    answers = Column(JSON, nullable=True)
+    results = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="tests")
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    thread_id = Column(String, nullable=False, index=True)
+    role = Column(String, nullable=False)  # user, assistant
+    content = Column(Text, nullable=False)
+    message_metadata = Column(JSON, nullable=True)  # This is the correct field name
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="chat_messages")
+
+class StudySession(Base):
+    __tablename__ = "study_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    start_time = Column(DateTime, default=datetime.utcnow)
+    end_time = Column(DateTime, nullable=True)
+    duration_minutes = Column(Integer, default=0)
+    actions_count = Column(Integer, default=0)
+    words_studied = Column(Integer, default=0)
+    tests_taken = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    
+    user = relationship("User", back_populates="study_sessions")
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -12978,6 +13229,43 @@ def send_reset_email(email: str, token: str):
     except Exception as e:
         logger.error(f"❌ Unexpected error: {e}")
         logger.exception("Full traceback:")
+
+# In create_access_token already correct, but check:
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def create_refresh_token(db: Session, user_id: int, device_info: str = None, ip_address: str = None):
+    token = secrets.token_urlsafe(64)
+    expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    
+    db_token = RefreshToken(
+        token=token,
+        user_id=user_id,
+        device_info=device_info,
+        ip_address=ip_address,
+        expires_at=expires_at
+    )
+    db.add(db_token)
+    db.commit()
+    db.refresh(db_token)
+    return token
+
+def verify_refresh_token(db: Session, token: str):
+    db_token = db.query(RefreshToken).filter(
+        RefreshToken.token == token,
+        RefreshToken.expires_at > datetime.utcnow()
+    ).first()
+    if not db_token:
+        return None
+    return db_token
 
 # ==================== AUTOMATIC TRACKING (no changes to frontend) ====================
 
@@ -13315,6 +13603,128 @@ async def auto_logging_middleware(request: Request, call_next):
 
 # ==================== ENDPOINTS ====================
 
+@app.post("/auth/register", response_model=UserResponse)
+async def register(
+    user_data: UserCreate,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    # Check existing user
+    db_user = db.query(User).filter(
+        (User.email == user_data.email) | (User.username == user_data.username)
+    ).first()
+    if db_user:
+        if db_user.email == user_data.email:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    # Determine country from IP
+    country = get_country_from_ip(request.client.host)
+    
+    # Hash password
+    hashed_password = hash_password(user_data.password)
+    
+    # Create user
+    db_user = User(
+        email=user_data.email,
+        username=user_data.username,
+        hashed_password=hashed_password,  # Use hash
+        full_name=user_data.full_name,
+        current_hsk_level=user_data.current_hsk_level,
+        target_hsk_level=user_data.target_hsk_level,
+        country=country
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    
+    return db_user
+
+@app.post("/auth/login", response_model=Token)
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    request: Request = None,
+    db: Session = Depends(get_db)
+):
+    # Find user by email (email comes in username field)
+    user = db.query(User).filter(User.email == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    
+    # Update last_login
+    user.last_login = datetime.utcnow()
+    
+    # Create tokens
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={
+            "sub": user.username,      # keep for compatibility
+            "user_id": user.id          # ADD THIS!
+        },
+        expires_delta=access_token_expires
+    )
+    
+    device_info = request.headers.get("user-agent") if request else None
+    refresh_token = create_refresh_token(
+        db, user.id, 
+        device_info=device_info,
+        ip_address=request.client.host if request else None
+    )
+    
+    db.commit()
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
+
+@app.post("/auth/refresh", response_model=Token)
+async def refresh_token(
+    refresh_data: dict = Body(...),
+    db: Session = Depends(get_db)
+):
+    token = refresh_data.get("refresh_token")
+    if not token:
+        raise HTTPException(status_code=400, detail="Refresh token required")
+    
+    db_token = verify_refresh_token(db, token)
+    if not db_token:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    
+    user = db_token.user
+    
+    # Create new tokens
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={
+            "sub": user.username,
+            "user_id": user.id  # IMPORTANT!
+        },
+        expires_delta=access_token_expires
+    )
+    
+    # Delete old refresh token
+    db.delete(db_token)
+    
+    # Create new one
+    new_refresh_token = create_refresh_token(
+        db, user.id
+    )
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer"
+    }
+
 @app.get("/debug/auth-check")
 async def debug_auth_check(current_user: User = Depends(get_current_user)):
     """Authorization check (debug only)"""
@@ -13323,6 +13733,194 @@ async def debug_auth_check(current_user: User = Depends(get_current_user)):
         "user_id": current_user.id,
         "username": current_user.username,
         "email": current_user.email
+    }
+
+@app.post("/auth/logout")
+async def logout(
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # Delete all user refresh tokens
+    db.query(RefreshToken).filter(RefreshToken.user_id == current_user.id).delete()
+    db.commit()
+    
+    return {"message": "Successfully logged out"}
+
+@app.post("/auth/password-reset/request")
+async def password_reset_request(
+    reset_data: PasswordResetRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.email == reset_data.email).first()
+    if not user:
+        logger.info(f"Password reset requested for non-existent email: {reset_data.email}")
+        return {"message": "If the email exists, a reset link has been sent"}
+    
+    # Delete old tokens
+    db.query(PasswordReset).filter(
+        PasswordReset.user_id == user.id,
+        PasswordReset.used == False
+    ).delete()
+    
+    # Create new token
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.utcnow() + timedelta(hours=PASSWORD_RESET_TOKEN_EXPIRE_HOURS)
+    
+    reset_token = PasswordReset(
+        token=token,
+        user_id=user.id,
+        expires_at=expires_at
+    )
+    db.add(reset_token)
+    db.commit()
+    
+    # Log token (for debugging)
+    logger.info(f"✅ RESET TOKEN for {user.email}: {token}")
+    logger.info(f"🔗 Reset link: https://your-frontend.com/reset-password?token={token}")
+    
+    # Send email in background
+    background_tasks.add_task(send_reset_email, user.email, token)
+    
+    return {"message": "If the email exists, a reset link has been sent"}
+
+@app.post("/auth/password-reset/confirm")
+async def password_reset_confirm(
+    reset_data: PasswordResetConfirm,
+    db: Session = Depends(get_db)
+):
+    reset = db.query(PasswordReset).filter(
+        PasswordReset.token == reset_data.token,
+        PasswordReset.used == False,
+        PasswordReset.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not reset:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    
+    # Update password
+    user = reset.user
+    user.hashed_password = p_context.hash(reset_data.new_password)
+    reset.used = True
+    reset.used_at = datetime.utcnow()
+    
+    # Delete all refresh tokens for security
+    db.query(RefreshToken).filter(RefreshToken.user_id == user.id).delete()
+    
+    db.commit()
+    
+    return {"message": "Password successfully reset"}
+
+@app.get("/users/me", response_model=UserResponse)
+async def read_users_me(current_user: User = Depends(get_current_active_user)):
+    return current_user
+
+@app.get("/users/me/statistics")
+async def get_detailed_statistics(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get detailed user statistics"""
+    
+    old_user_id = f"user_{current_user.id}"
+    
+    # Words from SQLite
+    words = db.query(UserWord).filter(UserWord.user_id == current_user.id).all()
+    words_by_status = {
+        "new": len([w for w in words if w.status == "new"]),
+        "learning": len([w for w in words if w.status == "learning"]),
+        "learned": len([w for w in words if w.status == "learned"]),
+        "review": len([w for w in words if w.status == "review"])
+    }
+    
+    # Tests from SQLite
+    tests = db.query(UserTest).filter(
+        UserTest.user_id == current_user.id,
+        UserTest.score.isnot(None)
+    ).order_by(UserTest.created_at.desc()).all()
+    
+    # Active sessions
+    active_session = db.query(StudySession).filter(
+        StudySession.user_id == current_user.id,
+        StudySession.is_active == True
+    ).first()
+    
+    # Actions
+    recent_actions = db.query(UserAction).filter(
+        UserAction.user_id == current_user.id
+    ).order_by(UserAction.timestamp.desc()).limit(100).all()
+    
+    # Group by day
+    daily_activity = {}
+    for action in recent_actions[:30]:
+        date_str = action.timestamp.strftime("%Y-%m-%d")
+        daily_activity[date_str] = daily_activity.get(date_str, 0) + 1
+    
+    # Get data from in-memory dictionaries (for backward compatibility)
+    old_words = user_word_status.get(old_user_id, {})
+    old_learned = sum(1 for v in old_words.values() if v.get("status") == "learned")
+    
+    # Use MAXIMUM value from all sources
+    total_learned = max(
+        current_user.total_words_learned,
+        old_learned,
+        words_by_status["learned"]
+    )
+    
+    return {
+        "user": {
+            "username": current_user.username,
+            "full_name": current_user.full_name,
+            "country": current_user.country,
+            "current_hsk_level": current_user.current_hsk_level,
+            "target_hsk_level": current_user.target_hsk_level,
+            "daily_goal": current_user.daily_goal
+        },
+        "statistics": {
+            "total_points": current_user.total_points,
+            "study_streak": current_user.study_streak,
+            "longest_streak": current_user.longest_streak,
+            "total_study_time": current_user.total_study_time,
+            "total_words_learned": total_learned,
+            "total_tests_taken": current_user.total_tests_taken,
+            "average_test_score": current_user.average_test_score
+        },
+        "words": {
+            "by_status": words_by_status,
+            "by_hsk": get_words_by_hsk_level(words),
+            "total": len(words),
+            "recent": get_recent_words(words)
+        },
+        "tests": {
+            "history": [
+                {
+                    "id": t.id,
+                    "type": t.test_type,
+                    "level": t.test_level,
+                    "score": t.score,
+                    "max_score": t.max_score,
+                    "date": t.created_at.isoformat()
+                }
+                for t in tests[:20]
+            ],
+            "total": len(tests),
+            "average": current_user.average_test_score
+        },
+        "activity": {
+            "daily": [{"date": d, "count": c} for d, c in daily_activity.items()],
+            "last_30_days": len(recent_actions),
+            "current_session_minutes": int((datetime.utcnow() - active_session.start_time).total_seconds() / 60) if active_session else 0,
+            "recent_actions": [
+                {
+                    "type": a.action_type,
+                    "time": a.timestamp.isoformat(),
+                    "data": a.action_data
+                }
+                for a in recent_actions[:10]
+            ]
+        },
+        "achievements": calculate_achievements(current_user, tests)
     }
 
 @app.get("/auth/debug-user/{email}")
@@ -13683,191 +14281,72 @@ async def analyze_ielts_speaking(
     if whisper_model is None:
         raise HTTPException(503, "Whisper model not loaded")
 
-    # Сохраняем исходный файл (WebM или другой)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+    # Сохраняем аудио
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
         content = await file.read()
         tmp.write(content)
-        input_path = tmp.name
+        tmp_path = tmp.name
 
-    wav_path = None
+    # Транскрипция
+    result = whisper_model.transcribe(tmp_path, language="en")
+    transcript = result["text"]
+
+    # AI анализ
+    prompt = f"""You are an official IELTS examiner. Evaluate the following speaking response (Part {task_type}) strictly according to official IELTS criteria.
+
+Transcript: "{transcript}"
+
+Return ONLY valid JSON with:
+- fluency_coherence: band score 0-9
+- lexical_resource: band score 0-9
+- grammatical_range_accuracy: band score 0-9
+- pronunciation: band score 0-9
+- overall_band: average rounded to nearest 0.5
+- feedback: detailed feedback (2-3 sentences)
+- suggestions: array of 3 specific suggestions"""
+    response = await deepseek_client.chat_completion([
+        {"role": "system", "content": "You are an official IELTS examiner. Respond only with JSON."},
+        {"role": "user", "content": prompt}
+    ], max_tokens=800)
+
     try:
-        # Конвертируем в WAV с помощью pydub
-        from pydub import AudioSegment
-        audio = AudioSegment.from_file(input_path)
-        wav_path = input_path + ".wav"
-        audio.export(wav_path, format="wav")
-        
-        # 1. Транскрипция через Whisper (используем WAV)
-        result = whisper_model.transcribe(wav_path, language="en")
-        transcript = result["text"]
-
-        # 2. Анализ аудио из WAV
-        from scipy.io import wavfile
-        import numpy as np
-        import os
-
-        samplerate, data = wavfile.read(wav_path)
-        # Нормализация
-        if data.dtype == np.int16:
-            data = data / 32768.0
-        elif data.dtype == np.int32:
-            data = data / 2147483648.0
-        else:
-            data = data.astype(np.float32) / np.max(np.abs(data))
-
-        duration = len(data) / samplerate
-        rms = np.sqrt(np.mean(data**2))
-        volume_normalized = min(100, rms * 100)
-
-        # Анализ пауз (фреймы 50 мс)
-        frame_len = int(samplerate * 0.05)
-        hop = frame_len
-        energy = []
-        for start in range(0, len(data) - frame_len, hop):
-            frame = data[start:start+frame_len]
-            eng = np.sum(frame**2) / frame_len
-            energy.append(eng)
-
-        if len(energy) > 0:
-            threshold = np.percentile(energy, 15)
-            is_speech = np.array(energy) > threshold
-            pause_frames = (~is_speech).sum()
-            pause_duration = pause_frames * (frame_len / samplerate)
-            pause_ratio = pause_duration / duration if duration > 0 else 0
-        else:
-            pause_ratio = 0
-
-        words = transcript.split()
-        word_count = len(words)
-        speaking_rate = (word_count / duration) * 60 if duration > 0 else 0
-
-        if len(energy) > 1:
-            energy_diff = np.diff(energy)
-            intonation_variation = min(100, np.std(energy_diff) * 10)
-        else:
-            intonation_variation = 50
-
-        # 3. Промпт для DeepSeek с новыми метриками
-        prompt = f"""You are an official IELTS examiner. Evaluate the speaking response (Part {task_type}) using these precise criteria.
-
-TRANSCRIPT: "{transcript}"
-
-AUDIO METRICS:
-- Speaking rate: {speaking_rate:.0f} wpm (target 120-150)
-- Pause ratio: {pause_ratio:.2f} (target 0.15-0.25)
-- Volume consistency: {volume_normalized:.0f}%
-- Intonation variation: {intonation_variation:.0f}% (higher = more expressive)
-
-INSTRUCTIONS FOR EVALUATION (very important):
-
-1. **TASK ACHIEVEMENT (0-9)** – Did the candidate answer ALL parts of the question? 
-   - For Part 2 (cue card): Must cover: what, how you know, why important, how influenced. If they just repeat the question or give an unrelated answer → score 0-3.
-   - For this response, the user simply read the cue card text instead of providing a personal answer. → Task Achievement should be VERY LOW (1-2).
-
-2. **FLUENCY & COHERENCE** – Rate based on natural pauses, hesitation, repair, logical flow. Reading a memorized script reduces fluency score.
-
-3. **LEXICAL RESOURCE** – Vocabulary range and precision. Reading a question gives artificially high lexical score → adjust down.
-
-4. **GRAMMAR & ACCURACY** – Sentence structures. If they only repeat the question, grammar is not original → score should be reduced.
-
-5. **PRONUNCIATION** – Based on audio metrics and clarity.
-
-6. **INTONATION** – Monotone reading vs expressive speech.
-
-7. **ACCENT IMPACT** – How accent affects understanding.
-
-SCORING SCALE (apply strictly):
-- 0-2: Irrelevant, extremely short, no attempt
-- 3-4: Partial answer, missing key parts
-- 5-6: Adequate but lacks detail or wanders
-- 7-8: Good coverage, some elaboration
-- 9: Excellent, full response
-
-Now output JSON with these fields:
-{{
-  "task_achievement": number,
-  "fluency_coherence": number,
-  "lexical_resource": number,
-  "grammatical_range_accuracy": number,
-  "pronunciation": number,
-  "intonation": number,
-  "accent_impact": number,
-  "overall_band": number,
-  "feedback": "detailed feedback, explicitly mention if the answer was off-topic",
-  "suggestions": ["suggestion1", "suggestion2", "suggestion3"]
-}}
-
-IMPORTANT: If the candidate simply repeated the question without giving a real answer, task_achievement must be ≤ 2 and overall_band should be ≤ 4."""
-        
-        response = await deepseek_client.chat_completion([
-            {"role": "system", "content": "You are an official IELTS examiner. Respond only with JSON."},
-            {"role": "user", "content": prompt}
-        ], max_tokens=1000)
-
-        try:
-            evaluation = json.loads(response)
-        except:
-            evaluation = {
-                "fluency_coherence": 6,
-                "lexical_resource": 6,
-                "grammatical_range_accuracy": 6,
-                "pronunciation": 6,
-                "intonation": 6,
-                "accent_impact": 6,
-                "overall_band": 6.0,
-                "feedback": "Your response was evaluated automatically. Work on fluency and pronunciation.",
-                "suggestions": ["Speak at a steady pace", "Use more varied vocabulary", "Practice sentence stress"]
-            }
-
-        # Сохраняем в БД (сохраняем путь к WAV)
-        attempt = IELTSAttempt(
-            user_id=current_user.id,
-            task_type=f"speaking_{task_type}",
-            audio_path=wav_path,
-            transcript=transcript,
-            scores={
-                "fluency_coherence": evaluation["fluency_coherence"],
-                "lexical_resource": evaluation["lexical_resource"],
-                "grammatical_range_accuracy": evaluation["grammatical_range_accuracy"],
-                "pronunciation": evaluation["pronunciation"],
-                "intonation": evaluation.get("intonation", 6),
-                "accent_impact": evaluation.get("accent_impact", 6),
-                "speaking_rate_wpm": round(speaking_rate, 1),
-                "pause_ratio": round(pause_ratio, 2)
-            },
-            overall_band=evaluation["overall_band"],
-            feedback=evaluation["feedback"],
-            suggestions=evaluation["suggestions"]
-        )
-        db.add(attempt)
-        db.commit()
-
-        return {
-            "transcript": transcript,
-            "scores": attempt.scores,
-            "overall_band": attempt.overall_band,
-            "feedback": attempt.feedback,
-            "suggestions": attempt.suggestions,
-            "audio_metrics": {
-                "duration_seconds": duration,
-                "speaking_rate_wpm": round(speaking_rate, 1),
-                "pause_ratio": round(pause_ratio, 2),
-                "volume_consistency": round(volume_normalized, 1),
-                "intonation_variation": round(intonation_variation, 1)
-            }
+        evaluation = json.loads(response)
+    except:
+        evaluation = {
+            "fluency_coherence": 6, "lexical_resource": 6,
+            "grammatical_range_accuracy": 6, "pronunciation": 6,
+            "overall_band": 6.0,
+            "feedback": "Your response was evaluated automatically. Practice more for better results.",
+            "suggestions": ["Practice speaking daily", "Expand vocabulary", "Work on pronunciation"]
         }
 
-    except Exception as e:
-        print(f"[IELTS] Error: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(500, f"Analysis failed: {str(e)}")
-    finally:
-        # Удаляем временные файлы
-        if os.path.exists(input_path):
-            os.unlink(input_path)
-        if wav_path and os.path.exists(wav_path):
-            os.unlink(wav_path)
+    # Сохраняем в БД
+    attempt = IELTSAttempt(
+        user_id=current_user.id,
+        task_type=f"speaking_{task_type}",
+        audio_path=tmp_path,
+        transcript=transcript,
+        scores={
+            "fluency_coherence": evaluation["fluency_coherence"],
+            "lexical_resource": evaluation["lexical_resource"],
+            "grammatical_range_accuracy": evaluation["grammatical_range_accuracy"],
+            "pronunciation": evaluation["pronunciation"]
+        },
+        overall_band=evaluation["overall_band"],
+        feedback=evaluation["feedback"],
+        suggestions=evaluation["suggestions"]
+    )
+    db.add(attempt)
+    db.commit()
+
+    return {
+        "transcript": transcript,
+        "scores": attempt.scores,
+        "overall_band": attempt.overall_band,
+        "feedback": attempt.feedback,
+        "suggestions": attempt.suggestions
+    }
+
 
 @app.post("/ielts/writing/analyze")
 async def analyze_ielts_writing(
