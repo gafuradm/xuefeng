@@ -116,6 +116,8 @@ class User(Base):
     technical_skills = Column(Text, nullable=True)
     achievements = Column(Text, nullable=True)
     letter_style = Column(JSON, nullable=True)
+
+    documents = relationship("UserDocument", back_populates="user", cascade="all, delete-orphan")
     
     # Связи (все — с back_populates, без backref)
     user_courses = relationship('UserCourse', back_populates='user', cascade='all, delete-orphan')
@@ -586,3 +588,17 @@ class IELTSAttempt(Base):
     suggestions = Column(JSON, default=[])
     created_at = Column(DateTime, default=datetime.utcnow)
     user = relationship("User")
+
+class UserDocument(Base):
+    __tablename__ = "user_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    filename = Column(String, nullable=False)           # сохранённое имя
+    original_filename = Column(String, nullable=False)  # оригинальное имя
+    file_path = Column(String, nullable=False)          # путь к PDF
+    index_path = Column(String, nullable=True)          # путь к FAISS индексу
+    chunks_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="documents")

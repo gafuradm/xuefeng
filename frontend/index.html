@@ -1,499 +1,449 @@
-<!-- frontend/index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>学峰 · 巅峰智学 | AI 导师</title>
-    <!--  Фавикон (inline data) – избавляет от 404  -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23831f33'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23f0ced5' font-weight='bold'%3E学%3C/text%3E%3C/svg%3E">
-    <link rel="stylesheet" href="/static/style.css">
+    <title>学峰 · AI Mentor | Персональный ИИ-учитель</title>
+    <!-- Tailwind CSS + Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- MathJax, marked — для работы уроков -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- MathJax – исправленный, надёжный CDN + резервное поведение -->
     <script>
         window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
-            startup: {
-                pageReady: () => {
-                    return MathJax.startup.defaultPageReady();
-                }
-            }
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            startup: { pageReady: () => MathJax.startup.defaultPageReady() }
         };
     </script>
     <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
-    <!--  Если Cloudflare не загрузится, подгрузим резерв (опционально) -->
-    <script>
-        window.addEventListener('load', function() {
-            if (typeof MathJax === 'undefined') {
-                var script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js';
-                script.async = true;
-                document.head.appendChild(script);
-            }
-        });
-    </script>
     <style>
-        /* ==================================================
-           🔥 学峰 · 暗黑勃艮第 DESIGN — BOMB ASTIC STYLE 
-           所有原有样式，视觉炸裂，黑红色系 + 奢华细节
-        ================================================== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', 'Segoe UI', 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
-            background: #0a0305 radial-gradient(circle at 20% 30%, #2c0e14 0%, #040102 100%);
-            min-height: 100vh;
-            padding: 24px;
-            color: #f0e9ec;
-            position: relative;
-        }
-
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            background-image: radial-gradient(rgba(180, 40, 60, 0.08) 1px, transparent 1px);
-            background-size: 35px 35px;
-            z-index: 0;
-        }
-
-        .app-wrapper {
-            max-width: 1500px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 2;
-        }
-
-        .main-container {
-            background: rgba(10, 6, 8, 0.82);
-            backdrop-filter: blur(3px);
-            border-radius: 2.5rem;
-            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(139, 44, 61, 0.3) inset;
-            overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-        }
-
-        .hero-section {
-            background: radial-gradient(ellipse at 70% 20%, #2f0a14, #050103);
-            position: relative;
-            padding: 2.8rem 2rem 3.5rem;
-            border-bottom: 2px solid #b83b4b;
-            overflow: hidden;
-        }
-
-        .hero-section::after {
-            content: '';
-            position: absolute;
-            top: -30%;
-            left: -20%;
-            width: 140%;
-            height: 140%;
-            background: radial-gradient(circle, rgba(185, 47, 79, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
-            pointer-events: none;
-        }
-
-        .xuefeng-master {
-            text-align: center;
-            margin-bottom: 1rem;
-            position: relative;
-            z-index: 5;
-        }
-        .xuefeng-logo {
-            font-family: 'Noto Serif SC', 'Times New Roman', 'Cinema', 'Impact', cursive;
-            font-size: 5.8rem;
-            font-weight: 900;
-            letter-spacing: 12px;
-            display: inline-block;
-            background: linear-gradient(135deg, #e6b8c2 10%, #bc3f4b 50%, #630d1f 90%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            text-shadow: 0 0 12px rgba(188, 63, 75, 0.7), 0 4px 20px rgba(0,0,0,0.5);
-            transform: skew(-6deg) scale(1.02);
-            transition: all 0.3s;
-            position: relative;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
-        }
-        .xuefeng-logo::before {
-            content: "学峰";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(145deg, #ffb7c5, #9e2538);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            opacity: 0.45;
-            transform: translate(5px, 3px);
-            z-index: -1;
-            filter: blur(6px);
-        }
-        .xuefeng-logo:hover {
-            letter-spacing: 15px;
-            transform: skew(-3deg) scale(1.05);
-            transition: 0.25s ease;
-        }
-        .xuefeng-sub {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 6px;
-            font-weight: 500;
-            color: #ca7a88;
-            border-top: 1px solid #862633;
-            display: inline-block;
-            padding-top: 8px;
-            margin-top: 6px;
-            backdrop-filter: blur(2px);
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 5;
-            text-align: center;
-        }
-        .hero-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(120deg, #f0e6e8, #dd9ba8);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            margin-top: 0.2rem;
-        }
-        .hero-subtitle {
-            font-size: 1.2rem;
-            color: #d1bfc3;
-            font-weight: 400;
-            margin-top: 0.5rem;
-            margin-bottom: 1.8rem;
-        }
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.6rem;
-            padding: 0.7rem 1.8rem;
-            border-radius: 3rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: 0.25s ease;
-            cursor: pointer;
-            border: none;
-            backdrop-filter: blur(4px);
-        }
-        .btn-primary {
-            background: linear-gradient(115deg, #9e2c3e, #551a26);
-            color: white;
-            box-shadow: 0 6px 18px rgba(100, 20, 30, 0.5);
-            border: 1px solid #c45466;
-        }
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            background: linear-gradient(115deg, #bc374b, #7d202f);
-            box-shadow: 0 12px 24px rgba(180, 40, 60, 0.5);
-        }
-        .btn-outline-light {
-            background: rgba(0, 0, 0, 0.45);
-            border: 1px solid #b54a5b;
-            color: #f5e3e7;
-            backdrop-filter: blur(8px);
-        }
-        .btn-outline-light:hover {
-            background: #932c3e;
-            border-color: #e17a8b;
-            color: white;
-            transform: scale(0.98);
-        }
-        .btn-secondary {
-            background: #221217;
-            border: 1px solid #723242;
-            color: #f0cdd5;
-        }
-        .btn-secondary:hover {
-            background: #351b23;
-            border-color: #b75165;
-        }
-        .btn-icon, .quick-actions .btn-icon {
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid #823544;
-            color: #f0ced5;
-            font-weight: 500;
-        }
-        .btn-icon:hover {
-            background: #902f42;
-            border-color: #dc7f8f;
-        }
-        .hero-wave {
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity="0.7" fill="%23260a10"/></svg>') repeat-x;
-            background-size: 1200px 50px;
-            z-index: 1;
-        }
-        .step-card {
+        /* Дополнительные стили */
+        .step-card, .question-card, .test-item, .course-card, .lesson-card, .results-container, .theory, .example, .task, .tips {
             background: rgba(18, 8, 11, 0.85);
-            backdrop-filter: blur(2px);
-            border-radius: 2rem;
-            padding: 2rem;
-            border: 1px solid rgba(139, 44, 61, 0.6);
-            box-shadow: 0 12px 28px -12px black;
-            transition: all 0.3s;
+            backdrop-filter: blur(4px);
+            border-radius: 1.5rem;
+            border: 1px solid #5c2e3c;
         }
-        .step-card:hover {
-            border-color: #b24b5e;
-            box-shadow: 0 20px 35px -12px #3f111b;
-        }
-        h2, h3 {
-            color: #f3dee3;
-            border-left: 5px solid #d45c6f;
-            padding-left: 1rem;
-        }
+        .progress-fill { background: linear-gradient(90deg, #c95267, #871f34); }
         .modern-input, select.modern-input, textarea.modern-input {
             background: #1f1217;
             border: 1px solid #762f3e;
             color: #f0e2e6;
-            border-radius: 1.2rem;
-            padding: 12px 18px;
+            border-radius: 1rem;
+            padding: 0.5rem 1rem;
         }
-        .modern-input:focus {
-            border-color: #dc6f82;
-            box-shadow: 0 0 0 3px rgba(200, 70, 90, 0.3);
-            outline: none;
+        button, .btn, [onclick] { cursor: pointer; }
+        .tab-btn.active {
+            background: #bc3f4b !important;
+            color: white !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-        .progress-wrapper {
-            background: #2d1920;
-            border-radius: 2rem;
-        }
-        .progress-bar {
-            background: #331820;
-        }
-        .progress-fill {
-            background: linear-gradient(90deg, #c95267, #871f34);
-        }
-        .results-container, .theory, .example, .task, .tips {
-            background: #1f0e13ee;
-            border-left: 4px solid #b3495d;
-        }
-        .question-card {
-            background: #1f1219;
-            border-color: #673546;
-        }
-        .question-card h3 {
-            color: #e7a5b4;
-        }
-        .course-card, .lesson-card, .test-card {
-            background: #180c10;
-            border: 1px solid #663142;
-            transition: all 0.2s;
-        }
-        .course-card:hover, .lesson-card:hover, .test-card:hover {
-            background: #28161e;
-            border-color: #c75f74;
-            transform: translateY(-5px);
-        }
-        #profileModal, #chatModal {
-            background: #1a0e12;
-            border: 1px solid #b14b60;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
-            color: #f0dbdf;
-        }
-        #chatModal button, .profile-actions button {
-            background: #2d171f;
-            color: #f0cfd8;
-        }
-        .quick-actions {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            gap: 12px;
-            z-index: 1050;
-        }
-        .profile-header, .profile-info {
-            background: #0f070b;
-        }
-        #userRoleDisplay {
-            background: #ad3f53;
-        }
-        .btn-outline {
-            border: 1px solid #ac4b5d;
-            color: #f5dce2;
-        }
-        .markdown-body {
-            color: #e7d6db;
-        }
-        code, pre {
-            background: #2b121b;
-        }
-        a {
-            color: #e28b9c;
-        }
-        button, .btn, [onclick] {
-            cursor: pointer;
-        }
-        @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(28px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animated-step {
-            animation: fadeSlideUp 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        .transition-smooth { transition: all 0.2s ease; }
+        .fade-in { animation: fadeIn 0.2s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (max-width: 640px) {
+            .btn-mobile-full { width: 100%; justify-content: center; }
         }
     </style>
 </head>
-<body>
-<div class="app-wrapper">
-    <div class="main-container">
-        <header class="hero-section">
-            <div class="hero-content">
-                <div class="xuefeng-master">
-                    <div class="xuefeng-logo">学峰</div>
-                    <div class="xuefeng-sub">XUEFENG · AI MENTOR</div>
-                </div>
-                <h1 class="hero-title">🎓 Universal AI Teacher</h1>
-                <p class="hero-subtitle">Персональный ИИ-учитель для подготовки к любым экзаменам</p>
-                <div class="hero-buttons">
-                    <button id="showTestCreatorBtn" class="btn btn-outline-light" onclick="showTestCreator()">✏️ Свой тест</button>
-                    <button onclick="window.open('http://localhost:8000/student', '_blank')" class="btn btn-outline-light">🎥 Присоединиться к лекции</button>
-                    <button onclick="window.open('http://localhost:8000/teacher', '_blank')" class="btn btn-outline-light">👨‍🏫 Начать лекцию (учитель)</button>
-                    <button onclick="showAuthModal()" id="loginBtn" class="btn btn-outline-light">🔑 Войти</button>
-                </div>
-            </div>
-            <div class="hero-wave"></div>
-        </header>
+<body class="bg-gradient-to-br from-[#0a0305] to-[#040102] text-gray-200 font-sans antialiased">
 
-        <div class="profile-header" id="profileHeader" style="display: none; justify-content: space-between; align-items: center; padding: 10px 20px; background: #0f070b; border-bottom: 1px solid #6f2c3b;">
-            <div class="profile-info" style="display: flex; align-items: center; gap: 15px;">
-                <img id="avatarImg" src="" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                <span id="userNameDisplay" style="color:#f3e2e7;"></span>
-                <span id="userRoleDisplay" style="background: #ad3f53; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;"></span>
-            </div>
-            <div class="profile-actions">
-                <button onclick="showProfileModal()" class="btn-secondary" style="margin-right: 10px;">👤 Профиль</button>
-                <button onclick="logout()" class="btn-secondary" style="background: #831f33;">🚪 Выйти</button>
+<div class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Шапка с логотипом и внешними ссылками (видна всегда, но некоторые кнопки скрываются после логина) -->
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6 p-4 rounded-2xl bg-black/30 backdrop-blur-sm border border-[#5c2e3c]">
+        <div class="flex items-center gap-3">
+            <div class="text-4xl font-black tracking-wider bg-gradient-to-r from-[#e6b8c2] to-[#bc3f4b] bg-clip-text text-transparent">学峰</div>
+            <div class="text-xs text-[#ca7a88] hidden sm:block">AI MENTOR</div>
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <!-- Кнопки для всех, но после логина их можно скрыть через класс -->
+            <a href="/ielts" target="_blank" class="external-link bg-[#1a5276] hover:bg-[#0e3b5c] text-white px-4 py-2 rounded-full text-sm font-semibold"><i class="fab fa-internet-explorer mr-1"></i> IELTS Prep</a>
+            <a href="/hsk" target="_blank" class="external-link bg-[#c0392b] hover:bg-[#a12f22] text-white px-4 py-2 rounded-full text-sm font-semibold"><i class="fas fa-language mr-1"></i> Поступление в Китай</a>
+            <button id="showAuthBtn" onclick="showAuthModal()" class="auth-btn bg-[#bc3f4b] hover:bg-[#9e2e3a] text-white px-5 py-2 rounded-full text-sm font-semibold"><i class="fas fa-key mr-1"></i> Войти</button>
+        </div>
+    </div>
+
+    <!-- Блок профиля (скрыт до логина) -->
+    <div id="profileHeader" class="hidden flex justify-between items-center bg-black/30 backdrop-blur-sm p-3 rounded-2xl mb-4 border border-[#5c2e3c]">
+        <div class="flex items-center gap-3">
+            <img id="avatarImg" class="w-10 h-10 rounded-full object-cover border border-[#c45466]" src="">
+            <span id="userNameDisplay" class="font-semibold"></span>
+            <span id="userRoleDisplay" class="text-xs bg-[#ad3f53] px-2 py-1 rounded-full"></span>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="showProfileModal()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm"><i class="fas fa-user-circle mr-1"></i> Профиль</button>
+            <button onclick="logout()" class="bg-[#831f33] hover:bg-[#6a1829] px-4 py-1 rounded-full text-sm"><i class="fas fa-sign-out-alt mr-1"></i> Выйти</button>
+        </div>
+    </div>
+
+    <!-- Панель быстрых действий по ролям (после логина) -->
+    <div id="rolePanel" class="hidden mb-6 p-3 rounded-2xl bg-black/30 backdrop-blur-sm border border-[#5c2e3c]">
+        <div id="rolePanelContent" class="flex flex-wrap gap-3"></div>
+    </div>
+
+    <!-- Вкладки навигации (видны только после логина) -->
+    <div id="tabsContainer" class="hidden mb-6 overflow-x-auto pb-2">
+        <div class="flex gap-2 min-w-max">
+            <button data-tab="dashboard" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-home mr-1"></i> Дашборд</button>
+            <button data-tab="learning" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-graduation-cap mr-1"></i> Обучение</button>
+            <button data-tab="courses" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-book-open mr-1"></i> Курсы / Уроки</button>
+            <button data-tab="tests" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-pen-alt mr-1"></i> Тесты</button>
+            <button data-tab="schools" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-school mr-1"></i> Школы</button>
+            <button data-tab="video" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-video mr-1"></i> Видео → текст</button>
+            <button data-tab="chat" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-comments mr-1"></i> Чат школы</button>
+            <button data-tab="pdfchat" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-file-pdf mr-1"></i> PDF чат</button>
+        </div>
+    </div>
+
+    <!-- Контент вкладок -->
+    <div id="tabContent" class="hidden fade-in">
+        <!-- Дашборд -->
+        <div id="dashboard-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-2xl font-bold border-l-4 border-[#d45c6f] pl-3 mb-4">Добро пожаловать в 学峰 · AI Mentor</h2>
+                <p class="mb-4">Персональный ИИ-учитель для подготовки к экзаменам, создания курсов, уроков и тестов.</p>
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="switchToLearningTabAndStart()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-5 py-2 rounded-full"><i class="fas fa-play mr-1"></i> Начать / продолжить обучение</button>
+                    <button onclick="showTestCreator()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-5 py-2 rounded-full"><i class="fas fa-plus-circle mr-1"></i> Создать тест</button>
+                    <button onclick="showCoursesList()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-5 py-2 rounded-full"><i class="fas fa-book mr-1"></i> Мои курсы</button>
+                    <button onclick="showLessonsList()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-5 py-2 rounded-full"><i class="fas fa-chalkboard mr-1"></i> Мои уроки</button>
+                </div>
             </div>
         </div>
 
-        <div id="profileModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a0e12; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; z-index: 1002; border: 1px solid #c95267;">
-            <h3 style="color:#f3dee3;">Мой профиль</h3>
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img id="modalAvatar" src="" style="width: 100px; height: 100px; border-radius: 50%; cursor: pointer; border: 2px solid #c75f74;">
-                <p style="font-size: 12px; color: #c28b98;">Нажмите на аватар, чтобы изменить</p>
-                <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
-            </div>
-            <p><strong style="color:#e7b5c1;">Имя:</strong> <span id="profileName"></span></p>
-            <p><strong style="color:#e7b5c1;">Email:</strong> <span id="profileEmail"></span></p>
-            <p><strong style="color:#e7b5c1;">Роль:</strong> <span id="profileRole"></span></p>
-            <p><strong style="color:#e7b5c1;">Username:</strong> <span id="profileUsername"></span></p>
-            <button onclick="closeProfileModal()" class="btn-secondary">Закрыть</button>
-        </div>
-
-        <main class="content-panel">
-            <div class="video-download-section step-card" style="margin-top: 30px;">
-                <h2>🎥 Извлечь и перевести текст из видео</h2>
-                <div class="form-group">
-                    <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео" class="modern-input">
-                    <select id="targetLang" class="modern-input">
-                        <option value="ru">Русский</option>
-                        <option value="en">Английский</option>
-                        <option value="kk">Казахский</option>
-                        <option value="zh">Китайский</option>
-                    </select>
-                    <button onclick="processVideo()" class="btn btn-primary">Обработать</button>
-                </div>
-                <div id="videoResult" class="video-result"></div>
-            </div>
-
+        <!-- Обучение (динамические шаги, совместимо с script.js) -->
+        <div id="learning-pane" class="tab-pane hidden">
             <div id="step1" class="step animated-step">
-                <div class="step-card">
-                    <h2>🚀 Начните обучение</h2>
-                    <div class="form-group">
-                        <label>Тип аккаунта:</label>
-                        <select id="userRole" onchange="setRole(this.value)" style="background:#1f1217; border:1px solid #762f3e; color:#f0e2e6; padding:12px; border-radius:1rem;">
-                            <option value="student">🎓 Студент (учусь)</option>
-                            <option value="teacher">👨‍🏫 Учитель (создаю школу)</option>
-                        </select>
+                <div class="step-card p-6">
+                    <h2 class="text-xl font-bold mb-4">🚀 Начните обучение</h2>
+                    <div class="space-y-3">
+                        <div><label class="block text-sm font-medium mb-1">Тип аккаунта:</label><select id="userRole" class="modern-input w-full"><option value="student">🎓 Студент</option><option value="teacher">👨‍🏫 Учитель</option></select></div>
+                        <div><input type="text" id="userName" placeholder="Ваше имя" class="modern-input w-full" required></div>
+                        <div><input type="email" id="userEmail" placeholder="Email" class="modern-input w-full" required></div>
+                        <div><input type="text" id="examName" placeholder="Что изучаем? (ЕНТ математика, SAT, ...)" class="modern-input w-full" required></div>
+                        <button onclick="startLearning()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full">Начать</button>
                     </div>
-                    <div class="form-group">
-                        <input type="text" id="userName" placeholder="Ваше имя" class="modern-input" required>
-                        <input type="email" id="userEmail" placeholder="Email" class="modern-input" required>
-                        <input type="text" id="examName" placeholder="Что изучаем? (например: ЕНТ математика, SAT, IELTS)" class="modern-input" required>
-                        <button onclick="startLearning()" class="btn btn-primary btn-block">Начать</button>
-                    </div>
-                    <div id="errorMessage" class="error-message"></div>
                 </div>
             </div>
+            <div id="step2" class="step hidden"><div class="step-card p-6"><h2 class="text-xl font-bold">📝 Начальное тестирование</h2><div id="testQuestions"></div><button onclick="submitTest()" class="bg-[#bc3f4b] mt-3 px-5 py-2 rounded-full">Отправить ответы</button></div></div>
+            <div id="step3" class="step hidden"><div class="step-card p-6"><h2>📊 Результаты тестирования</h2><div id="testResults"></div><div class="mt-3"><label>Сколько дней у вас есть на подготовку?</label><input type="number" id="daysAvailable" class="modern-input w-full mt-1"><button onclick="setTimeAndPlan()" class="bg-[#bc3f4b] mt-2 px-5 py-2 rounded-full">Создать план</button></div></div></div>
+            <div id="step4" class="step hidden"><div class="step-card p-6"><h2>📚 Ваш план обучения</h2><div id="studyPlan"></div><button id="startLearningBtn" class="bg-[#bc3f4b] mt-3 px-5 py-2 rounded-full">Начать обучение</button></div></div>
+            <div id="step5" class="step hidden"><div class="step-card p-6"><div class="learning-header"><h2>📖 Обучение</h2><div class="progress-wrapper"><div class="progress-bar h-2 bg-gray-700 rounded-full overflow-hidden"><div id="progressFill" class="progress-fill h-2 w-0"></div></div><div id="progressStats"></div></div></div><div id="lessonContent"></div><div id="testContent" class="hidden"></div></div></div>
+        </div>
 
-            <div id="step2" class="step animated-step" style="display:none"><div class="step-card"><h2>📝 Начальное тестирование</h2><div id="testQuestions"></div><button onclick="submitTest()" class="btn btn-primary">Отправить ответы</button></div></div>
-            <div id="step3" class="step animated-step" style="display:none"><div class="step-card"><h2>📊 Результаты тестирования</h2><div id="testResults" class="results-container"></div><div class="form-group"><label>Сколько дней у вас есть на подготовку?</label><input type="number" id="daysAvailable" placeholder="Количество дней" class="modern-input"><button onclick="setTimeAndPlan()" class="btn btn-primary">Создать план</button></div></div></div>
-            <div id="step4" class="step animated-step" style="display:none"><div class="step-card"><h2>📚 Ваш план обучения</h2><div id="studyPlan"></div><button id="startLearningBtn" class="btn btn-primary">Начать обучение</button></div></div>
-            <div id="step5" class="step animated-step" style="display:none"><div class="learning-header"><h2>📖 Обучение</h2><div class="progress-wrapper"><div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div><div id="progressStats" class="progress-stats"></div></div></div><div id="lessonContent"></div><div id="testContent" style="display:none"></div></div>
-            <div id="step6" class="step animated-step" style="display:none"><div class="step-card"><h2>📝 Создать свой тест</h2><div class="form-group"><label>Название теста:</label><input type="text" id="customTestName" placeholder="например: Моя контрольная по тригонометрии" class="modern-input"></div><div class="form-group"><label>Описание (необязательно):</label><textarea id="customTestDesc" rows="2" placeholder="Краткое описание теста" class="modern-input"></textarea></div><div id="questionsList" class="questions-list"></div><div class="button-group"><button onclick="addQuestionField()" class="btn btn-secondary">➕ Добавить вопрос</button><button onclick="saveCustomTest()" class="btn btn-primary">💾 Сохранить тест</button><button onclick="trainCustomTest()" class="btn btn-primary">🤖 Обучить ИИ</button><button onclick="showCustomTestsList()" class="btn btn-secondary">📋 Мои тесты</button><button onclick="backToMainMenu()" class="btn btn-outline">← Главное меню</button></div></div></div>
-            <div id="step7" class="step animated-step" style="display:none"><div class="step-card"><h2>📋 Мои тесты</h2><div id="customTestsList" class="tests-grid"></div><div class="button-group"><button onclick="showTestCreator()" class="btn btn-secondary">➕ Создать новый</button><button onclick="backToMainMenu()" class="btn btn-outline">← Главное меню</button></div></div></div>
-            <div id="step8" class="step animated-step" style="display:none"><div class="step-card"><h2 id="takingTestName"></h2><div id="takingTestQuestions"></div><div class="button-group"><button onclick="submitCustomTest()" class="btn btn-primary">Отправить ответы</button><button onclick="showCustomTestsList()" class="btn btn-outline">← К списку тестов</button></div></div></div>
-            <div id="step9" class="step animated-step" style="display:none"><div class="step-card"><h2>📊 Результаты теста</h2><div id="customTestResults"></div><button onclick="showCustomTestsList()" class="btn btn-outline">← К списку тестов</button></div></div>
-            <div id="step10" class="step animated-step" style="display:none"><div class="step-card"><h2>📚 Мои курсы</h2><div id="userCoursesList" class="courses-grid"></div><div class="button-group"><button onclick="showCreateCourseForm()" class="btn btn-secondary">➕ Создать новый курс</button><button onclick="showMainMenu()" class="btn btn-outline">← Главное меню</button></div></div></div>
-            <div id="step11" class="step animated-step" style="display:none"><div class="step-card"><h2 id="courseViewTitle"></h2><p id="courseViewDescription" class="course-description"></p><p><strong>Критерии успеха:</strong> <span id="courseViewCriteria"></span></p><div id="courseModulesList" class="modules-list"></div><div class="button-group"><button onclick="showCoursesList()" class="btn btn-outline">← К списку курсов</button><button onclick="generateAllLessonsContent()" class="btn btn-primary">✨ Сгенерировать всё содержание</button></div></div></div>
-            <div id="step12" class="step animated-step" style="display:none"><div class="step-card"><h2 id="lessonViewTitle"></h2><p><strong>Предмет:</strong> <span id="lessonViewSubject"></span></p><div id="lessonViewContent" class="lesson-view-content markdown-body"></div><div id="lessonViewHomework"></div><div id="lessonViewYoutube"></div><div class="button-group"><button onclick="generatePresentation()" class="btn btn-primary">📊 Скачать презентацию</button><button onclick="backToLessonsList()" class="btn btn-outline">← К списку уроков</button></div></div></div>
-            <div id="step13" class="step animated-step" style="display:none"><div class="step-card"><h2>📚 Создать новый курс</h2><div class="form-group"><label>Название курса:</label><input type="text" id="newCourseName" placeholder="например: Python для начинающих" class="modern-input"></div><div class="form-group"><label>Описание:</label><textarea id="newCourseDesc" rows="3" placeholder="Краткое описание курса" class="modern-input"></textarea></div><div class="form-group"><label>Критерии успеха (необязательно):</label><textarea id="newCourseCriteria" rows="2" placeholder="Что должен знать и уметь студент после курса" class="modern-input"></textarea></div><div class="button-group"><button onclick="createCourse()" class="btn btn-primary">🚀 Создать курс</button><button onclick="showCoursesList()" class="btn btn-outline">← Отмена</button></div></div></div>
-            <div id="step14" class="step animated-step" style="display:none"><div class="step-card"><h2>📖 Мои уроки</h2><div id="userLessonsList" class="lessons-grid"></div><div class="button-group"><button onclick="showCreateLessonForm()" class="btn btn-secondary">➕ Создать новый урок</button><button onclick="showMainMenu()" class="btn btn-outline">← Главное меню</button></div></div></div>
-            <div id="step15" class="step animated-step" style="display:none"><div class="step-card"><h2>📖 Создать новый урок</h2><div class="form-group"><label>Название урока:</label><input type="text" id="newLessonTitle" placeholder="например: Введение в переменные" class="modern-input"></div><div class="form-group"><label>Предмет:</label><input type="text" id="newLessonSubject" placeholder="например: Программирование" class="modern-input"></div><div class="form-group"><label>Описание (необязательно):</label><textarea id="newLessonDesc" rows="3" placeholder="Дополнительные требования" class="modern-input"></textarea></div><div class="button-group"><button onclick="createLesson()" class="btn btn-primary">🚀 Создать урок</button><button onclick="showLessonsList()" class="btn btn-outline">← Отмена</button></div></div></div>
-
-            <div id="teacherPanel" style="display: none; margin-bottom: 20px;"><div class="step-card"><h3>👨‍🏫 Панель учителя</h3><div class="button-group"><button onclick="showCreateSchoolForm()" class="btn btn-secondary">🏫 Создать школу</button><button onclick="showJoinSchoolForm()" class="btn btn-secondary">🔗 Присоединиться к школе</button><button onclick="showMySchools()" class="btn btn-secondary">📋 Мои школы</button><button onclick="showSchoolStats()" class="btn btn-secondary">📊 Статистика школы</button><button onclick="showTeacherGraphs()" class="btn btn-secondary">📈 Графы знаний</button><button onclick="buildTargetGraph()" class="btn btn-primary">🎯 Построить целевой граф</button></div></div></div>
-            <div id="studentPanel" style="display: none; margin-bottom: 20px;"><div class="step-card"><h3>🎓 Панель ученика</h3><div class="button-group"><button onclick="showMySchoolsStudent()" class="btn btn-secondary">🏫 Мои школы</button><button onclick="joinSchool()" class="btn btn-secondary">🔗 Вступить в школу</button><button onclick="showStudentGraphs()" class="btn btn-secondary">📊 Мой прогресс</button><button onclick="showStudentPlan()" class="btn btn-secondary">📅 Мой план</button></div></div></div>
-
-            <div class="quick-actions">
-                <button onclick="showCoursesList()" class="btn btn-icon">📚 Мои курсы</button>
-                <button onclick="showLessonsList()" class="btn btn-icon">📖 Мои уроки</button>
-                <button onclick="showCreateCourseForm()" class="btn btn-icon">➕ Создать курс</button>
-                <button onclick="showCreateLessonForm()" class="btn btn-icon">➕ Создать урок</button>
-                <button onclick="showMySchoolsStudent()" class="btn btn-icon">🏫 Мои школы</button>
-                <button onclick="joinSchool()" class="btn btn-icon">🔗 Вступить в школу</button>
-                <button onclick="showStudentGraphs()" class="btn btn-icon">📊 Мой прогресс</button>
-                <button onclick="openChatModal()" class="btn btn-icon">💬 Чат школы</button>
-                <button onclick="showStudentPlan()" class="btn btn-icon">📅 Мой план</button>
-                <a href="/hsk" target="_blank" class="btn btn-icon" style="background: #c0392b; color: white; text-decoration: none;">
-                    🇨🇳 Поступление в Китай
-                </a>
-                <a href="/ielts" class="btn btn-icon" style="background: #1a5276;">
-                    🇬🇧 IELTS Prep
-                </a>
-            </div>
-
-            <div id="chatModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a0e12; border-radius: 20px; width: 500px; max-width: 90%; height: 600px; max-height: 80vh; display: flex; flex-direction: column; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid #a24558;">
-                <div style="padding: 15px; border-bottom: 1px solid #883c4b; display: flex; justify-content: space-between;">
-                    <div><button id="chatTabGeneral" onclick="switchChatTab('general')" style="margin-right: 10px; padding: 5px 10px; background: #b34b60; color: white; border: none; border-radius: 5px;">Общий чат</button><button id="chatTabPrivate" onclick="switchChatTab('private')" style="padding: 5px 10px; background: #2a151d; border: none; border-radius: 5px; color:#eecbd3;">Личные сообщения</button></div>
-                    <button onclick="closeChatModal()" style="background: none; border: none; font-size: 20px; color:#e7b5c1;">✕</button>
+        <!-- Курсы/Уроки -->
+        <div id="courses-pane" class="tab-pane hidden">
+            <div class="step-card p-6 mb-4">
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="showCoursesList()" class="bg-[#bc3f4b] px-4 py-2 rounded-full"><i class="fas fa-book mr-1"></i> Мои курсы</button>
+                    <button onclick="showLessonsList()" class="bg-[#bc3f4b] px-4 py-2 rounded-full"><i class="fas fa-chalkboard mr-1"></i> Мои уроки</button>
+                    <button onclick="showCreateCourseForm()" class="bg-[#2c1a20] px-4 py-2 rounded-full"><i class="fas fa-plus-circle mr-1"></i> Создать курс</button>
+                    <button onclick="showCreateLessonForm()" class="bg-[#2c1a20] px-4 py-2 rounded-full"><i class="fas fa-plus-circle mr-1"></i> Создать урок</button>
                 </div>
-                <div id="chatMessagesContainer" style="flex: 1; overflow-y: auto; padding: 15px;"></div>
-                <div style="padding: 15px; border-top: 1px solid #572a36; display: flex;"><input type="text" id="chatInput" placeholder="Введите сообщение..." style="flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #a04559; background:#221218; color:white;"><button onclick="sendChatMessage()" style="margin-left: 10px; background: #ac4158; color: white; border: none; border-radius: 20px; padding: 0 20px;">Отправить</button></div>
-                <div id="chatRecipientSelect" style="display: none; padding: 10px; border-bottom: 1px solid #783545;"><select id="privateRecipientId" style="background:#2f171f; color:white;"><option value="">Выберите получателя</option></select></div>
             </div>
-        </main>
+            <div id="userCoursesList" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
+            <div id="userLessonsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div id="step10" class="hidden"></div><div id="step11" class="hidden"></div><div id="step12" class="hidden"></div>
+            <div id="step13" class="hidden"></div><div id="step14" class="hidden"></div><div id="step15" class="hidden"></div>
+        </div>
+
+        <!-- Тесты -->
+        <div id="tests-pane" class="tab-pane hidden">
+            <div class="step-card p-6 mb-4">
+                <div class="flex gap-3">
+                    <button onclick="showTestCreator()" class="bg-[#bc3f4b] px-4 py-2 rounded-full"><i class="fas fa-pen-alt mr-1"></i> Создать тест</button>
+                    <button onclick="showCustomTestsList()" class="bg-[#2c1a20] px-4 py-2 rounded-full"><i class="fas fa-list mr-1"></i> Мои тесты</button>
+                </div>
+            </div>
+            <div id="step6" class="hidden"></div><div id="step7" class="hidden"></div><div id="step8" class="hidden"></div><div id="step9" class="hidden"></div>
+        </div>
+
+        <!-- Школы -->
+        <div id="schools-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <div id="teacherPanel" class="hidden"><h3 class="text-xl font-bold mb-3">👨‍🏫 Панель учителя</h3><div class="flex flex-wrap gap-3"><button onclick="showCreateSchoolForm()" class="bg-[#2c1a20] px-4 py-2 rounded-full">🏫 Создать школу</button><button onclick="showJoinSchoolForm()" class="bg-[#2c1a20] px-4 py-2 rounded-full">🔗 Присоединиться</button><button onclick="showMySchools()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📋 Мои школы</button><button onclick="showSchoolStats()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📊 Статистика школы</button><button onclick="showTeacherGraphs()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📈 Графы знаний</button><button onclick="buildTargetGraph()" class="bg-[#bc3f4b] px-4 py-2 rounded-full">🎯 Целевой граф</button></div></div>
+                <div id="studentPanel" class="hidden"><h3 class="text-xl font-bold mb-3">🎓 Панель ученика</h3><div class="flex flex-wrap gap-3"><button onclick="showMySchools()" class="bg-[#2c1a20] px-4 py-2 rounded-full">🏫 Мои школы</button><button onclick="joinSchool()" class="bg-[#2c1a20] px-4 py-2 rounded-full">🔗 Вступить в школу</button><button onclick="showStudentGraphs()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📊 Мой прогресс</button><button onclick="showStudentPlan()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📅 Мой план</button></div></div>
+            </div>
+        </div>
+
+        <!-- Видео → текст -->
+        <div id="video-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">🎥 Извлечь и перевести текст из видео</h2>
+                <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео" class="modern-input w-full mb-3">
+                <select id="targetLang" class="modern-input w-full mb-3"><option value="ru">Русский</option><option value="en">Английский</option><option value="kk">Казахский</option><option value="zh">Китайский</option></select>
+                <button onclick="processVideo()" class="bg-[#bc3f4b] px-5 py-2 rounded-full">Обработать</button>
+                <div id="videoResult" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Чат школы -->
+        <div id="chat-pane" class="tab-pane hidden">
+            <div class="step-card p-6 text-center">
+                <i class="fas fa-comments text-6xl text-[#bc3f4b] mb-3 block"></i>
+                <h2 class="text-xl font-bold">Чат школы</h2>
+                <p class="mb-4">Общайтесь с участниками вашей школы в реальном времени.</p>
+                <button onclick="openChatModal()" class="bg-[#bc3f4b] px-5 py-2 rounded-full"><i class="fas fa-comment-dots mr-1"></i> Открыть чат</button>
+            </div>
+        </div>
+
+        <!-- PDF чат (RAG) -->
+        <div id="pdfchat-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">📄 Чат с PDF-лекцией (RAG)</h2>
+                <div class="mb-4">
+                    <input type="file" id="pdfFile" accept=".pdf" class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#bc3f4b] file:text-white hover:file:bg-[#9e2e3a]">
+                    <button id="uploadPdfBtn" class="mt-3 bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">Загрузить и индексировать</button>
+                </div>
+                <div id="pdfChatStatus" class="text-sm text-gray-400 mb-3"></div>
+                <div id="pdfQuestionBlock" style="display: none;">
+                    <textarea id="pdfQuestion" rows="3" placeholder="Задайте вопрос по содержанию лекции..." class="modern-input w-full mb-2"></textarea>
+                    <button id="askPdfBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">Спросить</button>
+                    <div id="pdfAnswer" class="mt-4 p-3 bg-[#1f1219] rounded-xl whitespace-pre-wrap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Блок для неавторизованных (показывается до логина) -->
+    <div id="guestBlock" class="text-center p-12 bg-black/30 backdrop-blur-sm rounded-3xl border border-[#5c2e3c] mt-8">
+        <i class="fas fa-robot text-7xl text-[#bc3f4b] mb-4"></i>
+        <h2 class="text-2xl font-bold mb-2">Добро пожаловать в 学峰 · AI Mentor</h2>
+        <p class="mb-6">Персональный ИИ-учитель для подготовки к экзаменам, создания курсов, уроков и тестов.</p>
+        <button onclick="showAuthModal()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] w-full sm:w-auto px-4 sm:px-8 py-3 rounded-full text-base sm:text-lg font-semibold"><i class="fas fa-key mr-2"></i> Авторизация</button>
     </div>
 </div>
+
+<!-- Модальное окно профиля -->
+<div id="profileModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50" onclick="if(event.target===this) closeProfileModal()"><div class="bg-[#1a0e12] p-6 rounded-2xl max-w-md w-full border border-[#c95267]"><h3 class="text-xl font-bold mb-4">Мой профиль</h3><div class="text-center mb-4"><img id="modalAvatar" class="w-24 h-24 rounded-full mx-auto cursor-pointer border-2 border-[#c75f74]" src=""><p class="text-xs text-[#c28b98] mt-1">Нажмите на аватар, чтобы изменить</p><input type="file" id="avatarUpload" class="hidden"></div><p><strong>Имя:</strong> <span id="profileName"></span></p><p><strong>Email:</strong> <span id="profileEmail"></span></p><p><strong>Роль:</strong> <span id="profileRole"></span></p><p><strong>Username:</strong> <span id="profileUsername"></span></p><div class="flex justify-end mt-4"><button onclick="closeProfileModal()" class="bg-[#2c1a20] px-4 py-2 rounded-full">Закрыть</button></div></div></div>
+
+<!-- Модальное окно чата -->
+<div id="chatModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50" onclick="if(event.target===this) closeChatModal()"><div class="bg-[#1a0e12] rounded-2xl w-[90%] max-w-lg h-[80vh] flex flex-col border border-[#a24558]"><div class="flex justify-between p-3 border-b border-[#883c4b]"><div><button id="chatTabGeneral" class="bg-[#b34b60] text-white px-3 py-1 rounded-md mr-2">Общий чат</button><button id="chatTabPrivate" class="bg-[#2a151d] text-white px-3 py-1 rounded-md">Личные</button></div><button onclick="closeChatModal()" class="text-gray-300 text-xl">&times;</button></div><div id="chatMessagesContainer" class="flex-1 overflow-y-auto p-3"></div><div class="p-3 border-t border-[#572a36] flex"><input type="text" id="chatInput" placeholder="Введите сообщение..." class="flex-1 bg-[#221218] border border-[#a04559] rounded-full px-4 py-2 text-white"><button onclick="sendChatMessage()" class="ml-2 bg-[#ac4158] px-4 rounded-full text-white">Отправить</button></div><div id="chatRecipientSelect" class="p-2 border-b border-[#783545] hidden"><select id="privateRecipientId" class="bg-[#2f171f] text-white p-1 rounded"><option value="">Выберите получателя</option></select></div></div></div>
+
+<!-- Подключаем основной скрипт (script.js) -->
 <script src="/static/script.js"></script>
+
+<!-- Дополнительные исправления и доработки для ролевого интерфейса, восстановления сессии, устранения дублирования -->
+<script>
+    // ========== ДОПОЛНИТЕЛЬНЫЕ УЛУЧШЕНИЯ ==========
+    // 1. Функция восстановления активной сессии для ученика при входе
+    async function resumeOrCreateStudentSession() {
+        if (!currentUserId) return false;
+        try {
+            // Получаем список сессий пользователя (через API-эндпоинт, который возвращает все сессии)
+            const response = await fetch(`${API_URL}/api/sessions?user_id=${currentUserId}`);
+            if (!response.ok) throw new Error();
+            const sessions = await response.json();
+            // Ищем незавершённую сессию (status != 'completed')
+            let activeSession = sessions.find(s => s.status !== 'completed');
+            if (activeSession) {
+                currentSessionId = activeSession.id;
+                // Загружаем данные сессии
+                const sessionRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`);
+                if (sessionRes.ok) {
+                    const sessionData = await sessionRes.json();
+                    if (sessionData.test_results && sessionData.test_results.length) {
+                        currentQuestions = sessionData.test_results[0].questions;
+                    }
+                    // Показываем step5 и загружаем урок
+                    document.getElementById('step1').style.display = 'none';
+                    document.getElementById('step2').style.display = 'none';
+                    document.getElementById('step3').style.display = 'none';
+                    document.getElementById('step4').style.display = 'none';
+                    document.getElementById('step5').style.display = 'block';
+                    await loadNextLesson();
+                    await updateProgress();
+                    return true;
+                }
+            }
+        } catch(e) { console.warn("No active session found", e); }
+        return false;
+    }
+
+    // Переопределяем функцию updateUIAfterAuth (чтобы синхронизировать интерфейс и восстановить сессию)
+    window.updateUIAfterAuth = async function() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            document.getElementById('profileHeader').classList.add('hidden');
+            document.getElementById('rolePanel').classList.add('hidden');
+            document.getElementById('tabsContainer').classList.add('hidden');
+            document.getElementById('tabContent').classList.add('hidden');
+            document.getElementById('guestBlock').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('profileHeader').classList.remove('hidden');
+        document.getElementById('rolePanel').classList.remove('hidden');
+        document.getElementById('tabsContainer').classList.remove('hidden');
+        document.getElementById('tabContent').classList.remove('hidden');
+        document.getElementById('guestBlock').classList.add('hidden');
+
+        try {
+            const profileResp = await fetch('/api/auth/profile', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!profileResp.ok) throw new Error();
+            const profile = await profileResp.json();
+            currentUserId = profile.id;
+            currentUserRole = profile.role;
+            document.getElementById('userNameDisplay').innerText = profile.name;
+            document.getElementById('userRoleDisplay').innerText = profile.role === 'teacher' ? 'Учитель' : 'Ученик';
+            const avatarEl = document.getElementById('avatarImg');
+            if(profile.avatar_url) avatarEl.src = profile.avatar_url;
+
+            // Заполняем панель быстрых действий
+            const panel = document.getElementById('rolePanelContent');
+            if (profile.role === 'teacher') {
+                panel.innerHTML = `<i class="fas fa-chalkboard-teacher mr-2"></i>
+                    <button onclick="showCreateSchoolForm()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🏫 Создать школу</button>
+                    <button onclick="showJoinSchoolForm()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🔗 Присоединиться</button>
+                    <button onclick="showMySchools()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📋 Мои школы</button>
+                    <button onclick="showSchoolStats()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📊 Статистика школы</button>
+                    <button onclick="showTeacherGraphs()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📈 Графы знаний</button>
+                    <button onclick="buildTargetGraph()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-1 rounded-full text-sm">🎯 Целевой граф</button>`;
+                document.getElementById('teacherPanel').classList.remove('hidden');
+                document.getElementById('studentPanel').classList.add('hidden');
+                // Для учителя показываем вкладку Обучение, но без автоматического восстановления сессии
+            } else {
+                panel.innerHTML = `<i class="fas fa-user-graduate mr-2"></i>
+                    <button onclick="joinSchool()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🔗 Вступить в школу</button>
+                    <button onclick="showMySchools()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🏫 Мои школы</button>
+                    <button onclick="showStudentGraphs()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📊 Мой прогресс</button>
+                    <button onclick="showStudentPlan()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📅 Мой план</button>`;
+                document.getElementById('teacherPanel').classList.add('hidden');
+                document.getElementById('studentPanel').classList.remove('hidden');
+                // Попытка восстановить сессию ученика
+                const hasSession = await resumeOrCreateStudentSession();
+                if (!hasSession) {
+                    // Нет активной сессии — показываем step1 для выбора экзамена
+                    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+                    document.getElementById('step1').style.display = 'block';
+                } else {
+                    // уже загружено в resumeOrCreateStudentSession
+                }
+            }
+            // Показываем дашборд по умолчанию
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+            document.getElementById('dashboard-pane').classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-btn[data-tab="dashboard"]').classList.add('active');
+        } catch(e) { console.error(e); }
+    };
+
+    // Функция для переключения на вкладку обучения и запуска/продолжения
+    window.switchToLearningTabAndStart = function() {
+        // Переключаем вкладку "Обучение"
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+        document.getElementById('learning-pane').classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector('.tab-btn[data-tab="learning"]').classList.add('active');
+        // Если уже есть сессия и мы в step5, не трогаем, иначе проверяем
+        if (currentSessionId && document.getElementById('step5').style.display === 'block') {
+            // уже в процессе
+        } else if (currentUserId && currentUserRole === 'student') {
+            // Пытаемся восстановить или создать новую
+            resumeOrCreateStudentSession().then(restored => {
+                if (!restored) {
+                    // показать step1
+                    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+                    document.getElementById('step1').style.display = 'block';
+                }
+            });
+        } else {
+            document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+            document.getElementById('step1').style.display = 'block';
+        }
+    };
+
+    // Перехватываем logout, чтобы обновить UI
+    const originalLogout = window.logout;
+    if (originalLogout) {
+        window.logout = function() {
+            originalLogout();
+            updateUIAfterAuth();
+        };
+    }
+
+    // Переопределяем setAuthToken, чтобы после сохранения вызывать updateUIAfterAuth
+    const originalSetAuthToken = window.setAuthToken;
+    if (originalSetAuthToken) {
+        window.setAuthToken = function(token, userData) {
+            originalSetAuthToken(token, userData);
+            updateUIAfterAuth();
+        };
+    }
+
+    // Инициализация UI после загрузки DOM и событий для вкладок
+    document.addEventListener('DOMContentLoaded', () => {
+        updateUIAfterAuth();
+        // Обработчики вкладок (если не были добавлены ранее)
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.removeEventListener('click', window.tabClickHandler);
+            window.tabClickHandler = function(e) {
+                const tab = this.getAttribute('data-tab');
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+                document.getElementById(`${tab}-pane`).classList.remove('hidden');
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            };
+            btn.addEventListener('click', window.tabClickHandler);
+        });
+        // Роль по умолчанию для select (если используется старый flow)
+        const roleSelect = document.getElementById('userRole');
+        if (roleSelect && typeof setRole === 'function') setRole(roleSelect.value);
+    });
+
+    // ========== PDF RAG интеграция (без дублирования) ==========
+    let currentPdfDocId = null;
+    const uploadBtn = document.getElementById('uploadPdfBtn');
+    const askBtn = document.getElementById('askPdfBtn');
+    const pdfFileInput = document.getElementById('pdfFile');
+    const pdfChatStatus = document.getElementById('pdfChatStatus');
+    const pdfQuestionBlock = document.getElementById('pdfQuestionBlock');
+    const pdfQuestion = document.getElementById('pdfQuestion');
+    const pdfAnswer = document.getElementById('pdfAnswer');
+
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', async () => {
+            const file = pdfFileInput.files[0];
+            if (!file) { alert('Выберите PDF файл'); return; }
+            const formData = new FormData();
+            formData.append('file', file);
+            pdfChatStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка и индексация...';
+            try {
+                const response = await fetch('/api/upload-pdf', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+                    body: formData
+                });
+                if (!response.ok) throw new Error(await response.text());
+                const data = await response.json();
+                currentPdfDocId = data.document_id;
+                pdfChatStatus.innerHTML = `<span class="text-green-400">✅ PDF "${data.filename}" загружен, проиндексировано ${data.chunks} фрагментов.</span>`;
+                pdfQuestionBlock.style.display = 'block';
+            } catch (err) {
+                pdfChatStatus.innerHTML = `<span class="text-red-400">❌ Ошибка: ${err.message}</span>`;
+            }
+        });
+    }
+
+    if (askBtn) {
+        askBtn.addEventListener('click', async () => {
+            const question = pdfQuestion.value.trim();
+            if (!question) { alert('Введите вопрос'); return; }
+            if (!currentPdfDocId) { alert('Сначала загрузите PDF'); return; }
+            pdfAnswer.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Поиск ответа...';
+            try {
+                const response = await fetch('/api/ask-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+                    body: JSON.stringify({ document_id: currentPdfDocId, question: question })
+                });
+                if (!response.ok) throw new Error(await response.text());
+                const data = await response.json();
+                pdfAnswer.innerHTML = `<div class="prose prose-invert max-w-none">${marked.parse(data.answer)}</div>`;
+            } catch (err) {
+                pdfAnswer.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
+            }
+        });
+    }
+</script>
 </body>
 </html>

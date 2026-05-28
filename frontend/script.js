@@ -2010,3 +2010,59 @@ async function startNewSession(examName) {
         alert('Ошибка создания сессии: ' + error.message);
     }
 }
+
+// PDF RAG
+let currentPdfDocId = null;
+
+document.getElementById('uploadPdfBtn')?.addEventListener('click', async () => {
+    const fileInput = document.getElementById('pdfFile');
+    const file = fileInput.files[0];
+    if (!file) {
+        alert('Выберите PDF файл');
+        return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    const statusDiv = document.getElementById('pdfChatStatus');
+    statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка и индексация...';
+    try {
+        const response = await fetch('/api/upload-pdf', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+            body: formData
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        currentPdfDocId = data.document_id;
+        statusDiv.innerHTML = `<span class="text-green-400">✅ PDF "${data.filename}" загружен, проиндексировано ${data.chunks} фрагментов.</span>`;
+        document.getElementById('pdfQuestionBlock').style.display = 'block';
+    } catch (err) {
+        statusDiv.innerHTML = `<span class="text-red-400">❌ Ошибка: ${err.message}</span>`;
+    }
+});
+
+document.getElementById('askPdfBtn')?.addEventListener('click', async () => {
+    const question = document.getElementById('pdfQuestion').value.trim();
+    if (!question) {
+        alert('Введите вопрос');
+        return;
+    }
+    if (!currentPdfDocId) {
+        alert('Сначала загрузите PDF');
+        return;
+    }
+    const answerDiv = document.getElementById('pdfAnswer');
+    answerDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Поиск ответа...';
+    try {
+        const response = await fetch('/api/ask-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+            body: JSON.stringify({ document_id: currentPdfDocId, question: question })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        answerDiv.innerHTML = `<div class="prose prose-invert max-w-none">${marked.parse(data.answer)}</div>`;
+    } catch (err) {
+        answerDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
+    }
+});

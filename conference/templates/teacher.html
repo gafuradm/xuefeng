@@ -1,281 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>学峰 · Панель преподавателя | Живая лекция</title>
+    <title>学峰 · Преподаватель | Живая лекция</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23831f33'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23f0ced5' font-weight='bold'%3E学%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', 'Segoe UI', 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
-            background: #0a0305 radial-gradient(circle at 20% 30%, #2c0e14 0%, #040102 100%);
-            min-height: 100vh;
-            padding: 24px;
-            color: #f0e9ec;
-        }
-
-        /* декоративный шум */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            background-image: radial-gradient(rgba(180, 40, 60, 0.08) 1px, transparent 1px);
-            background-size: 35px 35px;
-            z-index: 0;
-        }
-
-        .app-wrapper {
-            max-width: 1500px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 2;
-        }
-
-        .container {
-            background: rgba(10, 6, 8, 0.82);
-            backdrop-filter: blur(3px);
-            border-radius: 2.5rem;
-            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(139, 44, 61, 0.3) inset;
-            overflow: hidden;
-        }
-
-        /* Шапка с логотипом 学峰 */
-        .hero-header {
-            background: radial-gradient(ellipse at 70% 20%, #2f0a14, #050103);
-            border-bottom: 2px solid #b83b4b;
-            padding: 1.5rem 2rem;
-            text-align: center;
-        }
-        .xuefeng-master {
-            margin-bottom: 0.5rem;
-        }
-        .xuefeng-logo {
-            font-family: 'Noto Serif SC', 'Times New Roman', 'Cinema', 'Impact', cursive;
-            font-size: 4rem;
-            font-weight: 900;
-            letter-spacing: 12px;
-            display: inline-block;
-            background: linear-gradient(135deg, #e6b8c2 10%, #bc3f4b 50%, #630d1f 90%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            text-shadow: 0 0 12px rgba(188, 63, 75, 0.7), 0 4px 20px rgba(0,0,0,0.5);
-            transform: skew(-6deg) scale(1.02);
-            transition: all 0.3s;
-        }
-        .xuefeng-logo:hover {
-            letter-spacing: 15px;
-            transform: skew(-3deg) scale(1.05);
-        }
-        .xuefeng-sub {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 6px;
-            font-weight: 500;
-            color: #ca7a88;
-            border-top: 1px solid #862633;
-            display: inline-block;
-            padding-top: 6px;
-        }
-        .hero-header h1 {
-            font-size: 1.6rem;
-            margin-top: 0.5rem;
-            background: linear-gradient(120deg, #f0e6e8, #dd9ba8);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-        }
-        .hero-header p {
-            color: #d1bfc3;
-            font-size: 0.85rem;
-        }
-
-        /* Status bar */
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 24px;
-            background: rgba(18, 8, 11, 0.75);
-            border-bottom: 1px solid #4f2a36;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 5px 14px;
-            border-radius: 2rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            background: #2d1920;
-        }
-        .status-online { background: #1e4a2f; color: #bbf0cf; }
-        .status-offline { background: #5a2a2a; color: #f5bfbf; }
-        .lang-select, #userNameInput {
-            background: #1f1217;
-            border: 1px solid #762f3e;
-            color: #f0e2e6;
-            border-radius: 2rem;
-            padding: 6px 12px;
-        }
-        .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
-
-        /* Основной контент */
-        .main-content {
-            display: flex;
-            padding: 24px;
-            gap: 24px;
-            flex-wrap: wrap;
-        }
-        .screen-share-panel {
-            flex: 2;
-            min-width: 500px;
-        }
-        .chat-and-camera {
-            flex: 1;
-            min-width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .video-container {
-            background: #0a0508;
-            border-radius: 1.5rem;
-            padding: 12px;
-            border: 1px solid #823544;
-        }
-        #localScreenVideo, #localCameraVideo {
-            background: #000;
-            border-radius: 1rem;
-            width: 100%;
-        }
-        #localCameraVideo {
-            max-width: 280px;
-            margin-top: 12px;
-        }
-        .share-controls {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            flex-wrap: wrap;
-        }
-        /* Универсальные кнопки */
-        .btn {
-            padding: 10px 22px;
-            border-radius: 3rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-primary {
-            background: linear-gradient(115deg, #9e2c3e, #551a26);
-            color: white;
-            border: 1px solid #c45466;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        .btn-primary:hover { transform: translateY(-2px); background: linear-gradient(115deg, #bc374b, #7d202f); }
-        .btn-danger { background: #962b3e; color: white; }
-        .btn-danger:hover { background: #b53f54; }
-        .btn-success { background: #2d7a4b; color: white; }
-        .btn-success:hover { background: #3f9a60; }
-
-        /* Карточки */
-        .qr-code, .student-list, .translation-box, .history-box, .chat-panel, .stats-panel {
-            background: rgba(18, 8, 11, 0.75);
-            backdrop-filter: blur(2px);
-            border-radius: 1.5rem;
-            border: 1px solid #5c2e3c;
-            padding: 1rem 1.2rem;
-        }
-        .qr-code { text-align: center; }
-        .code-display {
-            font-size: 2rem;
-            letter-spacing: 6px;
-            font-weight: bold;
-            color: #f0ced5;
-            background: #0f070b;
-            display: inline-block;
-            padding: 0.3rem 1rem;
-            border-radius: 2rem;
-            margin: 10px 0;
-        }
-        .timer { color: #e68a9c; font-size: 0.8rem; }
-        .student-list h3, .translation-box h3, .history-box h3, .chat-panel h3 {
-            color: #e7a5b4;
-            border-left: 4px solid #d45c6f;
-            padding-left: 10px;
-            margin-bottom: 12px;
-        }
-        .student-item {
-            background: #0f070b80;
-            margin: 6px 0;
-            padding: 6px;
-            border-radius: 1rem;
-        }
-        #currentTranslation {
-            background: #1f1219;
-            padding: 10px;
-            border-radius: 1rem;
-            font-size: 1rem;
-        }
-        .history-item {
-            border-bottom: 1px solid #3f212d;
-            margin-bottom: 6px;
-            padding: 6px;
-        }
-        .chat-messages {
-            background: #0d060a;
-            border-radius: 1rem;
-            border: 1px solid #602f3e;
-            height: 200px;
-            overflow-y: auto;
-            padding: 8px;
-        }
-        .chat-input-area {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .chat-input-area input {
-            flex: 1;
-            background: #1f1217;
-            border: 1px solid #762f3e;
-            border-radius: 2rem;
-            padding: 8px 15px;
-            color: white;
-        }
-        .stats-panel {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-        .stat-card {
-            background: #1f1219;
-            border-radius: 1rem;
-            padding: 8px;
-            text-align: center;
-            flex: 1;
-        }
-        .stat-number {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #dd7f91;
-        }
-        /* Доска */
+        /* Дополнительные стили для совместимости с оригинальным JS (canvas, whiteboard) */
         .whiteboard-container {
-            margin: 20px;
             background: #140a0e;
             border-radius: 1.5rem;
             border: 1px solid #823544;
@@ -303,35 +39,34 @@
             width: 100%;
             height: auto;
         }
-
-        @media (max-width: 768px) {
-            .main-content { flex-direction: column; }
-            .screen-share-panel { min-width: auto; }
-            .hero-header h1 { font-size: 1.2rem; }
-            .xuefeng-logo { font-size: 2rem; letter-spacing: 6px; }
-        }
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #2c1a20; border-radius: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #bc3f4b; border-radius: 4px; }
     </style>
 </head>
-<body>
-<div class="app-wrapper">
-<div class="container">
-    <div class="hero-header">
-        <div class="xuefeng-master">
-            <div class="xuefeng-logo">学峰</div>
-            <div class="xuefeng-sub">XUEFENG · LIVE LECTURE · TEACHER</div>
+<body class="bg-gradient-to-br from-[#0a0305] to-[#040102] text-gray-200 font-sans antialiased">
+
+<div class="max-w-[1600px] mx-auto px-4 py-6">
+    <!-- Шапка с логотипом -->
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6 p-4 rounded-2xl bg-black/30 backdrop-blur-sm border border-[#5c2e3c]">
+        <div class="flex items-center gap-3">
+            <div class="text-4xl font-black tracking-wider bg-gradient-to-r from-[#e6b8c2] to-[#bc3f4b] bg-clip-text text-transparent">学峰</div>
+            <div class="text-xs text-[#ca7a88] hidden sm:block">LIVE LECTURE · TEACHER</div>
         </div>
-        <h1>👨‍🏫 Панель преподавателя</h1>
-        <p>Трансляция экрана | Видео камера | Чат с автопереводом | Интерактивная доска</p>
+        <div class="flex flex-wrap gap-3">
+            <button onclick="window.location.href='/'" class="bg-[#2c1a20] hover:bg-[#3f232c] text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-home mr-1"></i> На главную</button>
+        </div>
     </div>
 
-    <div class="status-bar">
-        <div>
-            <span class="status-badge" id="connectionStatus">🟡 Подключение...</span>
-            <span class="status-badge" id="screenStatus" style="margin-left: 8px;">📺 Экран: выкл</span>
-            <span class="status-badge" id="cameraStatus" style="margin-left: 8px;">📷 Камера: выкл</span>
+    <!-- Статус-бар -->
+    <div class="flex flex-wrap justify-between items-center gap-3 p-4 rounded-2xl bg-black/30 backdrop-blur-sm border border-[#5c2e3c] mb-6">
+        <div class="flex flex-wrap gap-3">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920]" id="connectionStatus">🟡 Подключение...</span>
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920]" id="screenStatus">📺 Экран: выкл</span>
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920]" id="cameraStatus">📷 Камера: выкл</span>
         </div>
-        <div>
-            <select id="myLanguage" class="lang-select">
+        <div class="flex flex-wrap items-center gap-3">
+            <select id="myLanguage" class="bg-[#1f1217] border border-[#762f3e] rounded-full px-3 py-1.5 text-sm">
                 <option value="en">🇺🇸 English</option>
                 <option value="ru">🇷🇺 Русский</option>
                 <option value="kk">🇰🇿 Қазақша</option>
@@ -340,78 +75,100 @@
                 <option value="ko">🇰🇷 한국어</option>
                 <option value="zh">🇨🇳 中文</option>
             </select>
-            <span style="margin-left: 12px;">👤 Имя: <input type="text" id="userNameInput" placeholder="Ваше имя" value="Преподаватель" style="width: 120px;"></span>
-            <button onclick="setName()" class="btn btn-success btn-sm">OK</button>
+            <div class="flex items-center gap-2">
+                <span class="text-sm">👤 Имя:</span>
+                <input type="text" id="userNameInput" value="Преподаватель" class="bg-[#1f1217] border border-[#762f3e] rounded-full px-3 py-1.5 text-sm w-32">
+                <button onclick="setName()" class="bg-[#2d7a4b] hover:bg-[#3f9a60] px-3 py-1.5 rounded-full text-sm font-medium">OK</button>
+            </div>
         </div>
-        <div>
-            <span>📊 Фраз: <strong id="phraseCount">0</strong></span>
-            <span style="margin-left: 15px;">👥 Подключено: <strong id="clientCount">0</strong></span>
+        <div class="flex gap-4 text-sm">
+            <span>📊 Фраз: <strong id="phraseCount" class="text-[#e8a0ab]">0</strong></span>
+            <span>👥 Подключено: <strong id="clientCount" class="text-[#e8a0ab]">0</strong></span>
         </div>
     </div>
 
-    <div class="main-content">
-        <div class="screen-share-panel">
-            <div class="video-container">
-                <video id="localScreenVideo" autoplay playsinline muted></video>
-                <video id="localCameraVideo" autoplay playsinline muted></video>
-            </div>
-            <div class="share-controls">
-                <button id="startScreenBtn" class="btn btn-primary">🎥 Начать трансляцию экрана</button>
-                <button id="stopScreenBtn" class="btn btn-danger" style="display: none;">⏹ Остановить экран</button>
-                <button id="startCameraBtn" class="btn btn-success">📷 Включить камеру</button>
-                <button id="stopCameraBtn" class="btn btn-danger" style="display: none;">📷 Выключить камеру</button>
-                <button onclick="refreshQR()" class="btn btn-primary">🔄 Обновить QR-код</button>
-                <button id="toggleWhiteboardBtn" class="btn btn-primary">📝 Открыть доску</button>
-            </div>
-
-            <div class="qr-code">
-                <h3>📱 QR-код для студентов</h3>
-                <div id="qrCodeImage"></div>
-                <div class="code-display" id="currentCode"></div>
-                <div class="timer" id="timerDisplay"></div>
+    <!-- Основной контент: 2 колонки -->
+    <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Левая колонка (трансляция, QR, студенты) -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Видео блок -->
+            <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4">
+                <video id="localScreenVideo" autoplay playsinline muted class="w-full rounded-xl bg-black"></video>
+                <video id="localCameraVideo" autoplay playsinline muted class="w-full max-w-[280px] mt-4 rounded-xl bg-black"></video>
+                <div class="flex flex-wrap gap-3 mt-4">
+                    <button id="startScreenBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] text-white px-5 py-2 rounded-full text-sm font-semibold"><i class="fas fa-desktop mr-1"></i> Начать трансляцию</button>
+                    <button id="stopScreenBtn" class="bg-[#962b3e] hover:bg-[#b53f54] text-white px-5 py-2 rounded-full text-sm font-semibold" style="display:none"><i class="fas fa-stop mr-1"></i> Остановить экран</button>
+                    <button id="startCameraBtn" class="bg-[#2d7a4b] hover:bg-[#3f9a60] text-white px-5 py-2 rounded-full text-sm font-semibold"><i class="fas fa-video mr-1"></i> Включить камеру</button>
+                    <button id="stopCameraBtn" class="bg-[#962b3e] hover:bg-[#b53f54] text-white px-5 py-2 rounded-full text-sm font-semibold" style="display:none"><i class="fas fa-video-slash mr-1"></i> Выключить камеру</button>
+                    <button onclick="refreshQR()" class="bg-[#2c1a20] hover:bg-[#3f232c] text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-qrcode mr-1"></i> Обновить QR</button>
+                    <button id="toggleWhiteboardBtn" class="bg-[#2c1a20] hover:bg-[#3f232c] text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-chalkboard mr-1"></i> Открыть доску</button>
+                </div>
             </div>
 
-            <div class="student-list">
-                <h3>✅ Подтверждённые студенты</h3>
-                <div id="verifiedStudentsList"><em>Никого пока нет</em></div>
+            <!-- QR-код и список студентов -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4 text-center">
+                    <h3 class="text-lg font-bold border-l-4 border-[#d45c6f] pl-3 mb-3">📱 QR-код для студентов</h3>
+                    <div id="qrCodeImage" class="flex justify-center mb-2"></div>
+                    <div class="text-2xl font-mono tracking-wider bg-black/40 inline-block px-4 py-2 rounded-full" id="currentCode"></div>
+                    <div class="text-sm text-[#e68a9c] mt-2" id="timerDisplay"></div>
+                </div>
+                <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4">
+                    <h3 class="text-lg font-bold border-l-4 border-[#d45c6f] pl-3 mb-3">✅ Подтверждённые студенты</h3>
+                    <div id="verifiedStudentsList" class="space-y-2 max-h-60 overflow-y-auto scrollbar-thin"><em class="text-gray-400">Никого пока нет</em></div>
+                </div>
             </div>
         </div>
 
-        <div class="chat-and-camera">
-            <div class="translation-box">
-                <h3>📝 Текущий перевод речи</h3>
-                <div id="currentTranslation"><em>Ожидание начала лекции...</em></div>
-                <div id="originalText"></div>
+        <!-- Правая колонка (перевод, чат, статистика) -->
+        <div class="space-y-6">
+            <!-- Текущий перевод -->
+            <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4">
+                <h3 class="text-lg font-bold border-l-4 border-[#d45c6f] pl-3 mb-3">📝 Текущий перевод речи</h3>
+                <div id="currentTranslation" class="bg-[#1f1219] p-3 rounded-xl text-base font-medium"><em>Ожидание начала лекции...</em></div>
+                <div id="originalText" class="text-sm text-gray-400 mt-2 italic"></div>
             </div>
 
-            <div class="history-box">
-                <h3>📜 История перевода</h3>
-                <div id="historyList"><em>Пусто</em></div>
+            <!-- История перевода -->
+            <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4">
+                <h3 class="text-lg font-bold border-l-4 border-[#d45c6f] pl-3 mb-3">📜 История перевода</h3>
+                <div id="historyList" class="space-y-2 max-h-48 overflow-y-auto scrollbar-thin"><em class="text-gray-400">Пусто</em></div>
             </div>
 
-            <div class="stats-panel">
-                <div class="stat-card"><div class="stat-number" id="verifiedCount">0</div><div>Студентов</div></div>
-                <div class="stat-card"><div class="stat-number" id="historyCount">0</div><div>Записей</div></div>
+            <!-- Статистика -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-3 text-center">
+                    <div class="text-3xl font-bold text-[#dd7f91]" id="verifiedCount">0</div>
+                    <div class="text-xs uppercase tracking-wide text-gray-400">Студентов</div>
+                </div>
+                <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-3 text-center">
+                    <div class="text-3xl font-bold text-[#dd7f91]" id="historyCount">0</div>
+                    <div class="text-xs uppercase tracking-wide text-gray-400">Записей</div>
+                </div>
             </div>
 
-            <div class="chat-panel">
-                <h3>💬 Чат (автоперевод)</h3>
-                <div class="chat-messages" id="chatMessages"><div style="color:#b38492; text-align:center;">Сообщения будут здесь</div></div>
-                <div class="chat-input-area">
-                    <input type="text" id="chatInput" placeholder="Введите сообщение..." autocomplete="off">
-                    <button onclick="sendChatMessage()" class="btn btn-primary">Отправить</button>
+            <!-- Чат -->
+            <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4">
+                <h3 class="text-lg font-bold border-l-4 border-[#d45c6f] pl-3 mb-3">💬 Чат (автоперевод)</h3>
+                <div id="chatMessages" class="bg-[#0d060a] rounded-xl border border-[#602f3e] h-64 overflow-y-auto p-3 space-y-2 scrollbar-thin">
+                    <div class="text-center text-gray-500">Сообщения будут здесь</div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    <input type="text" id="chatInput" placeholder="Введите сообщение..." class="flex-1 bg-[#1f1217] border border-[#762f3e] rounded-full px-4 py-2 text-sm focus:outline-none focus:border-[#bc3f4b]">
+                    <button onclick="sendChatMessage()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-5 py-2 rounded-full text-sm font-semibold">Отправить</button>
                 </div>
             </div>
         </div>
     </div>
-    <div id="whiteboardContainer" style="display: none;"></div>
-</div>
+
+    <!-- Контейнер для доски (скрыт по умолчанию) -->
+    <div id="whiteboardContainer" class="mt-6" style="display: none;"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 <script>
-    // ================== ФУНКЦИОНАЛ ПОЛНОСТЬЮ СОХРАНЁН ==================
+    // ================== ПОЛНОСТЬЮ СОХРАНЁННЫЙ ФУНКЦИОНАЛ ==================
     const socket = io();
     let screenStream = null;
     let cameraStream = null;
@@ -424,7 +181,6 @@
 
     const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
 
-    // DOM
     const startScreenBtn = document.getElementById('startScreenBtn');
     const stopScreenBtn = document.getElementById('stopScreenBtn');
     const startCameraBtn = document.getElementById('startCameraBtn');
@@ -436,23 +192,18 @@
 
     function updateConnectionStatus(connected) {
         const el = document.getElementById('connectionStatus');
-        if (connected) {
-            el.innerHTML = '🟢 Подключено';
-            el.className = 'status-badge status-online';
-        } else {
-            el.innerHTML = '🔴 Отключено';
-            el.className = 'status-badge status-offline';
-        }
+        if (connected) { el.innerHTML = '🟢 Подключено'; el.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#1e4a2f] text-[#bbf0cf]'; }
+        else { el.innerHTML = '🔴 Отключено'; el.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#5a2a2a] text-[#f5bfbf]'; }
     }
     function updateScreenStatus(active) {
         const el = document.getElementById('screenStatus');
-        if (active) { el.innerHTML = '📺 Экран: вкл'; el.style.background = '#1e4a2f'; el.style.color = '#bbf0cf'; }
-        else { el.innerHTML = '📺 Экран: выкл'; el.style.background = '#2d1920'; el.style.color = '#f0e2e6'; }
+        if (active) { el.innerHTML = '📺 Экран: вкл'; el.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#1e4a2f] text-[#bbf0cf]'; }
+        else { el.innerHTML = '📺 Экран: выкл'; el.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920] text-[#f0e2e6]'; }
     }
     function updateCameraStatus(active) {
         const el = document.getElementById('cameraStatus');
-        if (active) { el.innerHTML = '📷 Камера: вкл'; el.style.background = '#1e4a2f'; el.style.color = '#bbf0cf'; }
-        else { el.innerHTML = '📷 Камера: выкл'; el.style.background = '#2d1920'; el.style.color = '#f0e2e6'; }
+        if (active) { el.innerHTML = '📷 Камера: вкл'; el.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#1e4a2f] text-[#bbf0cf]'; }
+        else { el.innerHTML = '📷 Камера: выкл'; el.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920] text-[#f0e2e6]'; }
     }
 
     function createScreenPeerConnection(studentId) {
@@ -553,16 +304,16 @@
         const historyList = document.getElementById('historyList');
         if (historyList.children[0]?.innerText === 'Пусто') historyList.innerHTML = '';
         historyList.innerHTML = history.map(item => `
-            <div class="history-item">
-                <div class="history-time" style="font-size:10px; color:#bc8f9b;">${item.time}</div>
-                <div class="history-translation">${item.translation}</div>
-                <div class="history-original" style="font-size:12px;">${item.original || ''}</div>
+            <div class="bg-[#0f070b80] rounded-lg p-2 text-sm border-l-2 border-[#bc3f4b]">
+                <div class="text-[10px] text-[#bc8f9b]">${item.time}</div>
+                <div class="font-medium">${item.translation}</div>
+                <div class="text-xs text-gray-400">${item.original || ''}</div>
             </div>
         `).join('');
         document.getElementById('historyCount').innerText = history.length;
     }
 
-    // ================== ДОСКА (аналогично) ==================
+    // ================== ДОСКА (оригинальный класс) ==================
     class Whiteboard {
         constructor(containerId, socket, isTeacher, roomName) {
             this.container = document.getElementById(containerId);
@@ -643,17 +394,17 @@
     toggleWhiteboardBtn.addEventListener('click', () => {
         if (whiteboardContainer.style.display === 'none') {
             whiteboardContainer.style.display = 'block';
-            toggleWhiteboardBtn.textContent = '📝 Закрыть доску';
+            toggleWhiteboardBtn.innerHTML = '<i class="fas fa-chalkboard mr-1"></i> Закрыть доску';
             if (!whiteboardInstance) whiteboardInstance = new Whiteboard('whiteboardContainer', socket, true, 'teacher_room');
-        } else { whiteboardContainer.style.display = 'none'; toggleWhiteboardBtn.textContent = '📝 Открыть доску'; }
+        } else { whiteboardContainer.style.display = 'none'; toggleWhiteboardBtn.innerHTML = '<i class="fas fa-chalkboard mr-1"></i> Открыть доску'; }
     });
 
     // Socket handlers
     socket.on('connect', () => { updateConnectionStatus(true); fetchCurrentCode(); fetchVerifiedStudents(); setInterval(fetchVerifiedStudents, 5000); const savedLang = localStorage.getItem('teacher_lang') || 'en'; document.getElementById('myLanguage').value = savedLang; socket.emit('set_language', { lang: savedLang }); });
     socket.on('disconnect', () => updateConnectionStatus(false));
     socket.on('stats', (data) => { document.getElementById('phraseCount').innerText = data.phrases; document.getElementById('clientCount').innerText = data.connected; });
-    socket.on('new_translation', (data) => { document.getElementById('currentTranslation').innerHTML = `<strong>${data.translation}</strong>`; if (data.original) document.getElementById('originalText').innerHTML = `<i>Оригинал: "${data.original}"</i>`; if (data.is_final) addToHistory(data.translation, data.original); });
-    socket.on('chat_message', (data) => { const chatDiv = document.getElementById('chatMessages'); if (chatDiv.children[0]?.innerText.includes('Сообщения будут здесь')) chatDiv.innerHTML = ''; chatDiv.innerHTML += `<div><strong>${data.sender === 'me' ? 'Я' : data.sender}:</strong> ${data.translated}<br><small style="color:#bf8f9b;">${data.original}</small></div>`; chatDiv.scrollTop = chatDiv.scrollHeight; });
+    socket.on('new_translation', (data) => { document.getElementById('currentTranslation').innerHTML = `<strong>${data.translation}</strong>`; if (data.original) document.getElementById('originalText').innerHTML = `<i class="text-gray-400">Оригинал: "${data.original}"</i>`; if (data.is_final) addToHistory(data.translation, data.original); });
+    socket.on('chat_message', (data) => { const chatDiv = document.getElementById('chatMessages'); if (chatDiv.children[0]?.innerText.includes('Сообщения будут здесь')) chatDiv.innerHTML = ''; chatDiv.innerHTML += `<div class="bg-[#1f1219] rounded-lg p-2"><div class="font-semibold text-sm">${data.sender === 'me' ? 'Я' : data.sender}</div><div>${data.translated}</div><div class="text-xs text-gray-400 mt-1">${data.original}</div></div>`; chatDiv.scrollTop = chatDiv.scrollHeight; });
     socket.on('webrtc_answer', async (data) => { let pc = data.type === 'screen' ? screenPeerConnections[data.studentId] : cameraPeerConnections[data.studentId]; if (pc && data.answer) await pc.setRemoteDescription(new RTCSessionDescription(data.answer)); });
     socket.on('webrtc_ice_candidate', (data) => { let pc = data.type === 'screen' ? screenPeerConnections[data.studentId] : cameraPeerConnections[data.studentId]; if (pc && data.candidate) pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e=>console.error(e)); });
     socket.on('student_joined', async (data) => { if (isScreenSharing && screenStream) { const pc = createScreenPeerConnection(data.studentId); screenPeerConnections[data.studentId] = pc; await sendOfferToStudent(data.studentId, pc, 'screen'); } if (isCameraOn && cameraStream) { const pc = createCameraPeerConnection(data.studentId); cameraPeerConnections[data.studentId] = pc; await sendOfferToStudent(data.studentId, pc, 'camera'); } });
@@ -670,7 +421,7 @@
         const data = await resp.json();
         document.getElementById('currentCode').innerText = data.code;
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/student?code=' + data.code)}`;
-        document.getElementById('qrCodeImage').innerHTML = `<img src="${qrUrl}" width="140" height="140" style="border-radius:1rem;">`;
+        document.getElementById('qrCodeImage').innerHTML = `<img src="${qrUrl}" width="140" height="140" class="rounded-xl shadow-md">`;
         let t = data.expires_in;
         const interval = setInterval(() => { t--; document.getElementById('timerDisplay').innerText = `Код действителен: ${t} сек`; if (t <= 0) { clearInterval(interval); fetchCurrentCode(); } }, 1000);
     }
@@ -678,8 +429,8 @@
         const resp = await fetch('/api/verified_students');
         const data = await resp.json();
         document.getElementById('verifiedCount').innerText = data.count;
-        if (data.students.length) document.getElementById('verifiedStudentsList').innerHTML = data.students.map(s => `<div class="student-item">✅ ${s.id} - ${s.time}</div>`).join('');
-        else document.getElementById('verifiedStudentsList').innerHTML = '<em>Никого пока нет</em>';
+        if (data.students.length) document.getElementById('verifiedStudentsList').innerHTML = data.students.map(s => `<div class="bg-[#0f070b80] rounded-lg p-2 text-sm flex justify-between items-center"><span>✅ ${s.id}</span><span class="text-gray-400 text-xs">${s.time}</span></div>`).join('');
+        else document.getElementById('verifiedStudentsList').innerHTML = '<em class="text-gray-400">Никого пока нет</em>';
     }
     function refreshQR() { fetchCurrentCode(); }
     fetchCurrentCode();
