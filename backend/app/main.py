@@ -56,6 +56,7 @@ from .models import (
     UserInteraction, UserPerformance, CustomTest,
     School, SchoolMember, LessonVideo
 )
+from .auth import get_password_hash, verify_password, create_access_token, get_current_user, get_current_active_user
 from .deepseek_client import deepseek_client
 from .schemas import *
 from .services import AITeacherService
@@ -162,10 +163,6 @@ HSK_DIR = PROJECT_ROOT / "frontend_hsk"
 # можно определить BACKEND_ROOT:
 BACKEND_ROOT = Path(__file__).parent.parent
 
-# Монтируем статику (CSS, JS) из папки frontend
-if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
-
 @app.get("/", response_class=HTMLResponse)
 async def main_frontend():
     """Главная страница Universal AI Teacher"""
@@ -249,6 +246,25 @@ async def create_progress_test(session_id: int, db: Session = Depends(get_db)):
         return {"questions": questions}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/sessions/by_user")
+async def get_sessions_by_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    sessions = db.query(SessionModel).filter(
+        SessionModel.user_id == user_id
+    ).order_by(SessionModel.created_at.desc()).all()
+    return [
+        {
+            "id": s.id,
+            "exam_name": s.exam_name,
+            "status": s.status,
+            "created_at": s.created_at
+        }
+        for s in sessions
+    ]
 
 @app.get("/api/sessions/{session_id}")
 async def get_session(session_id: int, db: Session = Depends(get_db)):
@@ -1030,8 +1046,6 @@ async def conference_teacher_redirect():
 @app.get("/conference/student")
 async def conference_student_redirect():
     return RedirectResponse(url="http://localhost:8000/student")
-
-from .auth import get_password_hash, verify_password, create_access_token, get_current_user, get_current_active_user
 
 # Регистрация
 @app.post("/api/auth/register")
@@ -2242,6 +2256,42 @@ async def get_data_result(
         "code": session.code,
         "filename": session.filename
     }
+
+@app.post("/api/ai/generate-code")
+async def generate_code_proxy(
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
+    data = await request.json()
+    prompt = data.get("prompt", "")
+    df_info = data.get("df_info", "")
+    
+    code = await deepseek_client.chat_completion([
+        {
+            "role": "system",
+            "content": "Ты эксперт по анализу данных. Пиши только Python-код без объяснений и без markdown-тегов."
+        },
+        {
+            "role": "user",
+            "content": f"""Напиши Python-код для pandas/matplotlib.
+
+Структура датафрейма (df уже загружен):
+{df_info}
+
+Задача: {prompt}
+
+Правила:
+- df уже доступен, pandas импортировать не нужно
+- numpy доступен как np
+- Для графиков используй plt.show() в конце
+- plt.rcParams["figure.figsize"] = (10, 6) для размера
+- plt.tight_layout() перед show()
+- Только код, никаких пояснений"""
+        }
+    ], max_tokens=1000, temperature=0.3)
+    
+    code = code.replace("```python", "").replace("```", "").strip()
+    return {"code": code}
 
 # ========== IELTS МОДУЛЬ (полностью) ==========
 # ========== IELTS МОДУЛЬ (полностью) ==========
