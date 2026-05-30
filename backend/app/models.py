@@ -89,6 +89,7 @@ class User(Base):
     timezone = Column(String, default="UTC")
     language = Column(String, default="en")
 
+    data_analysis_sessions = relationship("DataAnalysisSession", back_populates="user", cascade="all, delete-orphan")
     scientific_articles = relationship("ScientificArticle", back_populates="user", cascade="all, delete-orphan")
 
     syllabus_courses = relationship("SyllabusCourse", back_populates="user", cascade="all, delete-orphan")
@@ -674,3 +675,21 @@ class ScientificArticle(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="scientific_articles")
+
+class DataAnalysisSession(Base):
+    __tablename__ = "data_analysis_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    filename = Column(String, nullable=True)
+    file_path = Column(String, nullable=True)
+    dataframe_json = Column(Text, nullable=True)   # храним данные как JSON
+    code = Column(Text, nullable=True)
+    output_text = Column(Text, nullable=True)
+    output_images = Column(JSON, default=[])
+    status = Column(String, default="pending")
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="data_analysis_sessions")

@@ -15,6 +15,15 @@ from .models import UserDocument
 import shutil
 import json
 
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')   # для работы без GUI
+import matplotlib.pyplot as plt
+import io
+import base64
+from RestrictedPython import compile_restricted, safe_globals
+from .models import DataAnalysisSession
+
 from fastapi import FastAPI, Depends, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -1985,6 +1994,254 @@ async def get_favorites(
         ScientificArticle.is_favorite == True
     ).order_by(ScientificArticle.created_at.desc()).all()
     return articles
+
+def safe_execute_code(code: str, local_vars: dict) -> tuple:
+    """
+    Выполняет Python-код в ограниченной среде.
+    Возвращает (output_text, list_of_base64_images, error_message)
+    """
+    # Разрешаем только определённые модули
+    allowed_modules = {
+        'pandas': pd,
+        'np': np,          # numpy должен быть импортирован как np
+        'matplotlib': matplotlib,
+        'plt': plt,
+        'math': __import__('math'),
+        'random': __import__('random'),
+        'statistics': __import__('statistics'),
+        'datetime': __import__('datetime'),
+        'collections': __import__('collections'),
+        'itertools': __import__('itertools'),
+        'functools': __import__('functools'),
+        'typing': __import__('typing'),
+    }
+    # Добавляем numpy, если ещё нет
+    try:
+        import numpy as np
+        allowed_modules['numpy'] = np
+    except ImportError:
+        pass
+
+    safe_globals_dict = safe_globals.copy()
+    safe_globals_dict.update(allowed_modules)
+    safe_globals_dict['__builtins__'] = {
+        'abs': abs, 'all': all, 'any': any, 'bool': bool, 'dict': dict,
+        'enumerate': enumerate, 'float': float, 'int': int, 'len': len,
+        'list': list, 'max': max, 'min': min, 'range': range, 'round': round,
+        'str': str, 'sum': sum, 'tuple': tuple, 'zip': zip, 'print': print,
+        'isinstance': isinstance, 'type': type, 'object': object,
+        'Exception': Exception, 'ValueError': ValueError, 'TypeError': TypeError,
+    }
+
+    # Переменные, которые будут доступны в коде
+    local_vars.update({
+        '__name__': '__main__',
+        '_output': '',
+        '_images': [],
+    })
+
+    # Компилируем код с ограничениями
+    try:
+        byte_code = compile_restricted(code, '<string>', 'exec')
+    except SyntaxError as e:
+        return "", [], f"Синтаксическая ошибка: {str(e)}"
+
+    # Перенаправляем print в строку
+    class PrintCollector:
+        def write(self, text):
+            local_vars['_output'] += str(text)
+    import sys
+    original_stdout = sys.stdout
+    sys.stdout = PrintCollector()
+
+    try:
+        exec(byte_code, safe_globals_dict, local_vars)
+        # Если код определил переменную result, добавим её в вывод
+        if 'result' in local_vars:
+            local_vars['_output'] += str(local_vars['result'])
+        # Сохраняем графики
+        images = []
+        for i, fig_num in enumerate(plt.get_fignums()):
+            fig = plt.figure(fig_num)
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png', bbox_inches='tight')
+            buf.seek(0)
+            img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+            images.append(f"data:image/png;base64,{img_base64}")
+        plt.close('all')
+        return local_vars.get('_output', ''), images, None
+    except Exception as e:
+        return "", [], str(e)
+    finally:
+        sys.stdout = original_stdout
+
+@app.post("/api/data/upload")
+async def upload_data_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    import pandas as pd
+    import io
+    from pathlib import Path
+    import uuid
+
+    content = await file.read()
+    # Определяем формат по расширению
+    if file.filename.endswith('.csv'):
+        df = pd.read_csv(io.BytesIO(content))
+    elif file.filename.endswith(('.xls', '.xlsx')):
+        df = pd.read_excel(io.BytesIO(content))
+    else:
+        raise HTTPException(400, "Only CSV and Excel files are supported")
+    
+    # Сохраняем DataFrame как JSON
+    df_json = df.to_json(orient='records', date_format='iso')
+    
+    # Опционально сохраняем файл на диск
+    temp_dir = Path("/tmp/data_analysis")
+    temp_dir.mkdir(exist_ok=True)
+    safe_filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = temp_dir / safe_filename
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    session = DataAnalysisSession(
+        user_id=current_user.id,
+        filename=file.filename,
+        file_path=str(file_path),
+        dataframe_json=df_json,
+        status="uploaded"
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return {"session_id": session.id, "filename": file.filename}
+
+@app.post("/api/data/analyze")
+async def analyze_data(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    import io
+    import sys
+    import base64
+    import pandas as pd
+    import numpy as np
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    data = await request.json()
+    session_id = data.get("session_id")
+    code = data.get("code", "")
+    
+    if not session_id or not code:
+        raise HTTPException(400, "session_id and code required")
+    
+    analysis_session = db.query(DataAnalysisSession).filter(
+        DataAnalysisSession.id == session_id,
+        DataAnalysisSession.user_id == current_user.id
+    ).first()
+    if not analysis_session:
+        raise HTTPException(404, "Session not found")
+    
+    # Сохраняем код
+    analysis_session.code = code
+    db.commit()
+    
+    # Восстанавливаем DataFrame из JSON
+    if analysis_session.dataframe_json:
+        df = pd.read_json(analysis_session.dataframe_json, orient='records')
+    else:
+        df = pd.DataFrame()
+    
+    # Безопасные builtins
+    safe_builtins = {
+        'abs': abs, 'all': all, 'any': any, 'bool': bool, 'dict': dict,
+        'enumerate': enumerate, 'float': float, 'int': int, 'len': len,
+        'list': list, 'max': max, 'min': min, 'print': print, 'range': range,
+        'round': round, 'str': str, 'sum': sum, 'tuple': tuple, 'zip': zip,
+        'type': type, 'isinstance': isinstance, 'issubclass': issubclass,
+        'True': True, 'False': False, 'None': None
+    }
+    
+    # Перехват stdout
+    stdout_capture = io.StringIO()
+    stderr_capture = io.StringIO()
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    sys.stdout = stdout_capture
+    sys.stderr = stderr_capture
+    
+    figures = []
+    original_show = plt.show
+    def show_capture(*args, **kwargs):
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        figures.append(img_base64)
+        plt.close()
+    plt.show = show_capture
+    
+    try:
+        exec_globals = {
+            '__builtins__': safe_builtins,
+            'pd': pd,
+            'np': np,
+            'plt': plt,
+            'df': df,
+        }
+        exec(code, exec_globals)
+        
+        out = stdout_capture.getvalue()
+        err = stderr_capture.getvalue()
+        
+        # Сохраняем результаты
+        analysis_session.output_text = out
+        analysis_session.output_images = figures
+        analysis_session.status = "success" if not err else "warning"
+        analysis_session.error_message = err if err else None
+        db.commit()
+        
+        return {
+            "stdout": out,
+            "stderr": err,
+            "figures": figures,
+            "has_figures": len(figures) > 0
+        }
+    except Exception as e:
+        analysis_session.status = "error"
+        analysis_session.error_message = str(e)
+        db.commit()
+        raise HTTPException(500, f"Analysis error: {str(e)}")
+    finally:
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+        plt.show = original_show
+
+@app.get("/api/data/result/{session_id}")
+async def get_data_result(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    session = db.query(DataAnalysisSession).filter(
+        DataAnalysisSession.id == session_id,
+        DataAnalysisSession.user_id == current_user.id
+    ).first()
+    if not session:
+        raise HTTPException(404, "Session not found")
+    return {
+        "status": session.status,
+        "output_text": session.output_text,
+        "output_images": session.output_images,
+        "error_message": session.error_message,
+        "code": session.code,
+        "filename": session.filename
+    }
 
 # ========== IELTS МОДУЛЬ (полностью) ==========
 # ========== IELTS МОДУЛЬ (полностью) ==========
