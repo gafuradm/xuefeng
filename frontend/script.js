@@ -1678,6 +1678,27 @@ async function authLogin() {
         if (!response.ok) throw new Error(await response.text());
         const data = await response.json();
         setAuthToken(data.access_token, data);
+        if (typeof updateUIAfterAuth === 'function') {
+            await updateUIAfterAuth();
+        } else {
+            console.error('updateUIAfterAuth not defined');
+        }
+        // ПРИНУДИТЕЛЬНОЕ ОТОБРАЖЕНИЕ ВКЛАДОК И СКРЫТИЕ ГОСТЕВОГО БЛОКА
+        const guest = document.getElementById('guestBlock');
+        const tabs = document.getElementById('tabsContainer');
+        const content = document.getElementById('tabContent');
+        if (guest) {
+            guest.style.display = 'none';
+            guest.classList.add('hidden');
+        }
+        if (tabs) {
+            tabs.style.display = 'block';
+            tabs.classList.remove('hidden');
+        }
+        if (content) {
+            content.style.display = 'block';
+            content.classList.remove('hidden');
+        }
         document.getElementById('avatarImg').src = data.avatar_url;
         document.getElementById('userNameDisplay').textContent = data.name;
         document.getElementById('userRoleDisplay').textContent = data.role === 'teacher' ? 'Учитель' : 'Ученик';
@@ -1730,6 +1751,27 @@ async function authRegister() {
         if (!response.ok) throw new Error(await response.text());
         const data = await response.json();
         setAuthToken(data.access_token, data);
+        if (typeof updateUIAfterAuth === 'function') {
+            await updateUIAfterAuth();
+        } else {
+            console.error('updateUIAfterAuth not defined');
+        }
+        // ПРИНУДИТЕЛЬНОЕ ОТОБРАЖЕНИЕ ВКЛАДОК И СКРЫТИЕ ГОСТЕВОГО БЛОКА
+        const guest = document.getElementById('guestBlock');
+        const tabs = document.getElementById('tabsContainer');
+        const content = document.getElementById('tabContent');
+        if (guest) {
+            guest.style.display = 'none';
+            guest.classList.add('hidden');
+        }
+        if (tabs) {
+            tabs.style.display = 'block';
+            tabs.classList.remove('hidden');
+        }
+        if (content) {
+            content.style.display = 'block';
+            content.classList.remove('hidden');
+        }
         document.getElementById('avatarImg').src = data.avatar_url;
         document.getElementById('userNameDisplay').textContent = data.name;
         document.getElementById('userRoleDisplay').textContent = data.role === 'teacher' ? 'Учитель' : 'Ученик';

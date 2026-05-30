@@ -1370,6 +1370,622 @@ ANSWER:"""
     
     return {"answer": answer, "used_chunks": len(relevant_chunks)}
 
+from .models import ExamTicket
+
+@app.post("/api/generate-exam-tickets")
+async def generate_exam_tickets(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    data = await request.json()
+    course_name = data.get("course_name")
+    num_questions = data.get("num_questions", 5)
+    ticket_type = data.get("ticket_type", "tickets")  # 'tickets' или 'test'
+    
+    if not course_name:
+        raise HTTPException(400, "course_name required")
+    if num_questions < 1 or num_questions > 20:
+        raise HTTPException(400, "num_questions must be between 1 and 20")
+    
+    # Формируем промпт для AI
+    if ticket_type == "tickets":
+        prompt = f"""Generate {num_questions} exam questions for a university-level course titled "{course_name}". 
+Each question should be a clear, standalone problem that tests understanding of key concepts.
+Return ONLY a JSON array of strings, like: ["Question 1...", "Question 2...", ...].
+Do not include answers or explanations."""
+    else:  # test with multiple choice
+        prompt = f"""Generate {num_questions} multiple-choice questions for a university-level course titled "{course_name}".
+For each question, provide: question text, 4 options (A, B, C, D), and the correct answer letter.
+Return ONLY a JSON array of objects:
+[
+  {{
+    "question": "What is ...?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct": "A"
+  }}
+]"""
+    
+    try:
+        response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "You are an expert exam creator. Return only valid JSON."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=2000, temperature=0.7)
+        
+        # Очистка ответа
+        import re
+        response = response.strip()
+        if response.startswith("```json"):
+            response = response[7:]
+        if response.endswith("```"):
+            response = response[:-3]
+        response = response.strip()
+        
+        questions = json.loads(response)
+        if not isinstance(questions, list):
+            raise ValueError("Response is not a list")
+        
+        # Сохраняем в БД
+        ticket = ExamTicket(
+            user_id=current_user.id,
+            course_name=course_name,
+            num_questions=num_questions,
+            ticket_type=ticket_type,
+            questions=questions
+        )
+        db.add(ticket)
+        db.commit()
+        db.refresh(ticket)
+        
+        return {
+            "ticket_id": ticket.id,
+            "course_name": course_name,
+            "num_questions": num_questions,
+            "type": ticket_type,
+            "questions": questions
+        }
+        
+    except Exception as e:
+        raise HTTPException(500, f"Generation failed: {str(e)}")
+    
+from pydantic import BaseModel
+import json
+
+class EssayCheckRequest(BaseModel):
+    text: str
+    title: Optional[str] = None
+    criteria: Optional[str] = None
+
+@app.post("/api/check-essay")
+async def check_essay(
+    request: EssayCheckRequest,
+    current_user: User = Depends(get_current_user)
+):
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(400, "Текст не может быть пустым")
+    
+    title = request.title or "Работа"
+    criteria = request.criteria or "стандартные академические критерии"
+    
+    # Используем тройные кавычки. Фигурные скобки внутри JSON НЕ экранируем,
+    # потому что они не являются частью f-строки (они внутри литерала). 
+    # На самом деле ошибка была в том, что в f-строке были { и } вокруг названий полей.
+    # Перепишем без f-строки для JSON-образца, а лучше передадим явный пример.
+    prompt = f"""Ты – опытный преподаватель. Проверь следующую студенческую работу на тему "{title}".
+
+Критерии оценки: {criteria}
+- Структура (введение, основная часть, заключение)
+- Аргументация и логика
+- Грамматика и стиль
+- Оригинальность (нет явных признаков плагиата)
+- Соответствие теме
+
+Текст работы:
+{text[:8000]}
+
+Оцени работу по 100-балльной шкале, затем напиши подробный отзыв (сильные стороны, слабые места, рекомендации). 
+Верни ТОЛЬКО JSON в следующем формате (без дополнительных пояснений):
+{{"score": 85, "grade": "хорошо", "strengths": ["список сильных сторон"], "weaknesses": ["список слабых мест"], "recommendations": ["рекомендации по улучшению"], "detailed_feedback": "развёрнутый отзыв"}}"""
+    
+    try:
+        response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "Ты строгий, но справедливый преподаватель. Отвечай только JSON."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=1500, temperature=0.5)
+        
+        # Очистка от markdown-разметки
+        response = response.strip()
+        if response.startswith("```json"):
+            response = response[7:]
+        if response.startswith("```"):
+            response = response[3:]
+        if response.endswith("```"):
+            response = response[:-3]
+        response = response.strip()
+        
+        result = json.loads(response)
+        result["word_count"] = len(text.split())
+        result["char_count"] = len(text)
+        result["checked_at"] = datetime.utcnow().isoformat()
+        return result
+    except json.JSONDecodeError as e:
+        raise HTTPException(500, f"Ошибка парсинга JSON: {str(e)}. Ответ AI: {response[:200]}")
+    except Exception as e:
+        raise HTTPException(500, f"Ошибка проверки: {str(e)}")
+    
+from pydantic import BaseModel
+from datetime import datetime, timedelta
+from .models import Task
+
+class TaskCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    deadline: str  # ISO format, e.g. "2025-06-01T15:00:00"
+
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    deadline: Optional[str] = None
+    status: Optional[str] = None
+
+@app.post("/api/tasks")
+async def create_task(
+    task_data: TaskCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        deadline = datetime.fromisoformat(task_data.deadline)
+    except ValueError:
+        raise HTTPException(400, "Неверный формат даты. Используйте ISO формат (YYYY-MM-DDTHH:MM:SS)")
+    
+    task = Task(
+        user_id=current_user.id,
+        title=task_data.title,
+        description=task_data.description,
+        deadline=deadline,
+        status="pending"
+    )
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return {
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "deadline": task.deadline.isoformat(),
+        "status": task.status,
+        "created_at": task.created_at.isoformat()
+    }
+
+@app.get("/api/tasks")
+async def get_tasks(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    status: Optional[str] = None,
+    upcoming_days: Optional[int] = None
+):
+    query = db.query(Task).filter(Task.user_id == current_user.id)
+    if status:
+        query = query.filter(Task.status == status)
+    if upcoming_days:
+        cutoff = datetime.utcnow()
+        future = cutoff + timedelta(days=upcoming_days)
+        query = query.filter(Task.deadline <= future, Task.deadline >= cutoff, Task.status == "pending")
+    tasks = query.order_by(Task.deadline).all()
+    return [
+        {
+            "id": t.id,
+            "title": t.title,
+            "description": t.description,
+            "deadline": t.deadline.isoformat(),
+            "status": t.status,
+            "reminder_sent": t.reminder_sent,
+            "created_at": t.created_at.isoformat()
+        }
+        for t in tasks
+    ]
+
+@app.put("/api/tasks/{task_id}")
+async def update_task(
+    task_id: int,
+    task_data: TaskUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    task = db.query(Task).filter(Task.id == task_id, Task.user_id == current_user.id).first()
+    if not task:
+        raise HTTPException(404, "Задача не найдена")
+    if task_data.title is not None:
+        task.title = task_data.title
+    if task_data.description is not None:
+        task.description = task_data.description
+    if task_data.deadline is not None:
+        try:
+            task.deadline = datetime.fromisoformat(task_data.deadline)
+        except ValueError:
+            raise HTTPException(400, "Неверный формат даты")
+    if task_data.status is not None:
+        task.status = task_data.status
+    task.updated_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Задача обновлена"}
+
+@app.delete("/api/tasks/{task_id}")
+async def delete_task(
+    task_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    task = db.query(Task).filter(Task.id == task_id, Task.user_id == current_user.id).first()
+    if not task:
+        raise HTTPException(404, "Задача не найдена")
+    db.delete(task)
+    db.commit()
+    return {"message": "Задача удалена"}
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timedelta
+import smtplib
+from email.mime.text import MIMEText
+
+# Функция отправки email (замените на свои SMTP данные или используйте логирование)
+def send_reminder_email(email: str, task_title: str, deadline: datetime):
+    # Настройте SMTP (для примера используем логирование)
+    print(f"[REMINDER] Напоминание для {email}: задача '{task_title}' истекает {deadline.strftime('%Y-%m-%d %H:%M')}")
+    # Реальная отправка email – раскомментируйте и настройте
+    try:
+        msg = MIMEText(f"Уважаемый студент, задача '{task_title}' должна быть выполнена до {deadline.strftime('%Y-%m-%d %H:%M')}.")
+        msg['Subject'] = f'Напоминание: {task_title}'
+        msg['From'] = 'amirkad62@gmail.com'
+        msg['To'] = email
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login('amirkad62@gmail.com', 'kpkhzrnpgbbkfjoy')
+            server.send_message(msg)
+    except Exception as e:
+        print(f"SMTP error: {e}")
+
+def check_deadlines():
+    """Фоновая задача для отправки напоминаний о дедлайнах (каждые 30 минут)"""
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        one_hour_later = now + timedelta(hours=1)
+        tasks = db.query(Task).filter(
+            Task.deadline <= one_hour_later,
+            Task.deadline > now,
+            Task.reminder_sent == False,
+            Task.status == "pending"
+        ).all()
+        for task in tasks:
+            user = task.user
+            if user and user.email:
+                send_reminder_email(user.email, task.title, task.deadline)
+                task.reminder_sent = True
+        db.commit()
+    except Exception as e:
+        print(f"Error in check_deadlines: {e}")
+    finally:
+        db.close()
+
+# Добавляем задачу в существующий планировщик (предполагается, что scheduler уже инициализирован)
+# Если scheduler ещё не создан, раскомментируйте следующую строку:
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=check_deadlines, trigger="interval", minutes=30)
+scheduler.start()
+
+from .models import SyllabusCourse
+from pydantic import BaseModel
+from typing import Optional, List
+
+class SyllabusGenerateRequest(BaseModel):
+    title: str
+    specialty: Optional[str] = None
+    total_hours: int = 144
+    semester: int = 1
+    goal: Optional[str] = None
+
+class SyllabusUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    department: Optional[str] = None
+    university: Optional[str] = None
+    semester: Optional[int] = None
+    credits: Optional[float] = None
+    total_hours: Optional[int] = None
+    description: Optional[str] = None
+    competencies: Optional[List[str]] = None
+    syllabus_content: Optional[dict] = None
+    assessment_tools: Optional[List[dict]] = None
+    literature: Optional[List[dict]] = None
+
+@app.post("/api/syllabus/generate")
+async def generate_syllabus(
+    req: SyllabusGenerateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    prompt = f"""Ты – эксперт по учебно-методической документации для вузов. Создай рабочий план дисциплины (силлабус / РПД) на русском языке.
+
+Название курса: {req.title}
+Специальность/направление: {req.specialty or 'не указано'}
+Общая трудоёмкость: {req.total_hours} часов
+Семестр: {req.semester}
+Цель курса: {req.goal or 'сформировать у студентов компетенции по данной дисциплине'}
+
+Требования к структуре (строго соблюдай):
+1. Компетенции (3-5 штук, например, ОПК-1, ПК-2 и т.д.)
+2. Тематический план: разбить на 3-5 разделов, в каждом разделе 2-4 темы. Для каждой темы указать часы: лекции, практические/лабораторные, самостоятельная работа. Сумма часов по всем темам должна равняться {req.total_hours}.
+3. Фонд оценочных средств: вопросы к экзамену/зачёту (не менее 10), типовые задания.
+4. Литература: основная (3-5 источников) и дополнительная (3-5 источников).
+5. Материально-техническое обеспечение (общие фразы).
+
+Верни ТОЛЬКО JSON (без лишнего текста) в следующем формате:
+{{
+  "title": "{req.title}",
+  "department": "Кафедра по умолчанию",
+  "university": "Университет",
+  "semester": {req.semester},
+  "credits": {round(req.total_hours / 36, 1)},
+  "total_hours": {req.total_hours},
+  "description": "Краткое описание курса (2 предложения)",
+  "competencies": ["ОПК-1", "ПК-2", "ПК-3"],
+  "syllabus_content": {{
+    "sections": [
+      {{
+        "title": "Название раздела 1",
+        "topics": [
+          {{"name": "Тема 1.1", "lecture_hours": 2, "practice_hours": 2, "lab_hours": 0, "self_hours": 4}}
+        ]
+      }}
+    ]
+  }},
+  "assessment_tools": [
+    {{"type": "экзамен", "questions": ["Вопрос 1", "Вопрос 2"]}},
+    {{"type": "задания", "tasks": ["Задание 1", "Задание 2"]}}
+  ],
+  "literature": [
+    {{"type": "основная", "authors": "Иванов И.И.", "title": "Название", "year": 2024}},
+    {{"type": "дополнительная", "authors": "Петров П.П.", "title": "Название", "year": 2023}}
+  ]
+}}"""
+
+    try:
+        response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "Ты помощник по созданию учебных программ. Отвечай только JSON."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=4000, temperature=0.5)
+        
+        # Очистка ответа
+        response = response.strip()
+        if response.startswith("```json"):
+            response = response[7:]
+        if response.startswith("```"):
+            response = response[3:]
+        if response.endswith("```"):
+            response = response[:-3]
+        response = response.strip()
+        
+        data = json.loads(response)
+        
+        # Сохраняем в БД
+        syllabus = SyllabusCourse(
+            user_id=current_user.id,
+            title=data.get("title", req.title),
+            department=data.get("department"),
+            university=data.get("university"),
+            semester=data.get("semester", req.semester),
+            credits=data.get("credits"),
+            total_hours=data.get("total_hours", req.total_hours),
+            description=data.get("description"),
+            competencies=data.get("competencies", []),
+            syllabus_content=data.get("syllabus_content", {}),
+            assessment_tools=data.get("assessment_tools", []),
+            literature=data.get("literature", [])
+        )
+        db.add(syllabus)
+        db.commit()
+        db.refresh(syllabus)
+        return syllabus
+        
+    except Exception as e:
+        raise HTTPException(500, f"Ошибка генерации: {str(e)}")
+    
+@app.get("/api/syllabus/courses")
+async def get_syllabus_courses(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    courses = db.query(SyllabusCourse).filter(SyllabusCourse.user_id == current_user.id).order_by(SyllabusCourse.created_at.desc()).all()
+    return courses
+
+@app.get("/api/syllabus/courses/{course_id}")
+async def get_syllabus_course(
+    course_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    course = db.query(SyllabusCourse).filter(SyllabusCourse.id == course_id, SyllabusCourse.user_id == current_user.id).first()
+    if not course:
+        raise HTTPException(404, "Курс не найден")
+    return course
+
+@app.put("/api/syllabus/courses/{course_id}")
+async def update_syllabus_course(
+    course_id: int,
+    req: SyllabusUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    course = db.query(SyllabusCourse).filter(SyllabusCourse.id == course_id, SyllabusCourse.user_id == current_user.id).first()
+    if not course:
+        raise HTTPException(404, "Курс не найден")
+    for field, value in req.dict(exclude_unset=True).items():
+        setattr(course, field, value)
+    course.updated_at = datetime.utcnow()
+    db.commit()
+    return course
+
+@app.delete("/api/syllabus/courses/{course_id}")
+async def delete_syllabus_course(
+    course_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    course = db.query(SyllabusCourse).filter(SyllabusCourse.id == course_id, SyllabusCourse.user_id == current_user.id).first()
+    if not course:
+        raise HTTPException(404, "Курс не найден")
+    db.delete(course)
+    db.commit()
+    return {"message": "Курс удалён"}
+
+import httpx
+import feedparser
+from datetime import datetime
+from .models import ScientificArticle
+
+# Генерация обзора литературы на основе списка статей
+@app.get("/api/scientific/search")
+async def search_arxiv(
+    query: str,
+    max_results: int = 10,
+    current_user: User = Depends(get_current_user)
+):
+    if not query:
+        raise HTTPException(400, "Query is required")
+    
+    # Кодируем query для URL
+    import urllib.parse
+    encoded_query = urllib.parse.quote(query)
+    url = f"https://export.arxiv.org/api/query?search_query=all:{encoded_query}&start=0&max_results={max_results}"
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.get(url, headers=headers)
+            if response.status_code != 200:
+                raise HTTPException(502, f"arXiv API error: status {response.status_code}")
+            feed = feedparser.parse(response.text)
+        except httpx.TimeoutException:
+            raise HTTPException(504, "arXiv API timeout")
+        except Exception as e:
+            raise HTTPException(502, f"arXiv API error: {str(e)}")
+    
+    results = []
+    for entry in feed.entries:
+        arxiv_id = entry.id.split('/abs/')[-1] if '/abs/' in entry.id else None
+        published = None
+        if hasattr(entry, 'published'):
+            try:
+                published = datetime.strptime(entry.published, '%Y-%m-%dT%H:%M:%SZ')
+            except:
+                pass
+        results.append({
+            "arxiv_id": arxiv_id,
+            "title": entry.title,
+            "authors": ", ".join([author.name for author in entry.authors]) if hasattr(entry, 'authors') else "",
+            "summary": entry.summary,
+            "published": published.isoformat() if published else None,
+            "url": entry.link,
+            "pdf_url": f"https://arxiv.org/pdf/{arxiv_id}.pdf" if arxiv_id else None
+        })
+    return results
+
+# Генерация BibTeX по arXiv ID
+@app.get("/api/scientific/bibtex")
+async def get_bibtex(
+    arxiv_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Получение BibTeX-цитаты для статьи по arXiv ID.
+    """
+    url = f"https://arxiv.org/bibtex/{arxiv_id}"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        if response.status_code != 200:
+            raise HTTPException(404, "BibTeX not found")
+        bibtex = response.text
+        return {"bibtex": bibtex}
+
+@app.post("/api/scientific/review")
+async def generate_literature_review(
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
+    data = await request.json()
+    topic = data.get("topic")
+    articles = data.get("articles", [])
+    if not topic or not articles:
+        raise HTTPException(400, "Topic and articles list are required")
+    
+    context = ""
+    for i, art in enumerate(articles[:10], 1):
+        context += f"[{i}] {art.get('title')}. {art.get('authors')}. {art.get('summary')}\n\n"
+    
+    prompt = f"""You are a research assistant. Write a literature review on the topic: "{topic}".
+
+Based on the following academic papers, synthesize a structured review (in Russian) that includes:
+- Introduction to the topic
+- Main directions and key findings
+- Comparison of approaches
+- Gaps and future research
+- References (numbered list, with titles and authors)
+
+Papers:
+{context}
+
+Write in Russian, academic style, 1000-1500 words."""
+    
+    try:
+        review = await deepseek_client.chat_completion([
+            {"role": "system", "content": "You are a research assistant. Write a detailed literature review."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=2500, temperature=0.5)
+        return {"review": review}
+    except Exception as e:
+        raise HTTPException(500, f"Generation error: {str(e)}")
+
+# Сохранение статьи в избранное (опционально)
+@app.post("/api/scientific/favorite")
+async def save_article(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    data = await request.json()
+    article = ScientificArticle(
+        user_id=current_user.id,
+        arxiv_id=data.get("arxiv_id"),
+        title=data.get("title"),
+        authors=data.get("authors"),
+        summary=data.get("summary"),
+        published=datetime.fromisoformat(data["published"]) if data.get("published") else None,
+        url=data.get("url"),
+        bibtex=data.get("bibtex"),
+        is_favorite=True
+    )
+    db.add(article)
+    db.commit()
+    db.refresh(article)
+    return article
+
+# Получение списка избранных статей
+@app.get("/api/scientific/favorites")
+async def get_favorites(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    articles = db.query(ScientificArticle).filter(
+        ScientificArticle.user_id == current_user.id,
+        ScientificArticle.is_favorite == True
+    ).order_by(ScientificArticle.created_at.desc()).all()
+    return articles
+
 # ========== IELTS МОДУЛЬ (полностью) ==========
 # ========== IELTS МОДУЛЬ (полностью) ==========
 # ========== IELTS МОДУЛЬ (полностью) ==========

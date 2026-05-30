@@ -88,7 +88,13 @@ class User(Base):
     city = Column(String, nullable=True)
     timezone = Column(String, default="UTC")
     language = Column(String, default="en")
-    
+
+    scientific_articles = relationship("ScientificArticle", back_populates="user", cascade="all, delete-orphan")
+
+    syllabus_courses = relationship("SyllabusCourse", back_populates="user", cascade="all, delete-orphan")
+    exam_tickets = relationship("ExamTicket", back_populates="user", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan")
+
     current_hsk_level = Column(Integer, default=1)
     target_hsk_level = Column(Integer, default=4)
     exam_date = Column(DateTime, nullable=True)
@@ -602,3 +608,69 @@ class UserDocument(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="documents")
+
+class ExamTicket(Base):
+    __tablename__ = "exam_tickets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    course_name = Column(String, nullable=False)
+    num_questions = Column(Integer, nullable=False)
+    ticket_type = Column(String, default="tickets")  # 'tickets' или 'test'
+    questions = Column(JSON, nullable=False)        # список вопросов (и вариантов для теста)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="exam_tickets")
+
+class Task(Base):
+    __tablename__ = "tasks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    deadline = Column(DateTime, nullable=False)
+    status = Column(String, default="pending")  # pending, completed, overdue
+    reminder_sent = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", back_populates="tasks")
+
+class SyllabusCourse(Base):
+    __tablename__ = "syllabus_courses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String, nullable=False)
+    department = Column(String, nullable=True)
+    university = Column(String, nullable=True)
+    semester = Column(Integer, nullable=True)
+    credits = Column(Float, nullable=True)
+    total_hours = Column(Integer, nullable=True)
+    description = Column(Text, nullable=True)
+    competencies = Column(JSON, default=[])
+    syllabus_content = Column(JSON, default={})
+    assessment_tools = Column(JSON, default=[])
+    literature = Column(JSON, default=[])
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="syllabus_courses")
+
+class ScientificArticle(Base):
+    __tablename__ = "scientific_articles"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    arxiv_id = Column(String, nullable=True)
+    title = Column(String, nullable=False)
+    authors = Column(String, nullable=True)
+    summary = Column(Text, nullable=True)
+    published = Column(DateTime, nullable=True)
+    url = Column(String, nullable=True)
+    bibtex = Column(Text, nullable=True)
+    is_favorite = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="scientific_articles")
