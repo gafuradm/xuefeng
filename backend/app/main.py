@@ -7,7 +7,8 @@ from .models import (
     UserCourse, CourseModule, CourseLesson, UserLesson,
     UserInteraction, UserPerformance, CustomTest,
     School, SchoolMember, LessonVideo, IELTSAttempt,
-    RefreshToken, PasswordReset, UserAction, ChatMessage
+    RefreshToken, PasswordReset, UserAction, ChatMessage,
+    Role, UserAchievement, ApiKey, AdminLog
 )
 
 from .pdf_rag import extract_text_from_pdf, split_text_into_chunks, create_tfidf_index, search_tfidf_index
@@ -32,7 +33,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .database import engine, get_db, SessionLocal
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 import json
 from fastapi import Body
@@ -45,7 +46,7 @@ from .models import (
     Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
     UserCourse, CourseModule, CourseLesson, UserLesson,
     UserInteraction, UserPerformance, CustomTest,
-    School, SchoolMember, LessonVideo, SchoolChatMessage  # ← добавить
+    School, SchoolMember, LessonVideo, SchoolChatMessage
 )
 from .models import (
     Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
@@ -60,20 +61,101 @@ from .models import (
     UserInteraction, UserPerformance, CustomTest,
     School, SchoolMember, LessonVideo
 )
-from .auth import get_password_hash, verify_password, create_access_token, get_current_user, get_current_active_user
+from .auth import get_password_hash, verify_password, create_access_token, get_current_user, get_current_active_user, decode_token, is_government_user, get_current_government_user
 from .deepseek_client import deepseek_client
 from .schemas import *
 from .services import AITeacherService
 from .config import settings
+from .role_service import get_visible_tabs, check_module_access, get_default_roles
+from .xp_service import award_xp, award_lesson_completion, award_test_passed, award_course_created, award_lesson_created
+from .middleware_logging import log_all_actions_middleware
 
 # ========== OCR РАСПОЗНАВАНИЕ РУКОПИСНОГО ТЕКСТА ==========
 import easyocr
 import numpy as np
 from PIL import Image
 import io
+import uuid
 
 from pathlib import Path
 import os
+
+# backend/app/main.py – все импорты (исправленные)
+
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+from .models import (
+    Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
+    UserCourse, CourseModule, CourseLesson, UserLesson,
+    UserInteraction, UserPerformance, CustomTest,
+    School, SchoolMember, LessonVideo, IELTSAttempt,
+    RefreshToken, PasswordReset, UserAction, ChatMessage,
+    Role, UserAchievement, ApiKey, AdminLog,
+    ExamTicket, Task, SyllabusCourse, ScientificArticle
+)
+
+from .pdf_rag import extract_text_from_pdf, split_text_into_chunks, create_tfidf_index, search_tfidf_index
+from .models import UserDocument
+import shutil
+import json
+
+from .plagiarism import check_plagiarism
+from .models import TextReview, PlagiarismCorpus
+from pydantic import BaseModel
+
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import io
+import base64
+from RestrictedPython import compile_restricted, safe_globals
+from .models import DataAnalysisSession
+
+from fastapi import FastAPI, Depends, HTTPException, Request, Query
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from .database import engine, get_db, SessionLocal
+from sqlalchemy.orm import Session, joinedload
+from typing import List, Optional
+import json
+from fastapi import Body
+import concurrent.futures
+from datetime import datetime, timedelta
+import asyncio
+from fastapi import UploadFile, File
+from fastapi.responses import RedirectResponse
+
+from .auth import get_password_hash, verify_password, create_access_token, get_current_user, get_current_active_user, decode_token, is_government_user, get_current_government_user
+from .deepseek_client import deepseek_client
+from .schemas import *
+from .services import AITeacherService
+from .config import settings
+from .role_service import get_visible_tabs, check_module_access, get_default_roles
+from .xp_service import award_xp, award_lesson_completion, award_test_passed, award_course_created, award_lesson_created
+from .middleware_logging import log_all_actions_middleware
+
+import easyocr
+import numpy as np
+from PIL import Image
+import uuid
+from pathlib import Path
+
+import whisper
+import tempfile
+import json
+from app.tasks.audio_tasks import transcribe_and_analyze
+from celery.result import AsyncResult
+from app.celery import celery_app
+
+import httpx
+import feedparser
+
+from apscheduler.schedulers.background import BackgroundScheduler
+import smtplib
+from email.mime.text import MIMEText
+import secrets
 
 # ========== КОРНЕВЫЕ ПУТИ (должны быть в самом начале) ==========
 PROJECT_ROOT = Path(__file__).parent.parent.parent      # папка, где лежат backend, frontend, frontend_hsk
@@ -90,15 +172,18 @@ COURSES_DIR = DATA_DIR / "courses"
 COURSES_DIR.mkdir(parents=True, exist_ok=True)
 
 # Для совместимости со старым кодом, который может использовать BASE_DIR
-BASE_DIR = BACKEND_ROOT   # или PROJECT_ROOT — смотрите, где он используется
+BASE_DIR = BACKEND_ROOT
 
-# Инициализируем EasyOCR один раз при старте (чтобы не грузить модель при каждом запросе)
+# Инициализируем EasyOCR один раз при старте
 ocr_reader = None
 
 # Создаем таблицы
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Universal AI Teacher", version="1.0.0")
+app = FastAPI(title="Universal AI Teacher", version="2.0.0")
+
+# Подключаем middleware для логирования
+app.middleware("http")(log_all_actions_middleware)
 
 # CORS настройки
 app.add_middleware(
@@ -129,16 +214,74 @@ from pydantic import BaseModel
 class AvatarUpdate(BaseModel):
     avatar_url: str
 
+# ========== ИНИЦИАЛИЗАЦИЯ РОЛЕЙ ПРИ СТАРТЕ ==========
+def init_roles(db: Session):
+    roles_data = [
+        ('schoolchild', 'Школьник', 'Учащийся школы', True, True),
+        ('applicant', 'Абитуриент', 'Поступающий в вуз', True, True),
+        ('student', 'Студент', 'Студент вуза/колледжа', True, True),
+        ('master', 'Магистр', 'Студент магистратуры', True, True),
+        ('phd', 'Докторант', 'Аспирант/докторант', True, True),
+        ('researcher', 'Исследователь', 'Научный сотрудник', False, True),
+        ('professor', 'Профессор', 'Преподаватель вуза', False, True),
+        ('school_teacher', 'Школьный учитель', 'Учитель школы', False, True),
+        ('private_tutor', 'Частный репетитор', 'Индивидуальный преподаватель', True, True),
+        ('employer', 'Работодатель', 'Компания, ищущая сотрудников', False, False),
+        ('job_seeker', 'Соискатель', 'Человек в поиске работы', True, True),
+        ('freelancer', 'Фрилансер', 'Поставщик услуг', True, True),
+        ('customer', 'Заказчик', 'Заказчик услуг', True, True),
+        ('startup_founder', 'Стартапер', 'Основатель стартапа', True, True),
+        ('investor', 'Инвестор', 'Инвестор проектов', False, False),
+        ('government', 'Государство', 'Администратор платформы', False, False),
+        ('developer', 'Разработчик API', 'Сторонний разработчик', True, True)
+    ]
+    for name, display, desc, can_self, need_approval in roles_data:
+        role = db.query(Role).filter(Role.name == name).first()
+        if not role:
+            role = Role(
+                name=name,
+                display_name=display,
+                description=desc,
+                can_be_assigned_by_user=can_self,
+                requires_approval=need_approval,
+                is_default=(name in ['schoolchild', 'student'])
+            )
+            db.add(role)
+    db.commit()
+
 @app.on_event("startup")
 async def startup_event():
-    print("🚀 Запуск Universal AI Teacher...")
+    print("🚀 Запуск Universal AI Teacher v2.0...")
+    
+    # Инициализация ролей
+    db = SessionLocal()
+    try:
+        init_roles(db)
+        print("✅ Роли инициализированы")
+    finally:
+        db.close()
+    
     if ai_service.rag_available:
         print("✅ RAG система готова")
+    
+    # Инициализация OCR
+    global ocr_reader
+    try:
+        ocr_reader = easyocr.Reader(['ru', 'en'], gpu=False)
+        print("✅ EasyOCR загружен")
+    except Exception as e:
+        print(f"⚠️ Ошибка загрузки EasyOCR: {e}")
+    
+    # Загрузка Whisper для IELTS
+    global whisper_model
+    try:
+        whisper_model = whisper.load_model("base")
+        print("✅ Whisper model loaded for IELTS")
+    except Exception as e:
+        print(f"⚠️ Failed to load Whisper: {e}")
 
 from fastapi.responses import HTMLResponse
 from pathlib import Path
-
-FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 
 @app.get("/app", response_class=HTMLResponse)
 async def serve_app():
@@ -148,28 +291,20 @@ async def serve_app():
             return HTMLResponse(content=f.read())
     return HTMLResponse("app.html not found", status_code=404)
 
-# ========== ПОЛЬЗОВАТЕЛИ ==========
+# ========== ПОЛЬЗОВАТЕЛИ (ОБНОВЛЕНО С РОЛЯМИ) ==========
 @app.post("/api/users", response_model=UserResponse)
 async def create_user(user: UserCreate, role: str = "student", db: Session = Depends(get_db)):
     try:
         user_obj = await ai_service.create_user(db, user.email, user.name)
-        user_obj.role = role
+        # Назначаем роли по умолчанию
+        default_role_names = get_default_roles()
+        default_roles = db.query(Role).filter(Role.name.in_(default_role_names)).all()
+        user_obj.roles = default_roles
         db.commit()
         db.refresh(user_obj)
         return user_obj
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-from fastapi.responses import HTMLResponse
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).parent.parent.parent   # корень проекта
-FRONTEND_DIR = PROJECT_ROOT / "frontend"
-HSK_DIR = PROJECT_ROOT / "frontend_hsk"
-
-# Для совместимости с остальным кодом, который ожидает BASE_DIR,
-# можно определить BACKEND_ROOT:
-BACKEND_ROOT = Path(__file__).parent.parent
 
 @app.get("/", response_class=HTMLResponse)
 async def main_frontend():
@@ -182,8 +317,7 @@ async def main_frontend():
 
 @app.get("/ielts", response_class=HTMLResponse)
 async def ielts_page():
-    # Поднимаемся на три уровня: из backend/app/main.py в корень проекта
-    project_root = Path(__file__).parent.parent.parent  # universal-ai-teacher/
+    project_root = Path(__file__).parent.parent.parent
     ielts_path = project_root / "frontend" / "ielts.html"
     print(f"[IELTS] Looking for file: {ielts_path}")
     if ielts_path.exists():
@@ -191,7 +325,6 @@ async def ielts_page():
             return HTMLResponse(content=f.read())
     return HTMLResponse(f"IELTS page not found at {ielts_path}", status_code=404)
 
-# HSK Tutor (если папка существует)
 if HSK_DIR.exists():
     @app.get("/hsk", response_class=HTMLResponse)
     async def hsk_frontend():
@@ -201,24 +334,178 @@ if HSK_DIR.exists():
                 return HTMLResponse(content=f.read())
         return HTMLResponse("HSK frontend not found", status_code=404)
 
-# ========== СЕССИИ И ТЕСТЫ ==========
+# ========== НОВЫЕ ЭНДПОИНТЫ ДЛЯ РОЛЕЙ И ВКЛАДОК ==========
+@app.get("/api/user/roles")
+async def get_my_roles(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Получить список своих ролей и доступные для назначения"""
+    my_role_names = [role.name for role in current_user.roles]
+    available_roles = db.query(Role).filter(Role.can_be_assigned_by_user == True).all()
+    return {
+        "my_roles": my_role_names,
+        "available_roles": [{"name": r.name, "display_name": r.display_name, "requires_approval": r.requires_approval} for r in available_roles]
+    }
+
+@app.post("/api/user/roles/assign")
+async def assign_role_to_myself(role_name: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Пользователь запрашивает добавление себе роли"""
+    role = db.query(Role).filter(Role.name == role_name).first()
+    if not role:
+        raise HTTPException(404, "Роль не найдена")
+    if not role.can_be_assigned_by_user:
+        raise HTTPException(403, "Эту роль нельзя назначить самостоятельно")
+    if role in current_user.roles:
+        return {"message": "Роль уже есть"}
+    if role.requires_approval:
+        admin_log = AdminLog(
+            admin_user_id=current_user.id,
+            target_user_id=current_user.id,
+            action="request_role",
+            details={"role": role_name, "status": "pending"}
+        )
+        db.add(admin_log)
+        db.commit()
+        return {"message": "Запрос на роль отправлен администратору"}
+    else:
+        current_user.roles.append(role)
+        db.commit()
+        return {"message": f"Роль {role.display_name} добавлена"}
+
+@app.get("/api/user/tabs")
+async def get_user_tabs(current_user: User = Depends(get_current_user)):
+    """Получить список вкладок для отображения на фронтенде"""
+    tabs = get_visible_tabs(current_user)
+    return tabs
+
+# ========== АДМИНИСТРАТИВНЫЕ ЭНДПОИНТЫ (ТОЛЬКО ДЛЯ ГОСУДАРСТВА) ==========
+@app.get("/api/admin/users")
+async def admin_list_users(
+    skip: int = 0, limit: int = 100,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_government_user)
+):
+    users = db.query(User).options(joinedload(User.roles)).offset(skip).limit(limit).all()
+    return [{"id": u.id, "name": u.name, "email": u.email, "roles": [r.name for r in u.roles], "total_xp": u.total_xp, "level": u.level} for u in users]
+
+@app.get("/api/admin/user/{user_id}")
+async def admin_get_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_government_user)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    
+    admin_log = AdminLog(
+        admin_user_id=admin_user.id,
+        target_user_id=user.id,
+        action="view_user_data",
+        details={"viewed_fields": "all"}
+    )
+    db.add(admin_log)
+    db.commit()
+    
+    return {
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "roles": [{"id": r.id, "name": r.name, "display_name": r.display_name} for r in user.roles],
+        "total_xp": user.total_xp,
+        "level": user.level,
+        "created_at": user.created_at,
+        "last_login": user.last_login,
+        "actions": [{"action_type": a.action_type, "timestamp": a.timestamp, "module_name": a.module_name} for a in user.actions[:50]]
+    }
+
+@app.post("/api/admin/user/{user_id}/roles")
+async def admin_set_user_roles(
+    user_id: int,
+    role_names: List[str],
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_government_user)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    
+    roles = db.query(Role).filter(Role.name.in_(role_names)).all()
+    user.roles = roles
+    db.commit()
+    
+    admin_log = AdminLog(
+        admin_user_id=admin_user.id,
+        target_user_id=user.id,
+        action="change_role",
+        details={"new_roles": role_names}
+    )
+    db.add(admin_log)
+    db.commit()
+    
+    return {"message": "Roles updated"}
+
+# ========== API КЛЮЧИ ДЛЯ РАЗРАБОТЧИКОВ ==========
+class ApiKeyCreateRequest(BaseModel):
+    name: str
+    permissions: List[str] = []
+    rate_limit_per_minute: int = 60
+    expires_at: Optional[datetime] = None
+
+@app.post("/api/developer/api_keys")
+async def create_api_key(
+    key_data: ApiKeyCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not any(role.name == 'developer' for role in current_user.roles):
+        raise HTTPException(403, "Only developers can create API keys")
+    
+    key_value = secrets.token_urlsafe(32)
+    api_key = ApiKey(
+        user_id=current_user.id,
+        key=key_value,
+        name=key_data.name,
+        permissions=key_data.permissions,
+        rate_limit_per_minute=key_data.rate_limit_per_minute,
+        expires_at=key_data.expires_at
+    )
+    db.add(api_key)
+    db.commit()
+    return {"key": key_value, "message": "API key created. Store it securely."}
+
+@app.get("/api/developer/api_keys")
+async def list_api_keys(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    keys = db.query(ApiKey).filter(ApiKey.user_id == current_user.id).all()
+    return [{"id": k.id, "name": k.name, "last_used_at": k.last_used_at, "is_active": k.is_active} for k in keys]
+
+import secrets
+
+# ========== СЕССИИ И ТЕСТЫ (С ПРОВЕРКОЙ ДОСТУПА) ==========
 @app.post("/api/sessions", response_model=SessionResponse)
-async def create_session(user_id: int, session_data: SessionCreate, db: Session = Depends(get_db)):
+async def create_session(user_id: int, session_data: SessionCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     try:
         return await ai_service.create_session(db, user_id, session_data.exam_name)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/sessions/{session_id}/submit_test")
-async def submit_test(session_id: int, test_data: TestSubmit, db: Session = Depends(get_db)):
+async def submit_test(session_id: int, test_data: TestSubmit, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     try:
         result = await ai_service.submit_test(db, session_id, test_data.answers)
+        # Начисляем XP за прохождение теста
+        if result.get("overall_score", 0) > 0:
+            await award_test_passed(db, current_user.id, f"session_{session_id}", result.get("overall_score", 0))
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/sessions/{session_id}/set_time")
-async def set_time(session_id: int, time_data: TimeSet, db: Session = Depends(get_db)):
+async def set_time(session_id: int, time_data: TimeSet, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     try:
         plan = await ai_service.set_time_and_plan(db, session_id, time_data.days)
         return plan
@@ -226,29 +513,37 @@ async def set_time(session_id: int, time_data: TimeSet, db: Session = Depends(ge
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/sessions/{session_id}/next_lesson")
-async def get_next_lesson(session_id: int, db: Session = Depends(get_db)):
+async def get_next_lesson(session_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     try:
         return await ai_service.get_next_lesson(db, session_id)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/sessions/{session_id}/submit_lesson")
-async def submit_lesson(session_id: int, lesson_data: LessonAnswer, db: Session = Depends(get_db)):
-    """Отправка ответов на урок"""
+async def submit_lesson(session_id: int, lesson_data: LessonAnswer, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     try:
         result = await ai_service.submit_lesson(
             db, session_id, lesson_data.lesson_id, lesson_data.user_answers,
-            lesson_data.time_spent_seconds, lesson_data.task_times   # ← добавить эти два
+            lesson_data.time_spent_seconds, lesson_data.task_times
         )
+        # Начисляем XP за завершение урока
+        if result.get("status") == "success":
+            await award_lesson_completion(db, current_user.id, f"lesson_{lesson_data.lesson_id}", result.get("score", 0))
         return result
     except Exception as e:
         print(f"Error in submit_lesson endpoint: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
-    
+
 @app.post("/api/sessions/{session_id}/progress_test")
-async def create_progress_test(session_id: int, db: Session = Depends(get_db)):
+async def create_progress_test(session_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     try:
         questions = await ai_service.generate_progress_test(db, session_id)
         return {"questions": questions}
@@ -261,6 +556,8 @@ async def get_sessions_by_user(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if current_user.id != user_id and not is_government_user(current_user):
+        raise HTTPException(403, "Доступ запрещён")
     sessions = db.query(SessionModel).filter(
         SessionModel.user_id == user_id
     ).order_by(SessionModel.created_at.desc()).all()
@@ -275,10 +572,12 @@ async def get_sessions_by_user(
     ]
 
 @app.get("/api/sessions/{session_id}")
-async def get_session(session_id: int, db: Session = Depends(get_db)):
+async def get_session(session_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    if session.user_id != current_user.id and not is_government_user(current_user):
+        raise HTTPException(403, "Доступ запрещён")
     
     test_results = db.query(TestResult).filter(TestResult.session_id == session_id).all()
     
@@ -311,7 +610,9 @@ async def get_session(session_id: int, db: Session = Depends(get_db)):
     }
 
 @app.get("/api/sessions/{session_id}/study_plan")
-async def get_study_plan(session_id: int, db: Session = Depends(get_db)):
+async def get_study_plan(session_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     try:
         plan = await ai_service.get_study_plan(db, session_id)
         return plan
@@ -319,7 +620,9 @@ async def get_study_plan(session_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/sessions/{session_id}/progress")
-async def get_progress(session_id: int, db: Session = Depends(get_db)):
+async def get_progress(session_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     history = db.query(ProgressHistory).filter(
         ProgressHistory.session_id == session_id
     ).order_by(ProgressHistory.timestamp).all()
@@ -327,12 +630,16 @@ async def get_progress(session_id: int, db: Session = Depends(get_db)):
 
 # ========== СТАТИСТИКА ПОЛЬЗОВАТЕЛЯ ==========
 @app.get("/api/user/statistics")
-async def get_user_statistics(user_id: int, db: Session = Depends(get_db)):
+async def get_user_statistics(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.id != user_id and not is_government_user(current_user):
+        raise HTTPException(403, "Доступ запрещён")
     stats = await ai_service.get_user_statistics(db, user_id)
     return stats
 
 @app.get("/api/user/performance")
-async def get_user_performance(user_id: int, db: Session = Depends(get_db)):
+async def get_user_performance(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.id != user_id and not is_government_user(current_user):
+        raise HTTPException(403, "Доступ запрещён")
     performances = db.query(UserPerformance).filter(UserPerformance.user_id == user_id).all()
     return [
         {
@@ -347,13 +654,16 @@ async def get_user_performance(user_id: int, db: Session = Depends(get_db)):
     ]
 
 @app.get("/api/user/detailed_stats")
-async def get_detailed_stats(user_id: int, db: Session = Depends(get_db)):
-    """Детальная статистика пользователя с временем по темам"""
+async def get_detailed_stats(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.id != user_id and not is_government_user(current_user):
+        raise HTTPException(403, "Доступ запрещён")
     stats = await ai_service.get_user_statistics(db, user_id)
     return stats
 
 @app.get("/api/user/interactions")
-async def get_user_interactions(user_id: int, limit: int = 50, db: Session = Depends(get_db)):
+async def get_user_interactions(user_id: int, limit: int = 50, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.id != user_id and not is_government_user(current_user):
+        raise HTTPException(403, "Доступ запрещён")
     interactions = db.query(UserInteraction).filter(
         UserInteraction.user_id == user_id
     ).order_by(UserInteraction.created_at.desc()).limit(limit).all()
@@ -371,7 +681,9 @@ async def get_user_interactions(user_id: int, limit: int = 50, db: Session = Dep
 
 # ========== ЧАТ ==========
 @app.post("/api/lessons/{lesson_id}/chat")
-async def lesson_chat(lesson_id: int, request: Request, db: Session = Depends(get_db)):
+async def lesson_chat(lesson_id: int, request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     data = await request.json()
     session_id = data.get("session_id")
     question = data.get("question")
@@ -388,8 +700,11 @@ async def search_problems(
     k: int = Query(5, ge=1, le=50),
     year: Optional[int] = Query(None),
     topic: Optional[str] = Query(None),
-    subject: Optional[str] = Query(None)
+    subject: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ запрещён")
     try:
         filters = {}
         if year:
@@ -424,7 +739,9 @@ async def search_problems(
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/exams/{exam_type}/stats")
-async def get_exam_stats(exam_type: str):
+async def get_exam_stats(exam_type: str, current_user: User = Depends(get_current_user)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ запрещён")
     try:
         if exam_type not in ai_service.exam_manager.active_exams:
             return {"error": f"Экзамен {exam_type} не найден"}
@@ -449,7 +766,9 @@ async def get_exam_stats(exam_type: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/test/search")
-async def test_search(query: str = "тригонометрия", k: int = 3):
+async def test_search(query: str = "тригонометрия", k: int = 3, current_user: User = Depends(get_current_user)):
+    if not check_module_access(current_user, 'learning'):
+        raise HTTPException(403, "Доступ запрещён")
     try:
         results = ai_service.exam_manager.search_problems('gaokao', query, k)
         return {"query": query, "count": len(results), "results": results[:k]}
@@ -458,7 +777,10 @@ async def test_search(query: str = "тригонометрия", k: int = 3):
 
 # ========== ВИДЕО ==========
 @app.post("/api/lessons/{lesson_id}/generate_video")
-async def generate_video_for_lesson(lesson_id: int, db: Session = Depends(get_db)):
+async def generate_video_for_lesson(lesson_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'video_generation'):
+        raise HTTPException(403, "Доступ к модулю 'Генерация видео' запрещён")
+    
     from .video_generator import VideoGenerator
     
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
@@ -507,7 +829,9 @@ async def generate_video_for_lesson(lesson_id: int, db: Session = Depends(get_db
     return {"video_url": f"/static/videos/{filename}"}
 
 @app.post("/api/video/transcribe")
-async def transcribe_video(request: Request, db: Session = Depends(get_db)):
+async def transcribe_video(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'video'):
+        raise HTTPException(403, "Доступ к модулю 'Видео → текст' запрещён")
     data = await request.json()
     url = data.get("url")
     target_language = data.get("language", "ru")
@@ -518,7 +842,9 @@ async def transcribe_video(request: Request, db: Session = Depends(get_db)):
 
 # ========== ПОЛЬЗОВАТЕЛЬСКИЕ ТЕСТЫ ==========
 @app.post("/api/custom_tests")
-async def create_custom_test(test_data: CustomTestCreate, user_id: int, db: Session = Depends(get_db)):
+async def create_custom_test(test_data: CustomTestCreate, user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'tests'):
+        raise HTTPException(403, "Доступ к модулю 'Тесты' запрещён")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден")
@@ -535,19 +861,25 @@ async def create_custom_test(test_data: CustomTestCreate, user_id: int, db: Sess
     return new_test
 
 @app.get("/api/custom_tests")
-async def get_user_tests(user_id: int, db: Session = Depends(get_db)):
+async def get_user_tests(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'tests'):
+        raise HTTPException(403, "Доступ к модулю 'Тесты' запрещён")
     tests = db.query(CustomTest).filter(CustomTest.user_id == user_id).all()
     return tests
 
 @app.get("/api/custom_tests/{test_id}")
-async def get_custom_test(test_id: int, db: Session = Depends(get_db)):
+async def get_custom_test(test_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'tests'):
+        raise HTTPException(403, "Доступ к модулю 'Тесты' запрещён")
     test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден")
     return test
 
 @app.delete("/api/custom_tests/{test_id}")
-async def delete_custom_test(test_id: int, user_id: int, db: Session = Depends(get_db)):
+async def delete_custom_test(test_id: int, user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'tests'):
+        raise HTTPException(403, "Доступ к модулю 'Тесты' запрещён")
     test = db.query(CustomTest).filter(CustomTest.id == test_id, CustomTest.user_id == user_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден или не принадлежит вам")
@@ -556,7 +888,9 @@ async def delete_custom_test(test_id: int, user_id: int, db: Session = Depends(g
     return {"status": "ok", "message": "Тест удалён"}
 
 @app.post("/api/custom_tests/{test_id}/train")
-async def train_ai_on_custom_test(test_id: int, db: Session = Depends(get_db)):
+async def train_ai_on_custom_test(test_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'tests'):
+        raise HTTPException(403, "Доступ к модулю 'Тесты' запрещён")
     test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден")
@@ -576,7 +910,9 @@ async def train_ai_on_custom_test(test_id: int, db: Session = Depends(get_db)):
     return {"status": "trained", "message": response, "test_id": test_id}
 
 @app.post("/api/custom_tests/{test_id}/submit")
-async def submit_custom_test(test_id: int, submission: CustomTestSubmit, db: Session = Depends(get_db)):
+async def submit_custom_test(test_id: int, submission: CustomTestSubmit, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'tests'):
+        raise HTTPException(403, "Доступ к модулю 'Тесты' запрещён")
     test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден")
@@ -612,7 +948,9 @@ async def submit_custom_test(test_id: int, submission: CustomTestSubmit, db: Ses
     }
 
 @app.post("/api/custom_tests/{test_id}/generate_similar")
-async def generate_similar_questions(test_id: int, num_questions: int = 5, db: Session = Depends(get_db)):
+async def generate_similar_questions(test_id: int, num_questions: int = 5, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'tests'):
+        raise HTTPException(403, "Доступ к модулю 'Тесты' запрещён")
     test = db.query(CustomTest).filter(CustomTest.id == test_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден")
@@ -629,7 +967,9 @@ async def generate_similar_questions(test_id: int, num_questions: int = 5, db: S
 
 # ========== ПОЛЬЗОВАТЕЛЬСКИЕ КУРСЫ ==========
 @app.post("/api/courses/generate")
-async def generate_course(course_data: UserCourseCreate, user_id: int, db: Session = Depends(get_db)):
+async def generate_course(course_data: UserCourseCreate, user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ к модулю 'Курсы' запрещён")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден")
@@ -649,6 +989,9 @@ async def generate_course(course_data: UserCourseCreate, user_id: int, db: Sessi
     db.add(new_course)
     db.commit()
     db.refresh(new_course)
+    
+    # Начисляем XP за создание курса
+    await award_course_created(db, user_id, course_data.name)
     
     modules_list = []
     for module_idx, module_data in enumerate(structure.get("modules", [])):
@@ -702,12 +1045,16 @@ async def generate_course(course_data: UserCourseCreate, user_id: int, db: Sessi
     }
 
 @app.get("/api/courses")
-async def get_user_courses(user_id: int, db: Session = Depends(get_db)):
+async def get_user_courses(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ к модулю 'Курсы' запрещён")
     courses = db.query(UserCourse).filter(UserCourse.user_id == user_id).all()
     return courses
 
 @app.get("/api/courses/{course_id}")
-async def get_course_details(course_id: int, db: Session = Depends(get_db)):
+async def get_course_details(course_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ к модулю 'Курсы' запрещён")
     course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
     if not course:
         raise HTTPException(404, "Курс не найден")
@@ -741,7 +1088,9 @@ async def get_course_details(course_id: int, db: Session = Depends(get_db)):
     return result
 
 @app.delete("/api/courses/{course_id}")
-async def delete_course(course_id: int, user_id: int, db: Session = Depends(get_db)):
+async def delete_course(course_id: int, user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ к модулю 'Курсы' запрещён")
     course = db.query(UserCourse).filter(UserCourse.id == course_id, UserCourse.user_id == user_id).first()
     if not course:
         raise HTTPException(404, "Курс не найден")
@@ -751,7 +1100,9 @@ async def delete_course(course_id: int, user_id: int, db: Session = Depends(get_
 
 # ========== ПОЛЬЗОВАТЕЛЬСКИЕ УРОКИ ==========
 @app.post("/api/lessons/generate", response_model=UserLessonResponse)
-async def generate_lesson(lesson_data: UserLessonCreate, user_id: int, db: Session = Depends(get_db)):
+async def generate_lesson(lesson_data: UserLessonCreate, user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ к модулю 'Уроки' запрещён")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден")
@@ -772,22 +1123,32 @@ async def generate_lesson(lesson_data: UserLessonCreate, user_id: int, db: Sessi
     db.add(new_lesson)
     db.commit()
     db.refresh(new_lesson)
+    
+    # Начисляем XP за создание урока
+    await award_lesson_created(db, user_id, lesson_data.title)
+    
     return new_lesson
 
 @app.get("/api/lessons")
-async def get_user_lessons(user_id: int, db: Session = Depends(get_db)):
+async def get_user_lessons(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ к модулю 'Уроки' запрещён")
     lessons = db.query(UserLesson).filter(UserLesson.user_id == user_id).all()
     return lessons
 
 @app.get("/api/lessons/{lesson_id}")
-async def get_lesson_details(lesson_id: int, db: Session = Depends(get_db)):
+async def get_lesson_details(lesson_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ к модулю 'Уроки' запрещён")
     lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден")
     return lesson
 
 @app.delete("/api/lessons/{lesson_id}")
-async def delete_lesson(lesson_id: int, user_id: int, db: Session = Depends(get_db)):
+async def delete_lesson(lesson_id: int, user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ к модулю 'Уроки' запрещён")
     lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id, UserLesson.user_id == user_id).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден или не принадлежит вам")
@@ -797,7 +1158,9 @@ async def delete_lesson(lesson_id: int, user_id: int, db: Session = Depends(get_
 
 # ========== ПРЕЗЕНТАЦИИ ==========
 @app.post("/api/lessons/{lesson_id}/generate_presentation")
-async def generate_presentation(lesson_id: int, db: Session = Depends(get_db)):
+async def generate_presentation(lesson_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ запрещён")
     lesson = db.query(UserLesson).filter(UserLesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден")
@@ -844,7 +1207,9 @@ async def generate_presentation(lesson_id: int, db: Session = Depends(get_db)):
 
 # ========== УПРАВЛЕНИЕ ШКОЛОЙ ==========
 @app.post("/api/schools/create")
-async def create_school_endpoint(name: str, description: str = None, user_id: int = Query(...), db: Session = Depends(get_db)):
+async def create_school_endpoint(name: str, description: str = None, user_id: int = Query(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён. Только учителя могут создавать школы.")
     try:
         result = await ai_service.create_school(db, user_id, name, description)
         return result
@@ -852,7 +1217,9 @@ async def create_school_endpoint(name: str, description: str = None, user_id: in
         raise HTTPException(400, str(e))
 
 @app.post("/api/schools/join")
-async def join_school_endpoint(invite_code: str, user_id: int = Query(...), db: Session = Depends(get_db)):
+async def join_school_endpoint(invite_code: str, user_id: int = Query(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_student'):
+        raise HTTPException(403, "Доступ запрещён")
     try:
         result = await ai_service.join_school(db, user_id, invite_code)
         return result
@@ -860,7 +1227,9 @@ async def join_school_endpoint(invite_code: str, user_id: int = Query(...), db: 
         raise HTTPException(400, str(e))
 
 @app.get("/api/schools/my")
-async def get_my_schools(user_id: int = Query(...), db: Session = Depends(get_db)):
+async def get_my_schools(user_id: int = Query(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_student') and not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
     schools = db.query(School).filter(
         School.id.in_(db.query(SchoolMember.school_id).filter(SchoolMember.user_id == user_id))
     ).all()
@@ -882,7 +1251,9 @@ async def get_my_schools(user_id: int = Query(...), db: Session = Depends(get_db
     return result
 
 @app.get("/api/schools/{school_id}")
-async def get_school_details(school_id: int, user_id: int = Query(...), db: Session = Depends(get_db)):
+async def get_school_details(school_id: int, user_id: int = Query(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_student') and not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
     member = db.query(SchoolMember).filter(
         SchoolMember.school_id == school_id, SchoolMember.user_id == user_id
     ).first()
@@ -908,7 +1279,9 @@ async def get_school_details(school_id: int, user_id: int = Query(...), db: Sess
     }
 
 @app.get("/api/schools/{school_id}/stats")
-async def get_school_stats_endpoint(school_id: int, teacher_id: int = Query(...), db: Session = Depends(get_db)):
+async def get_school_stats_endpoint(school_id: int, teacher_id: int = Query(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
     try:
         result = await ai_service.get_school_stats(db, school_id, teacher_id)
         return result
@@ -916,7 +1289,9 @@ async def get_school_stats_endpoint(school_id: int, teacher_id: int = Query(...)
         raise HTTPException(403, str(e))
 
 @app.delete("/api/schools/{school_id}")
-async def leave_school(school_id: int, user_id: int = Query(...), db: Session = Depends(get_db)):
+async def leave_school(school_id: int, user_id: int = Query(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_student'):
+        raise HTTPException(403, "Доступ запрещён")
     school = db.query(School).filter(School.id == school_id).first()
     if not school:
         raise HTTPException(404, "Школа не найдена")
@@ -931,7 +1306,9 @@ async def leave_school(school_id: int, user_id: int = Query(...), db: Session = 
     return {"status": "ok", "message": "Вы покинули школу"}
 
 @app.delete("/api/schools/{school_id}/delete")
-async def delete_school(school_id: int, user_id: int = Query(...), db: Session = Depends(get_db)):
+async def delete_school(school_id: int, user_id: int = Query(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
     school = db.query(School).filter(School.id == school_id, School.owner_id == user_id).first()
     if not school:
         raise HTTPException(404, "Школа не найдена или вы не являетесь владельцем")
@@ -946,9 +1323,12 @@ async def delete_school(school_id: int, user_id: int = Query(...), db: Session =
 async def build_target_graph_endpoint(
     user_id: int,
     exam_name: str,
-    school_id: int = Query(...),   # обязательно передавать ID школы
+    school_id: int = Query(...),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
     try:
         result = await ai_service.build_target_graph(db, user_id, school_id, exam_name)
         return result
@@ -956,7 +1336,9 @@ async def build_target_graph_endpoint(
         raise HTTPException(400, str(e))
 
 @app.post("/api/sync_performance")
-async def sync_performance_to_school(user_id: int, school_id: int, db: Session = Depends(get_db)):
+async def sync_performance_to_school(user_id: int, school_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
     try:
         await ai_service.sync_student_performance(db, user_id, school_id)
         return {"status": "ok"}
@@ -964,7 +1346,9 @@ async def sync_performance_to_school(user_id: int, school_id: int, db: Session =
         raise HTTPException(400, str(e))
 
 @app.get("/api/users/{user_id}/coefficient")
-async def get_coefficient_endpoint(user_id: int, school_id: int = Query(...), db: Session = Depends(get_db)):
+async def get_coefficient_endpoint(user_id: int, school_id: int = Query(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
     try:
         result = await ai_service.get_coefficient(db, user_id, school_id)
         return result
@@ -972,7 +1356,9 @@ async def get_coefficient_endpoint(user_id: int, school_id: int = Query(...), db
         raise HTTPException(400, str(e))
 
 @app.get("/api/users/{user_id}/learning_graphs")
-async def get_learning_graphs_endpoint(user_id: int, school_id: int = Query(...), db: Session = Depends(get_db)):
+async def get_learning_graphs_endpoint(user_id: int, school_id: int = Query(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'schools_teacher') and not check_module_access(current_user, 'rating_view'):
+        raise HTTPException(403, "Доступ запрещён")
     try:
         result = await ai_service.get_learning_graphs(db, user_id, school_id)
         return result
@@ -981,14 +1367,18 @@ async def get_learning_graphs_endpoint(user_id: int, school_id: int = Query(...)
 
 # ========== КУРСЫ И УРОКИ (дополнительные эндпоинты) ==========
 @app.get("/api/course_lessons/{lesson_id}")
-async def get_course_lesson(lesson_id: int, db: Session = Depends(get_db)):
+async def get_course_lesson(lesson_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ запрещён")
     lesson = db.query(CourseLesson).filter(CourseLesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден")
     return lesson
 
 @app.post("/api/courses/{course_id}/generate_lesson_content/{lesson_id}")
-async def generate_course_lesson_content(course_id: int, lesson_id: int, db: Session = Depends(get_db)):
+async def generate_course_lesson_content(course_id: int, lesson_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ запрещён")
     lesson = db.query(CourseLesson).filter(
         CourseLesson.id == lesson_id, CourseLesson.module.has(course_id=course_id)
     ).first()
@@ -1013,7 +1403,9 @@ async def generate_course_lesson_content(course_id: int, lesson_id: int, db: Ses
     return {"status": "ok", "message": "Содержание урока сгенерировано"}
 
 @app.post("/api/courses/{course_id}/generate_all_lessons_content")
-async def generate_all_lessons_content(course_id: int, db: Session = Depends(get_db)):
+async def generate_all_lessons_content(course_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not check_module_access(current_user, 'courses_create'):
+        raise HTTPException(403, "Доступ запрещён")
     course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
     if not course:
         raise HTTPException(404, "Курс не найден")
@@ -1055,19 +1447,24 @@ async def conference_teacher_redirect():
 async def conference_student_redirect():
     return RedirectResponse(url="http://localhost:8000/student")
 
-# Регистрация
+# Регистрация (обновлено с ролями)
 @app.post("/api/auth/register")
 async def register(username: str, password: str, name: str, email: str, role: str = "student", db: Session = Depends(get_db)):
-    # Проверка уникальности username
     existing = db.query(UserAuth).filter(UserAuth.username == username).first()
     if existing:
         raise HTTPException(400, "Username already exists")
     
-    # Создаём пользователя
-    user = User(name=name, email=email, role=role)
+    # Создаём пользователя (без поля role, теперь через связи)
+    user = User(name=name, email=email)
     db.add(user)
     db.commit()
     db.refresh(user)
+    
+    # Назначаем роли по умолчанию
+    default_role_names = get_default_roles()
+    default_roles = db.query(Role).filter(Role.name.in_(default_role_names)).all()
+    user.roles = default_roles
+    db.commit()
     
     # Создаём аутентификацию
     user_auth = UserAuth(
@@ -1080,9 +1477,16 @@ async def register(username: str, password: str, name: str, email: str, role: st
     db.commit()
     
     token = create_access_token(data={"sub": user.id})
-    return {"access_token": token, "token_type": "bearer", "user_id": user.id, "role": user.role, "name": user.name, "avatar_url": user_auth.avatar_url}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user_id": user.id,
+        "roles": [r.name for r in user.roles],
+        "name": user.name,
+        "avatar_url": user_auth.avatar_url
+    }
 
-# Логин
+# Логин (обновлено)
 @app.post("/api/auth/login")
 async def login(username: str, password: str, db: Session = Depends(get_db)):
     user_auth = db.query(UserAuth).filter(UserAuth.username == username).first()
@@ -1094,9 +1498,16 @@ async def login(username: str, password: str, db: Session = Depends(get_db)):
     db.commit()
     
     token = create_access_token(data={"sub": user.id})
-    return {"access_token": token, "token_type": "bearer", "user_id": user.id, "role": user.role, "name": user.name, "avatar_url": user_auth.avatar_url}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user_id": user.id,
+        "roles": [r.name for r in user.roles],
+        "name": user.name,
+        "avatar_url": user_auth.avatar_url
+    }
 
-# Получить профиль текущего пользователя
+# Получить профиль текущего пользователя (обновлено с XP и roles)
 @app.get("/api/auth/profile")
 async def get_profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     user_auth = db.query(UserAuth).filter(UserAuth.user_id == current_user.id).first()
@@ -1104,7 +1515,9 @@ async def get_profile(current_user: User = Depends(get_current_user), db: Sessio
         "id": current_user.id,
         "name": current_user.name,
         "email": current_user.email,
-        "role": current_user.role,
+        "roles": [r.name for r in current_user.roles],
+        "total_xp": current_user.total_xp,
+        "level": current_user.level,
         "avatar_url": user_auth.avatar_url if user_auth else None,
         "username": user_auth.username if user_auth else None
     }
@@ -1119,8 +1532,6 @@ async def update_avatar(data: AvatarUpdate, current_user: User = Depends(get_cur
     return {"avatar_url": data.avatar_url}
 
 # ========== ЧАТ ШКОЛЫ ==========
-
-# Получить сообщения общего чата школы (последние 50)
 @app.get("/api/chat/school/{school_id}/messages")
 async def get_school_chat_messages(
     school_id: int,
@@ -1128,7 +1539,9 @@ async def get_school_chat_messages(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Проверяем, является ли пользователь участником школы
+    if not check_module_access(current_user, 'schools_student') and not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
+    
     member = db.query(SchoolMember).filter(
         SchoolMember.school_id == school_id,
         SchoolMember.user_id == current_user.id
@@ -1145,13 +1558,12 @@ async def get_school_chat_messages(
         "id": m.id,
         "user_id": m.user_id,
         "user_name": m.user.name,
-        "user_role": m.user.role,
+        "user_role": m.user.roles[0].display_name if m.user.roles else "Пользователь",
         "avatar_url": db.query(UserAuth).filter(UserAuth.user_id == m.user_id).first().avatar_url if db.query(UserAuth).filter(UserAuth.user_id == m.user_id).first() else None,
         "message": m.message,
         "created_at": m.created_at.isoformat()
     } for m in reversed(messages)]
 
-# Отправить сообщение в общий чат школы
 @app.post("/api/chat/school/{school_id}/send")
 async def send_school_chat_message(
     school_id: int,
@@ -1159,6 +1571,9 @@ async def send_school_chat_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'schools_student') and not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
+    
     member = db.query(SchoolMember).filter(
         SchoolMember.school_id == school_id,
         SchoolMember.user_id == current_user.id
@@ -1178,7 +1593,6 @@ async def send_school_chat_message(
     
     return {"status": "ok", "message_id": new_msg.id}
 
-# Получить личные сообщения между текущим пользователем и указанным пользователем
 @app.get("/api/chat/private/{other_user_id}")
 async def get_private_messages(
     other_user_id: int,
@@ -1186,6 +1600,9 @@ async def get_private_messages(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'schools_student') and not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
+    
     messages = db.query(SchoolChatMessage).filter(
         SchoolChatMessage.is_private == True,
         ((SchoolChatMessage.user_id == current_user.id) & (SchoolChatMessage.recipient_id == other_user_id)) |
@@ -1204,7 +1621,6 @@ async def get_private_messages(
         "created_at": m.created_at.isoformat()
     } for m in reversed(messages)]
 
-# Отправить личное сообщение
 @app.post("/api/chat/private/send")
 async def send_private_message(
     recipient_id: int = Body(...),
@@ -1212,11 +1628,13 @@ async def send_private_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'schools_student') and not check_module_access(current_user, 'schools_teacher'):
+        raise HTTPException(403, "Доступ запрещён")
+    
     recipient = db.query(User).filter(User.id == recipient_id).first()
     if not recipient:
         raise HTTPException(404, "Получатель не найден")
     
-    # Проверяем, что оба пользователя состоят в одной школе
     common_school = db.query(SchoolMember).filter(
         SchoolMember.user_id == current_user.id
     ).filter(
@@ -1240,48 +1658,33 @@ async def send_private_message(
     
     return {"status": "ok", "message_id": new_msg.id}
 
-
-@app.on_event("startup")
-async def init_ocr():
-    global ocr_reader
-    try:
-        ocr_reader = easyocr.Reader(['ru', 'en'], gpu=False)
-        print("✅ EasyOCR загружен")
-    except Exception as e:
-        print(f"⚠️ Ошибка загрузки EasyOCR: {e}")
-
+# ========== OCR ==========
 @app.post("/api/ocr/recognize")
 async def recognize_handwriting(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user)  # опционально, если хотим авторизацию
+    current_user: User = Depends(get_current_user)
 ):
-    """Распознаёт рукописный текст из загруженного изображения"""
+    if not check_module_access(current_user, 'ocr'):
+        raise HTTPException(403, "Доступ к модулю OCR запрещён")
     if ocr_reader is None:
         raise HTTPException(503, "OCR сервис не инициализирован")
     
     try:
-        # Читаем файл
         contents = await file.read()
         image = Image.open(io.BytesIO(contents))
-        # Конвертируем в numpy array (RGB)
         img_array = np.array(image)
         
-        # Распознаём текст
         result = ocr_reader.readtext(img_array, detail=1)
         
         if not result:
             return {"text": "", "confidence": 0}
         
-        # Собираем весь текст
         full_text = ' '.join([item[1] for item in result])
-        # Средняя уверенность
         avg_confidence = sum(item[2] for item in result) / len(result)
         
-        # Пост-обработка через DeepSeek для исправления ошибок (опционально, но повышает качество)
-        # Раскомментируйте если хотите улучшить результат
         corrected = await deepseek_client.chat_completion([
-             {"role": "system", "content": "Ты эксперт по исправлению OCR-ошибок. Исправь распознанный текст, сохранив смысл."},
-             {"role": "user", "content": f"Распознанный текст:\n{full_text}\n\nИсправь ошибки распознавания и верни только исправленный текст:"}
+            {"role": "system", "content": "Ты эксперт по исправлению OCR-ошибок. Исправь распознанный текст, сохранив смысл."},
+            {"role": "user", "content": f"Распознанный текст:\n{full_text}\n\nИсправь ошибки распознавания и верни только исправленный текст:"}
         ])
         full_text = corrected.strip()
         
@@ -1290,13 +1693,17 @@ async def recognize_handwriting(
     except Exception as e:
         print(f"OCR ошибка: {e}")
         raise HTTPException(400, f"Ошибка распознавания: {str(e)}")
-    
+
+# ========== PDF ЧАТ ==========
 @app.post("/api/upload-pdf")
 async def upload_pdf(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'pdf_chat'):
+        raise HTTPException(403, "Доступ к PDF чату запрещён")
+    
     temp_dir = Path("/tmp/user_docs")
     temp_dir.mkdir(exist_ok=True)
     safe_filename = f"{uuid.uuid4()}.pdf"
@@ -1342,6 +1749,9 @@ async def ask_pdf(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'pdf_chat'):
+        raise HTTPException(403, "Доступ к PDF чату запрещён")
+    
     data = await request.json()
     doc_id = data.get("document_id")
     question = data.get("question")
@@ -1353,20 +1763,17 @@ async def ask_pdf(
         raise HTTPException(404, "Документ не найден")
     
     paths = json.loads(doc.index_path)
-    # Загружаем все чанки
     with open(paths["chunks"], "r", encoding="utf-8") as f:
         all_chunks = json.load(f)
     first_chunk = all_chunks[0] if all_chunks else ""
     
-    # Поиск релевантных чанков (увеличим k до 8 для большего контекста)
     relevant_chunks = search_tfidf_index(paths["vectorizer"], paths["matrix"], paths["chunks"], question, k=8)
     
-    # Формируем контекст: первый чанк (если не входит) + релевантные
     context_parts = []
     if first_chunk and first_chunk not in relevant_chunks:
         context_parts.append(first_chunk)
     context_parts.extend(relevant_chunks)
-    context = "\n\n---\n\n".join(context_parts[:8])  # берём до 8 чанков
+    context = "\n\n---\n\n".join(context_parts[:8])
     
     if not relevant_chunks and not first_chunk:
         return {"answer": "Не удалось найти информацию в загруженном документе."}
@@ -1401,31 +1808,32 @@ ANSWER:"""
     
     return {"answer": answer, "used_chunks": len(relevant_chunks)}
 
-from .models import ExamTicket
-
+# ========== ГЕНЕРАЦИЯ ЭКЗАМЕНАЦИОННЫХ БИЛЕТОВ ==========
 @app.post("/api/generate-exam-tickets")
 async def generate_exam_tickets(
     request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'exam_tickets'):
+        raise HTTPException(403, "Доступ к модулю 'Билеты' запрещён")
+    
     data = await request.json()
     course_name = data.get("course_name")
     num_questions = data.get("num_questions", 5)
-    ticket_type = data.get("ticket_type", "tickets")  # 'tickets' или 'test'
+    ticket_type = data.get("ticket_type", "tickets")
     
     if not course_name:
         raise HTTPException(400, "course_name required")
     if num_questions < 1 or num_questions > 20:
         raise HTTPException(400, "num_questions must be between 1 and 20")
     
-    # Формируем промпт для AI
     if ticket_type == "tickets":
         prompt = f"""Generate {num_questions} exam questions for a university-level course titled "{course_name}". 
 Each question should be a clear, standalone problem that tests understanding of key concepts.
 Return ONLY a JSON array of strings, like: ["Question 1...", "Question 2...", ...].
 Do not include answers or explanations."""
-    else:  # test with multiple choice
+    else:
         prompt = f"""Generate {num_questions} multiple-choice questions for a university-level course titled "{course_name}".
 For each question, provide: question text, 4 options (A, B, C, D), and the correct answer letter.
 Return ONLY a JSON array of objects:
@@ -1443,8 +1851,6 @@ Return ONLY a JSON array of objects:
             {"role": "user", "content": prompt}
         ], max_tokens=2000, temperature=0.7)
         
-        # Очистка ответа
-        import re
         response = response.strip()
         if response.startswith("```json"):
             response = response[7:]
@@ -1456,7 +1862,6 @@ Return ONLY a JSON array of objects:
         if not isinstance(questions, list):
             raise ValueError("Response is not a list")
         
-        # Сохраняем в БД
         ticket = ExamTicket(
             user_id=current_user.id,
             course_name=course_name,
@@ -1478,10 +1883,8 @@ Return ONLY a JSON array of objects:
         
     except Exception as e:
         raise HTTPException(500, f"Generation failed: {str(e)}")
-    
-from pydantic import BaseModel
-import json
 
+# ========== ПРОВЕРКА ЭССЕ ==========
 class EssayCheckRequest(BaseModel):
     text: str
     title: Optional[str] = None
@@ -1492,6 +1895,9 @@ async def check_essay(
     request: EssayCheckRequest,
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'essay_check'):
+        raise HTTPException(403, "Доступ к модулю 'Проверка работ' запрещён")
+    
     text = request.text.strip()
     if not text:
         raise HTTPException(400, "Текст не может быть пустым")
@@ -1499,10 +1905,6 @@ async def check_essay(
     title = request.title or "Работа"
     criteria = request.criteria or "стандартные академические критерии"
     
-    # Используем тройные кавычки. Фигурные скобки внутри JSON НЕ экранируем,
-    # потому что они не являются частью f-строки (они внутри литерала). 
-    # На самом деле ошибка была в том, что в f-строке были { и } вокруг названий полей.
-    # Перепишем без f-строки для JSON-образца, а лучше передадим явный пример.
     prompt = f"""Ты – опытный преподаватель. Проверь следующую студенческую работу на тему "{title}".
 
 Критерии оценки: {criteria}
@@ -1525,7 +1927,6 @@ async def check_essay(
             {"role": "user", "content": prompt}
         ], max_tokens=1500, temperature=0.5)
         
-        # Очистка от markdown-разметки
         response = response.strip()
         if response.startswith("```json"):
             response = response[7:]
@@ -1544,15 +1945,12 @@ async def check_essay(
         raise HTTPException(500, f"Ошибка парсинга JSON: {str(e)}. Ответ AI: {response[:200]}")
     except Exception as e:
         raise HTTPException(500, f"Ошибка проверки: {str(e)}")
-    
-from pydantic import BaseModel
-from datetime import datetime, timedelta
-from .models import Task
 
+# ========== ПЛАНИРОВЩИК ЗАДАЧ ==========
 class TaskCreate(BaseModel):
     title: str
     description: Optional[str] = None
-    deadline: str  # ISO format, e.g. "2025-06-01T15:00:00"
+    deadline: str
 
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
@@ -1566,6 +1964,8 @@ async def create_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'planner'):
+        raise HTTPException(403, "Доступ к модулю 'Планировщик' запрещён")
     try:
         deadline = datetime.fromisoformat(task_data.deadline)
     except ValueError:
@@ -1597,6 +1997,8 @@ async def get_tasks(
     status: Optional[str] = None,
     upcoming_days: Optional[int] = None
 ):
+    if not check_module_access(current_user, 'planner'):
+        raise HTTPException(403, "Доступ к модулю 'Планировщик' запрещён")
     query = db.query(Task).filter(Task.user_id == current_user.id)
     if status:
         query = query.filter(Task.status == status)
@@ -1625,6 +2027,8 @@ async def update_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'planner'):
+        raise HTTPException(403, "Доступ к модулю 'Планировщик' запрещён")
     task = db.query(Task).filter(Task.id == task_id, Task.user_id == current_user.id).first()
     if not task:
         raise HTTPException(404, "Задача не найдена")
@@ -1649,6 +2053,8 @@ async def delete_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'planner'):
+        raise HTTPException(403, "Доступ к модулю 'Планировщик' запрещён")
     task = db.query(Task).filter(Task.id == task_id, Task.user_id == current_user.id).first()
     if not task:
         raise HTTPException(404, "Задача не найдена")
@@ -1656,30 +2062,28 @@ async def delete_task(
     db.commit()
     return {"message": "Задача удалена"}
 
+# ========== ПЛАНИРОВЩИК НАПОМИНАНИЙ ==========
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 
-# Функция отправки email (замените на свои SMTP данные или используйте логирование)
 def send_reminder_email(email: str, task_title: str, deadline: datetime):
-    # Настройте SMTP (для примера используем логирование)
     print(f"[REMINDER] Напоминание для {email}: задача '{task_title}' истекает {deadline.strftime('%Y-%m-%d %H:%M')}")
-    # Реальная отправка email – раскомментируйте и настройте
     try:
-        msg = MIMEText(f"Уважаемый студент, задача '{task_title}' должна быть выполнена до {deadline.strftime('%Y-%m-%d %H:%M')}.")
+        msg = MIMEText(f"Уважаемый пользователь, задача '{task_title}' должна быть выполнена до {deadline.strftime('%Y-%m-%d %H:%M')}.")
         msg['Subject'] = f'Напоминание: {task_title}'
-        msg['From'] = 'amirkad62@gmail.com'
+        msg['From'] = 'noreply@ai-teacher.com'
         msg['To'] = email
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.starttls()
-            server.login('amirkad62@gmail.com', 'kpkhzrnpgbbkfjoy')
-            server.send_message(msg)
+        # Раскомментировать при наличии SMTP
+        # with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        #     server.starttls()
+        #     server.login('your_email@gmail.com', 'your_password')
+        #     server.send_message(msg)
     except Exception as e:
         print(f"SMTP error: {e}")
 
 def check_deadlines():
-    """Фоновая задача для отправки напоминаний о дедлайнах (каждые 30 минут)"""
     db = SessionLocal()
     try:
         now = datetime.utcnow()
@@ -1701,16 +2105,11 @@ def check_deadlines():
     finally:
         db.close()
 
-# Добавляем задачу в существующий планировщик (предполагается, что scheduler уже инициализирован)
-# Если scheduler ещё не создан, раскомментируйте следующую строку:
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=check_deadlines, trigger="interval", minutes=30)
 scheduler.start()
 
-from .models import SyllabusCourse
-from pydantic import BaseModel
-from typing import Optional, List
-
+# ========== КОНСТРУКТОР СИЛЛАБУСОВ ==========
 class SyllabusGenerateRequest(BaseModel):
     title: str
     specialty: Optional[str] = None
@@ -1737,6 +2136,9 @@ async def generate_syllabus(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'syllabus'):
+        raise HTTPException(403, "Доступ к модулю 'Конструктор курсов' запрещён")
+    
     prompt = f"""Ты – эксперт по учебно-методической документации для вузов. Создай рабочий план дисциплины (силлабус / РПД) на русском языке.
 
 Название курса: {req.title}
@@ -1788,7 +2190,6 @@ async def generate_syllabus(
             {"role": "user", "content": prompt}
         ], max_tokens=4000, temperature=0.5)
         
-        # Очистка ответа
         response = response.strip()
         if response.startswith("```json"):
             response = response[7:]
@@ -1800,7 +2201,6 @@ async def generate_syllabus(
         
         data = json.loads(response)
         
-        # Сохраняем в БД
         syllabus = SyllabusCourse(
             user_id=current_user.id,
             title=data.get("title", req.title),
@@ -1822,12 +2222,14 @@ async def generate_syllabus(
         
     except Exception as e:
         raise HTTPException(500, f"Ошибка генерации: {str(e)}")
-    
+
 @app.get("/api/syllabus/courses")
 async def get_syllabus_courses(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'syllabus'):
+        raise HTTPException(403, "Доступ к модулю 'Конструктор курсов' запрещён")
     courses = db.query(SyllabusCourse).filter(SyllabusCourse.user_id == current_user.id).order_by(SyllabusCourse.created_at.desc()).all()
     return courses
 
@@ -1837,6 +2239,8 @@ async def get_syllabus_course(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'syllabus'):
+        raise HTTPException(403, "Доступ к модулю 'Конструктор курсов' запрещён")
     course = db.query(SyllabusCourse).filter(SyllabusCourse.id == course_id, SyllabusCourse.user_id == current_user.id).first()
     if not course:
         raise HTTPException(404, "Курс не найден")
@@ -1849,6 +2253,8 @@ async def update_syllabus_course(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'syllabus'):
+        raise HTTPException(403, "Доступ к модулю 'Конструктор курсов' запрещён")
     course = db.query(SyllabusCourse).filter(SyllabusCourse.id == course_id, SyllabusCourse.user_id == current_user.id).first()
     if not course:
         raise HTTPException(404, "Курс не найден")
@@ -1864,6 +2270,8 @@ async def delete_syllabus_course(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'syllabus'):
+        raise HTTPException(403, "Доступ к модулю 'Конструктор курсов' запрещён")
     course = db.query(SyllabusCourse).filter(SyllabusCourse.id == course_id, SyllabusCourse.user_id == current_user.id).first()
     if not course:
         raise HTTPException(404, "Курс не найден")
@@ -1871,28 +2279,27 @@ async def delete_syllabus_course(
     db.commit()
     return {"message": "Курс удалён"}
 
+# ========== НАУЧНЫЕ СТАТЬИ ==========
 import httpx
 import feedparser
-from datetime import datetime
-from .models import ScientificArticle
 
-# Генерация обзора литературы на основе списка статей
 @app.get("/api/scientific/search")
 async def search_arxiv(
     query: str,
     max_results: int = 10,
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'scientific'):
+        raise HTTPException(403, "Доступ к модулю 'Научные статьи' запрещён")
     if not query:
         raise HTTPException(400, "Query is required")
     
-    # Кодируем query для URL
     import urllib.parse
     encoded_query = urllib.parse.quote(query)
     url = f"https://export.arxiv.org/api/query?search_query=all:{encoded_query}&start=0&max_results={max_results}"
     
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
     }
     
     async with httpx.AsyncClient(timeout=30.0) as client:
@@ -1926,15 +2333,13 @@ async def search_arxiv(
         })
     return results
 
-# Генерация BibTeX по arXiv ID
 @app.get("/api/scientific/bibtex")
 async def get_bibtex(
     arxiv_id: str,
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Получение BibTeX-цитаты для статьи по arXiv ID.
-    """
+    if not check_module_access(current_user, 'scientific'):
+        raise HTTPException(403, "Доступ к модулю 'Научные статьи' запрещён")
     url = f"https://arxiv.org/bibtex/{arxiv_id}"
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
@@ -1948,6 +2353,8 @@ async def generate_literature_review(
     request: Request,
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'scientific'):
+        raise HTTPException(403, "Доступ к модулю 'Научные статьи' запрещён")
     data = await request.json()
     topic = data.get("topic")
     articles = data.get("articles", [])
@@ -1981,13 +2388,14 @@ Write in Russian, academic style, 1000-1500 words."""
     except Exception as e:
         raise HTTPException(500, f"Generation error: {str(e)}")
 
-# Сохранение статьи в избранное (опционально)
 @app.post("/api/scientific/favorite")
 async def save_article(
     request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'scientific'):
+        raise HTTPException(403, "Доступ к модулю 'Научные статьи' запрещён")
     data = await request.json()
     article = ScientificArticle(
         user_id=current_user.id,
@@ -2005,27 +2413,24 @@ async def save_article(
     db.refresh(article)
     return article
 
-# Получение списка избранных статей
 @app.get("/api/scientific/favorites")
 async def get_favorites(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'scientific'):
+        raise HTTPException(403, "Доступ к модулю 'Научные статьи' запрещён")
     articles = db.query(ScientificArticle).filter(
         ScientificArticle.user_id == current_user.id,
         ScientificArticle.is_favorite == True
     ).order_by(ScientificArticle.created_at.desc()).all()
     return articles
 
+# ========== АНАЛИЗ ДАННЫХ ==========
 def safe_execute_code(code: str, local_vars: dict) -> tuple:
-    """
-    Выполняет Python-код в ограниченной среде.
-    Возвращает (output_text, list_of_base64_images, error_message)
-    """
-    # Разрешаем только определённые модули
     allowed_modules = {
         'pandas': pd,
-        'np': np,          # numpy должен быть импортирован как np
+        'np': np,
         'matplotlib': matplotlib,
         'plt': plt,
         'math': __import__('math'),
@@ -2037,7 +2442,6 @@ def safe_execute_code(code: str, local_vars: dict) -> tuple:
         'functools': __import__('functools'),
         'typing': __import__('typing'),
     }
-    # Добавляем numpy, если ещё нет
     try:
         import numpy as np
         allowed_modules['numpy'] = np
@@ -2055,20 +2459,17 @@ def safe_execute_code(code: str, local_vars: dict) -> tuple:
         'Exception': Exception, 'ValueError': ValueError, 'TypeError': TypeError,
     }
 
-    # Переменные, которые будут доступны в коде
     local_vars.update({
         '__name__': '__main__',
         '_output': '',
         '_images': [],
     })
 
-    # Компилируем код с ограничениями
     try:
         byte_code = compile_restricted(code, '<string>', 'exec')
     except SyntaxError as e:
         return "", [], f"Синтаксическая ошибка: {str(e)}"
 
-    # Перенаправляем print в строку
     class PrintCollector:
         def write(self, text):
             local_vars['_output'] += str(text)
@@ -2078,10 +2479,8 @@ def safe_execute_code(code: str, local_vars: dict) -> tuple:
 
     try:
         exec(byte_code, safe_globals_dict, local_vars)
-        # Если код определил переменную result, добавим её в вывод
         if 'result' in local_vars:
             local_vars['_output'] += str(local_vars['result'])
-        # Сохраняем графики
         images = []
         for i, fig_num in enumerate(plt.get_fignums()):
             fig = plt.figure(fig_num)
@@ -2103,13 +2502,14 @@ async def upload_data_file(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'data_analysis'):
+        raise HTTPException(403, "Доступ к модулю 'Анализ данных' запрещён")
+    
     import pandas as pd
     import io
-    from pathlib import Path
     import uuid
 
     content = await file.read()
-    # Определяем формат по расширению
     if file.filename.endswith('.csv'):
         df = pd.read_csv(io.BytesIO(content))
     elif file.filename.endswith(('.xls', '.xlsx')):
@@ -2117,10 +2517,8 @@ async def upload_data_file(
     else:
         raise HTTPException(400, "Only CSV and Excel files are supported")
     
-    # Сохраняем DataFrame как JSON
     df_json = df.to_json(orient='records', date_format='iso')
     
-    # Опционально сохраняем файл на диск
     temp_dir = Path("/tmp/data_analysis")
     temp_dir.mkdir(exist_ok=True)
     safe_filename = f"{uuid.uuid4()}_{file.filename}"
@@ -2146,6 +2544,9 @@ async def analyze_data(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'data_analysis'):
+        raise HTTPException(403, "Доступ к модулю 'Анализ данных' запрещён")
+    
     import io
     import sys
     import base64
@@ -2169,17 +2570,14 @@ async def analyze_data(
     if not analysis_session:
         raise HTTPException(404, "Session not found")
     
-    # Сохраняем код
     analysis_session.code = code
     db.commit()
     
-    # Восстанавливаем DataFrame из JSON
     if analysis_session.dataframe_json:
         df = pd.read_json(analysis_session.dataframe_json, orient='records')
     else:
         df = pd.DataFrame()
     
-    # Безопасные builtins
     safe_builtins = {
         'abs': abs, 'all': all, 'any': any, 'bool': bool, 'dict': dict,
         'enumerate': enumerate, 'float': float, 'int': int, 'len': len,
@@ -2189,7 +2587,6 @@ async def analyze_data(
         'True': True, 'False': False, 'None': None
     }
     
-    # Перехват stdout
     stdout_capture = io.StringIO()
     stderr_capture = io.StringIO()
     original_stdout = sys.stdout
@@ -2221,7 +2618,6 @@ async def analyze_data(
         out = stdout_capture.getvalue()
         err = stderr_capture.getvalue()
         
-        # Сохраняем результаты
         analysis_session.output_text = out
         analysis_session.output_images = figures
         analysis_session.status = "success" if not err else "warning"
@@ -2250,6 +2646,8 @@ async def get_data_result(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'data_analysis'):
+        raise HTTPException(403, "Доступ к модулю 'Анализ данных' запрещён")
     session = db.query(DataAnalysisSession).filter(
         DataAnalysisSession.id == session_id,
         DataAnalysisSession.user_id == current_user.id
@@ -2270,6 +2668,8 @@ async def generate_code_proxy(
     request: Request,
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'data_analysis'):
+        raise HTTPException(403, "Доступ к модулю 'Анализ данных' запрещён")
     data = await request.json()
     prompt = data.get("prompt", "")
     df_info = data.get("df_info", "")
@@ -2301,21 +2701,23 @@ async def generate_code_proxy(
     code = code.replace("```python", "").replace("```", "").strip()
     return {"code": code}
 
+# ========== AI-РЕЦЕНЗЕНТ С ПРОВЕРКОЙ НА ПЛАГИАТ ==========
 @app.post("/api/review-text")
 async def review_text(
     req: TextReviewRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not check_module_access(current_user, 'essay_check'):
+        raise HTTPException(403, "Доступ к модулю 'Проверка работ' запрещён")
+    
     text = req.text.strip()
     if not text:
         raise HTTPException(400, "Текст не может быть пустым")
     title = req.title or "Без названия"
     
-    # 1. Проверка на плагиат
     plagiarism_percent, similar_parts = check_plagiarism(db, current_user.id, title, text)
     
-    # 2. AI-рецензия (используем усовершенствованный промпт)
     prompt = f"""Ты – строгий научный рецензент. Проведи рецензирование следующего текста.
 
 Название: {title}
@@ -2338,8 +2740,7 @@ async def review_text(
   "weaknesses": ["список слабых мест"],
   "recommendations": ["рекомендации"],
   "detailed_feedback": "развёрнутый отзыв (3-5 предложений)"
-}}
-Дополнительно, если обнаружены явные признаки плагиата, укажи это в feedback."""
+}}"""
     
     try:
         ai_response = await deepseek_client.chat_completion([
@@ -2347,7 +2748,6 @@ async def review_text(
             {"role": "user", "content": prompt}
         ], max_tokens=1500, temperature=0.4)
         
-        # Очистка от маркдауна
         ai_response = ai_response.strip()
         if ai_response.startswith("```json"):
             ai_response = ai_response[7:]
@@ -2359,7 +2759,6 @@ async def review_text(
         
         feedback = json.loads(ai_response)
     except Exception as e:
-        # fallback
         feedback = {
             "score": 50, "grade": "удовлетворительно",
             "strengths": ["Текст содержит интересные идеи"],
@@ -2368,7 +2767,6 @@ async def review_text(
             "detailed_feedback": "Автоматическая проверка не удалась. Рекомендуется доработать текст."
         }
     
-    # Сохраняем в БД
     review = TextReview(
         user_id=current_user.id,
         title=title,
@@ -2399,6 +2797,8 @@ async def get_review_history(
     db: Session = Depends(get_db),
     limit: int = 20
 ):
+    if not check_module_access(current_user, 'essay_check'):
+        raise HTTPException(403, "Доступ к модулю 'Проверка работ' запрещён")
     reviews = db.query(TextReview).filter(TextReview.user_id == current_user.id).order_by(TextReview.created_at.desc()).limit(limit).all()
     return [
         {
@@ -2412,55 +2812,14 @@ async def get_review_history(
         for r in reviews
     ]
 
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-# ========== IELTS МОДУЛЬ (полностью) ==========
-
+# ========== IELTS МОДУЛЬ ==========
 import whisper
 import tempfile
 import json
 
-# Глобальная переменная для модели Whisper (загружается один раз)
 whisper_model = None
 
-@app.on_event("startup")
-async def load_whisper_model():
-    global whisper_model
-    try:
-        whisper_model = whisper.load_model("base")
-        print("✅ Whisper model loaded for IELTS")
-    except Exception as e:
-        print(f"⚠️ Failed to load Whisper: {e}")
-
 from app.tasks.audio_tasks import transcribe_and_analyze
-import uuid
 
 @app.post("/ielts/speaking/analyze")
 async def analyze_ielts_speaking(
@@ -2469,7 +2828,9 @@ async def analyze_ielts_speaking(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Сохраняем аудио во временный файл
+    if not check_module_access(current_user, 'ielts'):
+        raise HTTPException(403, "Доступ к модулю IELTS запрещён")
+    
     ext = file.filename.split(".")[-1] if "." in file.filename else "webm"
     safe_filename = f"{uuid.uuid4()}.{ext}"
     temp_dir = tempfile.gettempdir()
@@ -2479,7 +2840,6 @@ async def analyze_ielts_speaking(
     with open(file_path, "wb") as f:
         f.write(content)
     
-    # Запускаем Celery задачу
     task = transcribe_and_analyze.delay(
         audio_path=file_path,
         task_type=task_type,
@@ -2512,6 +2872,9 @@ async def analyze_ielts_writing(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'ielts'):
+        raise HTTPException(403, "Доступ к модулю IELTS запрещён")
+    
     data = await request.json()
     task_type = data.get("task_type", "task1")
     answer = data.get("answer", "")
@@ -2546,7 +2909,6 @@ Return ONLY valid JSON with:
             "suggestions": ["Plan before writing", "Use linking words", "Check grammar"]
         }
 
-    # Сохраняем в БД
     attempt = IELTSAttempt(
         user_id=current_user.id,
         task_type=f"writing_{task_type}",
@@ -2572,12 +2934,13 @@ Return ONLY valid JSON with:
         "suggestions": attempt.suggestions
     }
 
-
 @app.get("/ielts/attempts")
 async def get_ielts_attempts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'ielts'):
+        raise HTTPException(403, "Доступ к модулю IELTS запрещён")
     attempts = db.query(IELTSAttempt).filter(
         IELTSAttempt.user_id == current_user.id
     ).order_by(IELTSAttempt.created_at.desc()).all()
@@ -2591,13 +2954,14 @@ async def get_ielts_attempts(
         for a in attempts
     ]
 
-
 @app.get("/ielts/attempt/{attempt_id}")
 async def get_ielts_attempt(
     attempt_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if not check_module_access(current_user, 'ielts'):
+        raise HTTPException(403, "Доступ к модулю IELTS запрещён")
     attempt = db.query(IELTSAttempt).filter(
         IELTSAttempt.id == attempt_id,
         IELTSAttempt.user_id == current_user.id
@@ -2614,4 +2978,3 @@ async def get_ielts_attempt(
         "suggestions": attempt.suggestions,
         "created_at": attempt.created_at
     }
-    

@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 from .context_service import ContextService
-from .models import User, Session as SessionModel, TestResult, Lesson, ProgressHistory
+from .models import User, Session as SessionModel, TestResult, Lesson, ProgressHistory, Role
 from .deepseek_client import deepseek_client
 from .config import settings
 import yt_dlp
@@ -1473,14 +1473,17 @@ class AITeacherService:
             ]
         }
 
-    # ========== УПРАВЛЕНИЕ ШКОЛОЙ ==========
+    # ========== УПРАВЛЕНИЕ ШКОЛОЙ (АДАПТИРОВАНО ПОД НОВЫЕ РОЛИ) ==========
     async def create_school(self, db: Session, owner_id: int, name: str, description: str = None) -> Dict:
         print(f"DEBUG: create_school called with owner_id={owner_id}, name={name}")
         user = db.query(User).filter(User.id == owner_id).first()
         if not user:
             raise ValueError(f"Пользователь с id={owner_id} не найден")
-        if not hasattr(user, 'role') or user.role != 'teacher':
-            raise ValueError(f"Только учитель может создать школу. Ваша роль: {getattr(user, 'role', 'не задана')}")
+        
+        # Проверка наличия роли учителя (school_teacher или professor)
+        teacher_roles = ['school_teacher', 'professor']
+        if not any(role.name in teacher_roles for role in user.roles):
+            raise ValueError(f"Только учитель может создать школу. Ваши роли: {[r.name for r in user.roles]}")
         
         import secrets
         invite_code = secrets.token_hex(4).upper()
@@ -1541,7 +1544,6 @@ class AITeacherService:
                 continue
             user = member.user
             
-            # Получаем детальную статистику ученика
             performances = db.query(UserPerformance).filter(UserPerformance.user_id == user.id).all()
             time_stats = db.query(TopicTimeStats).filter(TopicTimeStats.user_id == user.id).all()
             total_seconds = sum(ts.total_seconds for ts in time_stats)
@@ -1607,7 +1609,6 @@ class AITeacherService:
                         "difficulty": topic.get("difficulty", "medium")
                     }
                 
-                # Ищем или создаём StudentPerformance с конкретной школой
                 performance = db.query(StudentPerformance).filter(
                     StudentPerformance.user_id == user_id,
                     StudentPerformance.school_id == school_id
@@ -1701,7 +1702,6 @@ class AITeacherService:
         if not performance:
             return {"target_graph": [], "current_graph": []}
 
-        # Преобразование целевого графа (словарь → список)
         target_list = []
         if performance.target_graph:
             for topic, data in performance.target_graph.items():
@@ -1712,7 +1712,6 @@ class AITeacherService:
                     "difficulty": data.get("difficulty", "medium")
                 })
 
-        # Преобразование текущего графа (словарь → список)
         current_list = []
         if performance.current_graph:
             for topic, mastery in performance.current_graph.items():

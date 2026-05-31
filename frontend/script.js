@@ -4,7 +4,9 @@ const API_URL = "http://localhost:8080";
 let currentSessionId = null;
 let currentUserId = null;
 let currentQuestions = [];
-let currentUserRole = 'student';
+let currentUserRoles = [];      // массив строк (role names)
+let currentUserXP = 0;
+let currentUserLevel = 1;
 
 // Таймеры для отслеживания времени
 let lessonStartTime = null;
@@ -98,17 +100,10 @@ function getTotalLessonTime() {
     return 0;
 }
 
-// ========== ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ onchange СЕЛЕКТОРА ==========
+// ========== ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ onchange СЕЛЕКТОРА (устарело, оставлено для совместимости) ==========
 window.setRole = function(role) {
-    currentUserRole = role;
-    const teacherPanel = document.getElementById('teacherPanel');
-    if (teacherPanel) {
-        if (role === 'teacher' && currentUserId) {
-            teacherPanel.style.display = 'block';
-        } else {
-            teacherPanel.style.display = 'none';
-        }
-    }
+    // Не используется, оставлено для старых вызовов
+    console.log("Deprecated setRole called");
 };
 
 // ========== ОСНОВНЫЕ ФУНКЦИИ ОБУЧЕНИЯ ==========
@@ -123,7 +118,8 @@ async function startLearning() {
     }
 
     try {
-        const role = document.getElementById('userRole') ? document.getElementById('userRole').value : 'student';
+        const roleSelect = document.getElementById('userRole');
+        const role = roleSelect ? roleSelect.value : 'student';
         console.log("1. Создаём пользователя с ролью:", role);
 
         const userRes = await fetch(`${API_URL}/api/users?role=${role}`, {
@@ -138,7 +134,6 @@ async function startLearning() {
         console.log("Пользователь создан:", user);
 
         if (role === 'teacher') {
-            currentUserRole = 'teacher';
             alert(`Добро пожаловать, учитель ${name}!`);
             document.getElementById('step1').style.display = 'none';
             document.getElementById('teacherPanel').style.display = 'block';
@@ -146,7 +141,6 @@ async function startLearning() {
             return;
         }
 
-        currentUserRole = 'student';
         alert(`Добро пожаловать, ${name}! Вы можете вступить в школу через кнопку "Вступить в школу" или продолжить обучение.`);
 
         document.getElementById('teacherPanel').style.display = 'none';
@@ -312,7 +306,9 @@ async function loadNextLesson() {
     try {
         const url = `${API_URL}/api/sessions/${currentSessionId}/next_lesson`;
         console.log("Запрос:", url);
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         console.log("Статус ответа:", response.status);
 
         if (!response.ok) {
@@ -428,7 +424,10 @@ async function submitLesson(lessonId) {
     try {
         const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/submit_lesson`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
             body: JSON.stringify({
                 lesson_id: lessonId,
                 user_answers: answers,
@@ -477,7 +476,10 @@ async function askBot(lessonId) {
     try {
         const response = await fetch(`${API_URL}/api/lessons/${lessonId}/chat`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
             body: JSON.stringify({ session_id: currentSessionId, question: question })
         });
         const data = await response.json();
@@ -490,7 +492,10 @@ async function askBot(lessonId) {
 
 async function loadProgressTest() {
     try {
-        const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/progress_test`, { method: 'POST' });
+        const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/progress_test`, { 
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
         const data = await response.json();
         displayTest(data.questions);
@@ -504,7 +509,9 @@ async function loadProgressTest() {
 
 async function updateProgress() {
     try {
-        const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/progress`);
+        const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/progress`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) return;
         const history = await response.json();
         if (history && history.length) {
@@ -603,7 +610,10 @@ async function saveCustomTest() {
     try {
         const response = await fetch(`${API_URL}/api/custom_tests?user_id=${currentUserId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
             body: JSON.stringify({ name: name, description: description, questions: questions })
         });
         if (!response.ok) throw new Error(await response.text());
@@ -618,7 +628,9 @@ async function saveCustomTest() {
 
 async function showCustomTestsList() {
     try {
-        const response = await fetch(`${API_URL}/api/custom_tests?user_id=${currentUserId}`);
+        const response = await fetch(`${API_URL}/api/custom_tests?user_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         const tests = await response.json();
         const container = document.getElementById('customTestsList');
         container.innerHTML = '';
@@ -653,7 +665,10 @@ async function showCustomTestsList() {
 async function deleteCustomTest(testId) {
     if (!confirm('Удалить этот тест?')) return;
     try {
-        const response = await fetch(`${API_URL}/api/custom_tests/${testId}?user_id=${currentUserId}`, { method: 'DELETE' });
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}?user_id=${currentUserId}`, { 
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         alert('Тест удалён');
         showCustomTestsList();
@@ -665,7 +680,10 @@ async function deleteCustomTest(testId) {
 
 async function trainExistingTest(testId, testName) {
     try {
-        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/train`, { method: 'POST' });
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/train`, { 
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         const result = await response.json();
         alert(`Тест "${testName}" обучен!\n${result.message}`);
     } catch (error) {
@@ -676,7 +694,9 @@ async function trainExistingTest(testId, testName) {
 
 async function startCustomTest(testId) {
     try {
-        const response = await fetch(`${API_URL}/api/custom_tests/${testId}`);
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         const test = await response.json();
         currentCustomTestId = test.id;
         currentCustomQuestions = test.questions;
@@ -711,7 +731,10 @@ async function submitCustomTest() {
     try {
         const response = await fetch(`${API_URL}/api/custom_tests/${currentCustomTestId}/submit`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
             body: JSON.stringify({ test_id: currentCustomTestId, answers: answers })
         });
         const result = await response.json();
@@ -749,7 +772,10 @@ async function generateSimilar(testId, testName) {
     const num = prompt('Сколько вопросов сгенерировать?', 5);
     if (!num) return;
     try {
-        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/generate_similar?num_questions=${num}`, { method: 'POST' });
+        const response = await fetch(`${API_URL}/api/custom_tests/${testId}/generate_similar?num_questions=${num}`, { 
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         const data = await response.json();
         if (data.error) {
@@ -794,7 +820,9 @@ async function generateSimilar(testId, testName) {
 async function showCoursesList() {
     if (!currentUserId) { alert('Сначала создайте пользователя'); return; }
     try {
-        const response = await fetch(`${API_URL}/api/courses?user_id=${currentUserId}`);
+        const response = await fetch(`${API_URL}/api/courses?user_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         const courses = await response.json();
         const container = document.getElementById('userCoursesList');
         container.innerHTML = '';
@@ -825,7 +853,9 @@ async function showCoursesList() {
 
 async function viewCourse(courseId) {
     try {
-        const response = await fetch(`${API_URL}/api/courses/${courseId}`);
+        const response = await fetch(`${API_URL}/api/courses/${courseId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         const course = await response.json();
         window.currentCourseId = courseId;
         document.getElementById('courseViewTitle').textContent = course.name;
@@ -861,7 +891,10 @@ async function viewCourse(courseId) {
 async function deleteCourse(courseId) {
     if (!confirm('Удалить этот курс?')) return;
     try {
-        const response = await fetch(`${API_URL}/api/courses/${courseId}?user_id=${currentUserId}`, { method: 'DELETE' });
+        const response = await fetch(`${API_URL}/api/courses/${courseId}?user_id=${currentUserId}`, { 
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         alert('Курс удалён');
         showCoursesList();
@@ -888,7 +921,10 @@ async function createCourse() {
     try {
         const response = await fetch(`${API_URL}/api/courses/generate?user_id=${currentUserId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
             body: JSON.stringify({ name, description, success_criteria: successCriteria })
         });
         if (!response.ok) throw new Error(await response.text());
@@ -904,7 +940,9 @@ async function createCourse() {
 async function showLessonsList() {
     if (!currentUserId) { alert('Сначала создайте пользователя'); return; }
     try {
-        const response = await fetch(`${API_URL}/api/lessons?user_id=${currentUserId}`);
+        const response = await fetch(`${API_URL}/api/lessons?user_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         const lessons = await response.json();
         const container = document.getElementById('userLessonsList');
         container.innerHTML = '';
@@ -935,7 +973,9 @@ async function showLessonsList() {
 
 async function viewLesson(lessonId) {
     try {
-        const response = await fetch(`${API_URL}/api/lessons/${lessonId}`);
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         const lesson = await response.json();
         document.getElementById('lessonViewTitle').textContent = lesson.title;
         document.getElementById('lessonViewSubject').textContent = lesson.subject;
@@ -986,7 +1026,10 @@ async function viewLesson(lessonId) {
 async function deleteLesson(lessonId) {
     if (!confirm('Удалить этот урок?')) return;
     try {
-        const response = await fetch(`${API_URL}/api/lessons/${lessonId}?user_id=${currentUserId}`, { method: 'DELETE' });
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}?user_id=${currentUserId}`, { 
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         alert('Урок удалён');
         showLessonsList();
@@ -1014,7 +1057,10 @@ async function createLesson() {
     try {
         const response = await fetch(`${API_URL}/api/lessons/generate?user_id=${currentUserId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
             body: JSON.stringify({ title, subject, description })
         });
         if (!response.ok) throw new Error(await response.text());
@@ -1030,7 +1076,10 @@ async function createLesson() {
 async function generatePresentation() {
     if (!window.currentLessonId) return;
     try {
-        const response = await fetch(`${API_URL}/api/lessons/${window.currentLessonId}/generate_presentation`, { method: 'POST' });
+        const response = await fetch(`${API_URL}/api/lessons/${window.currentLessonId}/generate_presentation`, { 
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         const data = await response.json();
         if (data.presentation_url) window.open(data.presentation_url, '_blank');
         else alert('Ошибка генерации презентации');
@@ -1045,7 +1094,10 @@ async function generateVideo(lessonId) {
     if (!statusDiv) return;
     statusDiv.innerHTML = '⏳ Генерация видео... (20-40 секунд)';
     try {
-        const response = await fetch(`${API_URL}/api/lessons/${lessonId}/generate_video`, { method: 'POST' });
+        const response = await fetch(`${API_URL}/api/lessons/${lessonId}/generate_video`, { 
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         const data = await response.json();
         if (data.video_url) statusDiv.innerHTML = `<a href="${data.video_url}" target="_blank">▶ Смотреть видео-урок</a>`;
         else statusDiv.innerHTML = data.message;
@@ -1060,10 +1112,11 @@ async function showStudentPlan() {
         return;
     }
     try {
-        const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/study_plan`);
+        const response = await fetch(`${API_URL}/api/sessions/${currentSessionId}/study_plan`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         const plan = await response.json();
-        // Показываем план в модальном окне, а не в displayPlan
         let planHtml = `
             <h3>📅 Мой план подготовки</h3>
             <p><strong>Стратегия:</strong> ${plan.strategy || 'Не указана'}</p>
@@ -1097,7 +1150,9 @@ async function showStudentPlanForTeacher(studentId, schoolId) {
     const sessionId = prompt("Введите ID сессии ученика (можно узнать у ученика или из БД):");
     if (!sessionId) return;
     try {
-        const response = await fetch(`${API_URL}/api/sessions/${sessionId}/study_plan`);
+        const response = await fetch(`${API_URL}/api/sessions/${sessionId}/study_plan`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         const plan = await response.json();
         showModal(`
@@ -1125,7 +1180,10 @@ async function showCreateSchoolForm() {
     const name = prompt("Название школы:");
     if (!name) return;
     const description = prompt("Описание школы (необязательно):");
-    const response = await fetch(`${API_URL}/api/schools/create?user_id=${currentUserId}&name=${encodeURIComponent(name)}&description=${encodeURIComponent(description || '')}`, { method: 'POST' });
+    const response = await fetch(`${API_URL}/api/schools/create?user_id=${currentUserId}&name=${encodeURIComponent(name)}&description=${encodeURIComponent(description || '')}`, { 
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+    });
     const result = await response.json();
     if (response.ok) alert(`Школа "${result.name}" создана! Код: ${result.invite_code}`);
     else alert("Ошибка: " + result.detail);
@@ -1134,7 +1192,10 @@ async function showCreateSchoolForm() {
 async function showJoinSchoolForm() {
     const inviteCode = prompt("Введите код приглашения:");
     if (!inviteCode) return;
-    const response = await fetch(`${API_URL}/api/schools/join?user_id=${currentUserId}&invite_code=${inviteCode}`, { method: 'POST' });
+    const response = await fetch(`${API_URL}/api/schools/join?user_id=${currentUserId}&invite_code=${inviteCode}`, { 
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+    });
     const result = await response.json();
     if (response.ok) alert(`Вы присоединились к школе "${result.school_name}" как ${result.role}`);
     else alert("Ошибка: " + result.detail);
@@ -1144,7 +1205,9 @@ async function askStudentSessionId(studentId) {
     const sessionId = prompt(`Введите ID активной сессии ученика ${studentId} (можно посмотреть в БД или спросить у ученика):`);
     if (!sessionId) return;
     try {
-        const response = await fetch(`${API_URL}/api/sessions/${sessionId}/study_plan`);
+        const response = await fetch(`${API_URL}/api/sessions/${sessionId}/study_plan`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         const plan = await response.json();
         let planHtml = `
@@ -1185,7 +1248,9 @@ async function showSchoolStats() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/api/schools/${schoolId}/stats?teacher_id=${currentUserId}`);
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}/stats?teacher_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         
         const data = await response.json();
@@ -1207,7 +1272,7 @@ async function showSchoolStats() {
                             <td style="padding: 10px;">${totalTime.toFixed(1)} ч</td>
                             <td style="padding: 10px;"><button onclick="viewStudentGraphs(${student.user_id}, ${schoolId})">📈 Графы</button></td>
                             <td style="padding: 10px;"><button onclick="askStudentSessionId(${student.user_id})">📅 План</button></td>
-                          </tr>`;
+                           </tr>`;
             }
             html += '</table>';
         } else {
@@ -1232,8 +1297,9 @@ async function showTeacherGraphs() {
     }
     
     try {
-        // Получаем список учеников школы
-        const statsResponse = await fetch(`${API_URL}/api/schools/${schoolId}/stats?teacher_id=${currentUserId}`);
+        const statsResponse = await fetch(`${API_URL}/api/schools/${schoolId}/stats?teacher_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!statsResponse.ok) throw new Error(await statsResponse.text());
         const statsData = await statsResponse.json();
         
@@ -1259,7 +1325,9 @@ async function showTeacherGraphs() {
 
 async function viewStudentGraphs(studentId, schoolId) {
     try {
-        const response = await fetch(`${API_URL}/api/users/${studentId}/learning_graphs?school_id=${schoolId}`);
+        const response = await fetch(`${API_URL}/api/users/${studentId}/learning_graphs?school_id=${schoolId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         
         const data = await response.json();
@@ -1295,7 +1363,9 @@ async function viewStudentGraphs(studentId, schoolId) {
         }
         
         // Коэффициент успеваемости
-        const coefRes = await fetch(`${API_URL}/api/users/${studentId}/coefficient?school_id=${schoolId}`);
+        const coefRes = await fetch(`${API_URL}/api/users/${studentId}/coefficient?school_id=${schoolId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (coefRes.ok) {
             const coefData = await coefRes.json();
             if (coefData && coefData.coefficient !== undefined) {
@@ -1324,7 +1394,8 @@ async function buildTargetGraph() {
     if (!schoolId) return;
     
     const response = await fetch(`${API_URL}/api/users/${studentId}/build_target_graph?exam_name=${encodeURIComponent(examName)}&school_id=${schoolId}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
     });
     const data = await response.json();
     
@@ -1345,11 +1416,12 @@ async function showStudentGraphs() {
         return;
     }
     try {
-        const perfResponse = await fetch(`${API_URL}/api/user/detailed_stats?user_id=${currentUserId}`);
+        const perfResponse = await fetch(`${API_URL}/api/user/detailed_stats?user_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!perfResponse.ok) throw new Error(await perfResponse.text());
         const stats = await perfResponse.json();
         
-        // Фильтруем только темы, где были попытки (total_count > 0)
         const topicsWithProgress = stats.topics_detail?.filter(t => t.total_count > 0) || [];
         
         if (!topicsWithProgress.length) {
@@ -1389,7 +1461,6 @@ async function showStudentGraphs() {
                 <p>Изучено тем: ${topicsWithProgress.length}</p>
             </div>
         `;
-        // Добавляем кнопку для просмотра плана подготовки
         if (currentSessionId) {
             html += `<div style="margin-top:20px;text-align:center">
                         <button onclick="showStudentPlan()" class="btn-primary">📅 Мой план подготовки</button>
@@ -1406,7 +1477,10 @@ async function joinSchool() {
     const inviteCode = prompt("Введите код приглашения:");
     if (!inviteCode) return;
     try {
-        const response = await fetch(`${API_URL}/api/schools/join?user_id=${currentUserId}&invite_code=${inviteCode}`, { method: 'POST' });
+        const response = await fetch(`${API_URL}/api/schools/join?user_id=${currentUserId}&invite_code=${inviteCode}`, { 
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         const result = await response.json();
         alert(`✅ Вы присоединились к школе "${result.school_name}"!`);
@@ -1418,7 +1492,9 @@ async function joinSchool() {
 async function showMySchools() {
     if (!currentUserId) { alert("Сначала создайте пользователя"); return; }
     try {
-        const response = await fetch(`${API_URL}/api/schools/my?user_id=${currentUserId}`);
+        const response = await fetch(`${API_URL}/api/schools/my?user_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         const schools = await response.json();
         let html = '<h3>🏫 Мои школы</h3>';
@@ -1445,7 +1521,9 @@ async function showMySchools() {
 
 async function viewSchoolDetails(schoolId) {
     try {
-        const response = await fetch(`${API_URL}/api/schools/${schoolId}?user_id=${currentUserId}`);
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}?user_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         const school = await response.json();
         let html = `<h3>🏫 ${escapeHtml(school.name)}</h3>
@@ -1467,7 +1545,10 @@ async function viewSchoolDetails(schoolId) {
 async function leaveSchool(schoolId) {
     if (!confirm('Покинуть школу?')) return;
     try {
-        const response = await fetch(`${API_URL}/api/schools/${schoolId}?user_id=${currentUserId}`, { method: 'DELETE' });
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}?user_id=${currentUserId}`, { 
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         alert('Вы покинули школу');
         showMySchools();
@@ -1479,7 +1560,10 @@ async function leaveSchool(schoolId) {
 async function deleteSchool(schoolId) {
     if (!confirm('Удалить школу? Это необратимо.')) return;
     try {
-        const response = await fetch(`${API_URL}/api/schools/${schoolId}/delete?user_id=${currentUserId}`, { method: 'DELETE' });
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}/delete?user_id=${currentUserId}`, { 
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
         if (!response.ok) throw new Error(await response.text());
         alert('Школа удалена');
         showMySchools();
@@ -1497,7 +1581,10 @@ async function processVideo() {
     try {
         const response = await fetch(`${API_URL}/api/video/transcribe`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
             body: JSON.stringify({ url, language })
         });
         const data = await response.json();
@@ -1537,16 +1624,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const roleSelect = document.getElementById('userRole');
     if (roleSelect) {
-        setRole(roleSelect.value);
-        roleSelect.addEventListener('change', function(e) { setRole(e.target.value); });
+        roleSelect.addEventListener('change', function(e) { 
+            // Не используется, но оставлено
+        });
     }
 });
 
-// ========== АВТОРИЗАЦИЯ ==========
+// ========== АВТОРИЗАЦИЯ (ОБНОВЛЕНО ДЛЯ РОЛЕВОЙ СИСТЕМЫ) ==========
 let authToken = localStorage.getItem('authToken');
 let currentUser = null;
 
-// Сохраняем токен в localStorage при успешном входе
 function setAuthToken(token, userData) {
     authToken = token;
     currentUser = userData;
@@ -1554,7 +1641,6 @@ function setAuthToken(token, userData) {
     localStorage.setItem('currentUser', JSON.stringify(userData));
 }
 
-// Выход
 function logout() {
     authToken = null;
     currentUser = null;
@@ -1565,9 +1651,9 @@ function logout() {
     document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
     document.getElementById('step1').style.display = 'block';
     alert('Вы вышли из системы');
+    location.reload(); // перезагружаем для сброса UI
 }
 
-// Показать модальное окно профиля
 async function showProfileModal() {
     if (!authToken) {
         alert('Сначала войдите в систему');
@@ -1583,15 +1669,21 @@ async function showProfileModal() {
         document.getElementById('modalAvatar').src = profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
         document.getElementById('profileName').textContent = profile.name;
         document.getElementById('profileEmail').textContent = profile.email;
-        document.getElementById('profileRole').textContent = profile.role === 'teacher' ? 'Учитель' : 'Ученик';
+        // Отображаем все роли
+        const rolesText = profile.roles ? profile.roles.join(', ') : 'Нет ролей';
+        document.getElementById('profileRole').innerHTML = rolesText;
         document.getElementById('profileUsername').textContent = profile.username;
+        // Отображаем XP и уровень
+        const xpSpan = document.getElementById('profileXP');
+        const levelSpan = document.getElementById('profileLevel');
+        if (xpSpan) xpSpan.textContent = profile.total_xp || 0;
+        if (levelSpan) levelSpan.textContent = profile.level || 1;
         
         document.getElementById('profileModal').style.display = 'block';
         
-        // ВАЖНО: добавляем клик на аватар
         const modalAvatar = document.getElementById('modalAvatar');
         const avatarUpload = document.getElementById('avatarUpload');
-        modalAvatar.onclick = () => avatarUpload.click();
+        if (modalAvatar) modalAvatar.onclick = () => avatarUpload.click();
         
     } catch (error) {
         alert('Ошибка загрузки профиля: ' + error.message);
@@ -1602,7 +1694,6 @@ function closeProfileModal() {
     document.getElementById('profileModal').style.display = 'none';
 }
 
-// Загрузка аватара
 document.getElementById('avatarUpload')?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1630,7 +1721,324 @@ document.getElementById('avatarUpload')?.addEventListener('change', async (e) =>
     reader.readAsDataURL(file);
 });
 
-// Форма регистрации/логина
+// Функция управления ролями
+async function manageRoles() {
+    if (!authToken) return;
+    try {
+        const resp = await fetch(`${API_URL}/api/user/roles`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!resp.ok) throw new Error(await resp.text());
+        const data = await resp.json();
+        let html = `<h3>📋 Управление ролями</h3>
+                    <p><strong>Ваши текущие роли:</strong> ${data.my_roles.join(', ') || 'нет'}</p>
+                    <h4>Доступные для добавления:</h4><ul>`;
+        for (let r of data.available_roles) {
+            html += `<li>${r.display_name} (${r.name}) `;
+            if (data.my_roles.includes(r.name)) {
+                html += `<span style="color:green">✓ уже есть</span>`;
+            } else {
+                html += `<button onclick="assignRole('${r.name}')">➕ Добавить</button>`;
+            }
+            html += `</li>`;
+        }
+        html += `</ul><button onclick="closeModal()" class="btn-secondary">Закрыть</button>`;
+        showModal(html);
+    } catch (err) {
+        alert('Ошибка загрузки ролей: ' + err.message);
+    }
+}
+
+async function assignRole(roleName) {
+    try {
+        const resp = await fetch(`${API_URL}/api/user/roles/assign?role_name=${encodeURIComponent(roleName)}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            alert(data.message);
+            manageRoles(); // обновить список
+            await updateUIAfterAuth(); // обновить интерфейс
+        } else {
+            alert('Ошибка: ' + data.detail);
+        }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
+}
+
+// Динамическая загрузка вкладок
+async function loadUserTabs() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    try {
+        const resp = await fetch(`${API_URL}/api/user/tabs`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!resp.ok) return;
+        const tabs = await resp.json();
+        const container = document.getElementById('tabsContainer');
+        if (!container) return;
+        let html = '<div class="flex gap-2 min-w-max">';
+        const iconMap = {
+            'learning': 'fa-home',
+            'tests': 'fa-pen-alt',
+            'courses': 'fa-book-open',
+            'schools': 'fa-school',
+            'video': 'fa-video',
+            'pdfchat': 'fa-file-pdf',
+            'examtickets': 'fa-ticket-alt',
+            'essaycheck': 'fa-file-alt',
+            'planner': 'fa-calendar-alt',
+            'scientific': 'fa-flask',
+            'syllabus': 'fa-chalkboard-user',
+            'dataanalysis': 'fa-chart-line',
+            'ielts': 'fa-language',
+            'softskills': 'fa-comments',
+            'coding': 'fa-code',
+            'supervisor': 'fa-user-graduate',
+            'internship': 'fa-briefcase',
+            'hypothesis': 'fa-lightbulb',
+            'rating': 'fa-trophy',
+            'corporate': 'fa-building',
+            'api': 'fa-plug',
+            'reviewer': 'fa-pen-fancy'
+        };
+        for (let tab of tabs) {
+            const icon = iconMap[tab.id] || 'fa-circle';
+            html += `<button data-tab="${tab.id}" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas ${icon} mr-1"></i> ${tab.name}</button>`;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+        // Перепривязываем обработчики
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                showTabPane(tabId);
+            });
+        });
+        // По умолчанию показать первую вкладку
+        if (tabs.length > 0) showTabPane(tabs[0].id);
+    } catch (err) {
+        console.error('Failed to load tabs:', err);
+    }
+}
+
+function showTabPane(tabId) {
+    // Скрыть все панели
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+    const pane = document.getElementById(`${tabId}-pane`);
+    if (pane) pane.classList.remove('hidden');
+    // Активировать соответствующую кнопку
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-tab') === tabId) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+// Обновление UI после авторизации
+async function updateUIAfterAuth() {
+    const token = localStorage.getItem('authToken');
+    const guestBlock = document.getElementById('guestBlock');
+    const profileHeader = document.getElementById('profileHeader');
+    const tabsContainer = document.getElementById('tabsContainer');
+    const tabContent = document.getElementById('tabContent');
+    const rolePanel = document.getElementById('rolePanel');
+
+    if (!token) {
+        if (profileHeader) profileHeader.classList.add('hidden');
+        if (rolePanel) rolePanel.classList.add('hidden');
+        if (tabsContainer) tabsContainer.classList.add('hidden');
+        if (tabContent) tabContent.classList.add('hidden');
+        if (guestBlock) guestBlock.classList.remove('hidden');
+        return;
+    }
+
+    if (profileHeader) profileHeader.classList.remove('hidden');
+    if (rolePanel) rolePanel.classList.remove('hidden');
+    if (tabsContainer) tabsContainer.classList.remove('hidden');
+    if (tabContent) tabContent.classList.remove('hidden');
+    if (guestBlock) guestBlock.classList.add('hidden');
+
+    try {
+        const profileResp = await fetch('/api/auth/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!profileResp.ok) throw new Error();
+        const profile = await profileResp.json();
+        currentUserId = profile.id;
+        currentUserRoles = profile.roles || [];
+        currentUserXP = profile.total_xp || 0;
+        currentUserLevel = profile.level || 1;
+
+        document.getElementById('userNameDisplay').innerText = profile.name;
+        const rolesStr = currentUserRoles.join(', ');
+        document.getElementById('userRoleDisplay').innerText = rolesStr || 'Нет ролей';
+        const avatarEl = document.getElementById('avatarImg');
+        if (profile.avatar_url) avatarEl.src = profile.avatar_url;
+
+        // Панель быстрых действий (упрощённо)
+        const panel = document.getElementById('rolePanelContent');
+        if (panel) {
+            if (currentUserRoles.includes('school_teacher') || currentUserRoles.includes('professor')) {
+                panel.innerHTML = `<i class="fas fa-chalkboard-teacher mr-2"></i>
+                    <button onclick="showCreateSchoolForm()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🏫 Создать школу</button>
+                    <button onclick="showJoinSchoolForm()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🔗 Присоединиться</button>
+                    <button onclick="showMySchools()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📋 Мои школы</button>
+                    <button onclick="showSchoolStats()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📊 Статистика школы</button>
+                    <button onclick="showTeacherGraphs()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📈 Графы знаний</button>
+                    <button onclick="buildTargetGraph()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-1 rounded-full text-sm">🎯 Целевой граф</button>
+                    <button onclick="manageRoles()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">👥 Роли</button>`;
+            } else {
+                panel.innerHTML = `<i class="fas fa-user-graduate mr-2"></i>
+                    <button onclick="joinSchool()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🔗 Вступить в школу</button>
+                    <button onclick="showMySchools()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🏫 Мои школы</button>
+                    <button onclick="showStudentGraphs()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📊 Мой прогресс</button>
+                    <button onclick="showStudentPlan()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📅 Мой план</button>
+                    <button onclick="manageRoles()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">👥 Роли</button>`;
+            }
+        }
+
+        // Загрузка вкладок
+        await loadUserTabs();
+
+        // Если у пользователя есть роль ученика, попробуем восстановить сессию
+        if (currentUserRoles.includes('student') || currentUserRoles.includes('schoolchild') || currentUserRoles.includes('applicant')) {
+            await resumeOrCreateStudentSession();
+        }
+    } catch (e) {
+        console.error('Ошибка обновления UI:', e);
+    }
+}
+
+async function resumeOrCreateStudentSession() {
+    if (!currentUserId) return false;
+    try {
+        const stats = await fetch(`${API_URL}/api/user/statistics?user_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
+        if (!stats.ok) return false;
+        
+        const sessResp = await fetch(`${API_URL}/api/sessions/by_user?user_id=${currentUserId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
+        if (!sessResp.ok) return false;
+        const sessions = await sessResp.json();
+        const activeSession = Array.isArray(sessions) 
+            ? sessions.find(s => s.status !== 'completed')
+            : null;
+            
+        if (activeSession) {
+            currentSessionId = activeSession.id;
+            const sessionRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+            });
+            if (sessionRes.ok) {
+                const sessionData = await sessionRes.json();
+                if (sessionData.test_results && sessionData.test_results.length) {
+                    currentQuestions = sessionData.test_results[0].questions;
+                }
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'none';
+                document.getElementById('step3').style.display = 'none';
+                document.getElementById('step4').style.display = 'none';
+                document.getElementById('step5').style.display = 'block';
+                await loadNextLesson();
+                await updateProgress();
+                return true;
+            }
+        }
+    } catch(e) { console.warn("No active session found", e); }
+    return false;
+}
+
+// Функция для начала новой сессии (вызывается при входе)
+async function startNewSession(examName) {
+    if (!currentUserId) {
+        alert('Сначала войдите в систему');
+        return;
+    }
+    try {
+        const sessionRes = await fetch(`${API_URL}/api/sessions?user_id=${currentUserId}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({ exam_name: examName })
+        });
+        if (!sessionRes.ok) throw new Error(`HTTP ${sessionRes.status}: ${await sessionRes.text()}`);
+        const session = await sessionRes.json();
+        currentSessionId = session.id;
+        
+        const testRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        });
+        if (!testRes.ok) throw new Error(`HTTP ${testRes.status}: ${await testRes.text()}`);
+        const sessionData = await testRes.json();
+        if (!sessionData.test_results || sessionData.test_results.length === 0) throw new Error("Тест не найден");
+        const testResult = sessionData.test_results[0];
+        currentQuestions = testResult.questions;
+        
+        displayTest(currentQuestions);
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка создания сессии: ' + error.message);
+    }
+}
+
+// Регистрация (обновлена: параметр role больше не используется, роли назначаются автоматически)
+async function authRegister() {
+    const username = document.getElementById('authUsername').value;
+    const password = document.getElementById('authPassword').value;
+    const name = document.getElementById('authName').value;
+    const email = document.getElementById('authEmail').value;
+    // role больше не передаём
+    if (!username || !password || !name || !email) {
+        alert('Заполните все поля');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/api/auth/register?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`, {
+            method: 'POST'
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        setAuthToken(data.access_token, data);
+        await updateUIAfterAuth();
+        closeAuthModal();
+    } catch (error) {
+        alert('Ошибка регистрации: ' + error.message);
+    }
+}
+
+// Логин
+async function authLogin() {
+    const username = document.getElementById('authUsername').value;
+    const password = document.getElementById('authPassword').value;
+    if (!username || !password) {
+        alert('Введите username и пароль');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/api/auth/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
+            method: 'POST'
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        setAuthToken(data.access_token, data);
+        await updateUIAfterAuth();
+        closeAuthModal();
+    } catch (error) {
+        alert('Ошибка входа: ' + error.message);
+    }
+}
+
 function showAuthModal() {
     const modalHtml = `
         <div id="authModal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; z-index: 1002;">
@@ -1640,10 +2048,7 @@ function showAuthModal() {
                 <input type="password" id="authPassword" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px;">
                 <input type="text" id="authName" placeholder="Имя (при регистрации)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
                 <input type="email" id="authEmail" placeholder="Email (при регистрации)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-                <select id="authRole" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-                    <option value="student">Ученик</option>
-                    <option value="teacher">Учитель</option>
-                </select>
+                <!-- Селектор роли убран, теперь роли назначаются автоматически -->
             </div>
             <button onclick="authLogin()" class="btn-primary" style="margin-right: 10px;">Войти</button>
             <button onclick="authRegister()" class="btn-secondary">Зарегистрироваться</button>
@@ -1664,147 +2069,6 @@ function showAuthModal() {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-async function authLogin() {
-    const username = document.getElementById('authUsername').value;
-    const password = document.getElementById('authPassword').value;
-    if (!username || !password) {
-        alert('Введите username и пароль');
-        return;
-    }
-    try {
-        const response = await fetch(`${API_URL}/api/auth/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
-            method: 'POST'
-        });
-        if (!response.ok) throw new Error(await response.text());
-        const data = await response.json();
-        setAuthToken(data.access_token, data);
-        if (typeof updateUIAfterAuth === 'function') {
-            await updateUIAfterAuth();
-        } else {
-            console.error('updateUIAfterAuth not defined');
-        }
-        // ПРИНУДИТЕЛЬНОЕ ОТОБРАЖЕНИЕ ВКЛАДОК И СКРЫТИЕ ГОСТЕВОГО БЛОКА
-        const guest = document.getElementById('guestBlock');
-        const tabs = document.getElementById('tabsContainer');
-        const content = document.getElementById('tabContent');
-        if (guest) {
-            guest.style.display = 'none';
-            guest.classList.add('hidden');
-        }
-        if (tabs) {
-            tabs.style.display = 'block';
-            tabs.classList.remove('hidden');
-        }
-        if (content) {
-            content.style.display = 'block';
-            content.classList.remove('hidden');
-        }
-        document.getElementById('avatarImg').src = data.avatar_url;
-        document.getElementById('userNameDisplay').textContent = data.name;
-        document.getElementById('userRoleDisplay').textContent = data.role === 'teacher' ? 'Учитель' : 'Ученик';
-        document.getElementById('profileHeader').style.display = 'flex';
-        closeAuthModal();
-        
-        currentUserId = data.user_id;
-        currentUserRole = data.role;
-        
-        if (data.role === 'teacher') {
-            document.getElementById('teacherPanel').style.display = 'block';
-            document.getElementById('studentPanel').style.display = 'none';
-            document.getElementById('step1').style.display = 'none';
-        } else {
-            // Ученик
-            document.getElementById('teacherPanel').style.display = 'none';
-            document.getElementById('studentPanel').style.display = 'block';
-            document.getElementById('step1').style.display = 'none';
-            
-            // Предлагаем начать обучение (выбрать экзамен)
-            const examName = prompt('Введите название экзамена (например: ЕНТ математика, SAT, IELTS):');
-            if (examName) {
-                await startNewSession(examName);
-            } else {
-                // Если не ввел – показываем главное меню для выбора экзамена (шаг 1)
-                document.getElementById('step1').style.display = 'block';
-                document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-                document.getElementById('step1').style.display = 'block';
-            }
-        }
-    } catch (error) {
-        alert('Ошибка входа: ' + error.message);
-    }
-}
-
-async function authRegister() {
-    const username = document.getElementById('authUsername').value;
-    const password = document.getElementById('authPassword').value;
-    const name = document.getElementById('authName').value;
-    const email = document.getElementById('authEmail').value;
-    const role = document.getElementById('authRole').value;
-    if (!username || !password || !name || !email) {
-        alert('Заполните все поля');
-        return;
-    }
-    try {
-        const response = await fetch(`${API_URL}/api/auth/register?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&role=${role}`, {
-            method: 'POST'
-        });
-        if (!response.ok) throw new Error(await response.text());
-        const data = await response.json();
-        setAuthToken(data.access_token, data);
-        if (typeof updateUIAfterAuth === 'function') {
-            await updateUIAfterAuth();
-        } else {
-            console.error('updateUIAfterAuth not defined');
-        }
-        // ПРИНУДИТЕЛЬНОЕ ОТОБРАЖЕНИЕ ВКЛАДОК И СКРЫТИЕ ГОСТЕВОГО БЛОКА
-        const guest = document.getElementById('guestBlock');
-        const tabs = document.getElementById('tabsContainer');
-        const content = document.getElementById('tabContent');
-        if (guest) {
-            guest.style.display = 'none';
-            guest.classList.add('hidden');
-        }
-        if (tabs) {
-            tabs.style.display = 'block';
-            tabs.classList.remove('hidden');
-        }
-        if (content) {
-            content.style.display = 'block';
-            content.classList.remove('hidden');
-        }
-        document.getElementById('avatarImg').src = data.avatar_url;
-        document.getElementById('userNameDisplay').textContent = data.name;
-        document.getElementById('userRoleDisplay').textContent = data.role === 'teacher' ? 'Учитель' : 'Ученик';
-        document.getElementById('profileHeader').style.display = 'flex';
-        closeAuthModal();
-        
-        currentUserId = data.user_id;
-        currentUserRole = data.role;
-        
-        if (data.role === 'teacher') {
-            document.getElementById('teacherPanel').style.display = 'block';
-            document.getElementById('studentPanel').style.display = 'none';
-            document.getElementById('step1').style.display = 'none';
-        } else {
-            // Ученик
-            document.getElementById('teacherPanel').style.display = 'none';
-            document.getElementById('studentPanel').style.display = 'block';
-            document.getElementById('step1').style.display = 'none';
-            
-            const examName = prompt('Введите название экзамена (например: ЕНТ математика, SAT, IELTS):');
-            if (examName) {
-                await startNewSession(examName);
-            } else {
-                document.getElementById('step1').style.display = 'block';
-                document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-                document.getElementById('step1').style.display = 'block';
-            }
-        }
-    } catch (error) {
-        alert('Ошибка регистрации: ' + error.message);
-    }
-}
-
 function closeAuthModal() {
     const modal = document.getElementById('authModal');
     const overlay = document.getElementById('authOverlay');
@@ -1812,10 +2076,7 @@ function closeAuthModal() {
     if (overlay) overlay.remove();
 }
 
-// Обновляем startLearning - теперь не нужен, используем авторизацию
-// Но оставим для совместимости
-
-// ========== ЧАТ ==========
+// ========== ЧАТ (без изменений, только добавлены токены) ==========
 let currentChatSchoolId = null;
 let currentChatTab = 'general';
 let chatPollingInterval = null;
@@ -1825,8 +2086,9 @@ async function openChatModal() {
         alert('Сначала войдите в систему');
         return;
     }
-    // Получаем школы пользователя
-    const schoolsResp = await fetch(`${API_URL}/api/schools/my?user_id=${currentUserId}`);
+    const schoolsResp = await fetch(`${API_URL}/api/schools/my?user_id=${currentUserId}`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+    });
     if (!schoolsResp.ok) return alert('Ошибка загрузки школ');
     const schools = await schoolsResp.json();
     if (schools.length === 0) {
@@ -1847,8 +2109,9 @@ async function openChatModal() {
     }
     currentChatSchoolId = schoolId;
     
-    // Загружаем список участников школы для личных сообщений
-    const membersResp = await fetch(`${API_URL}/api/schools/${schoolId}?user_id=${currentUserId}`);
+    const membersResp = await fetch(`${API_URL}/api/schools/${schoolId}?user_id=${currentUserId}`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+    });
     if (membersResp.ok) {
         const schoolData = await membersResp.json();
         const select = document.getElementById('privateRecipientId');
@@ -1987,7 +2250,6 @@ async function uploadPhotoForTask(taskIndex) {
         formData.append('file', file);
         
         try {
-            // Показываем индикатор загрузки
             const taskContainer = document.querySelector(`.task[data-task-idx="${taskIndex}"]`);
             const originalBtn = taskContainer.querySelector('button');
             originalBtn.textContent = '⏳ Распознаю...';
@@ -2003,11 +2265,9 @@ async function uploadPhotoForTask(taskIndex) {
             if (!response.ok) throw new Error(await response.text());
             const data = await response.json();
             
-            // Вставляем распознанный текст в поле ответа
             const answerInput = document.getElementById(`task_${taskIndex}`);
             if (answerInput) {
                 answerInput.value = data.text;
-                // Останавливаем таймер задачи (если был активен) и запускаем заново? Не обязательно
             }
             alert(`Распознано: "${data.text}"\nУверенность: ${data.confidence * 100}%`);
         } catch (err) {
@@ -2020,37 +2280,6 @@ async function uploadPhotoForTask(taskIndex) {
         }
     };
     input.click();
-}
-
-async function startNewSession(examName) {
-    if (!currentUserId) {
-        alert('Сначала войдите в систему');
-        return;
-    }
-    try {
-        const sessionRes = await fetch(`${API_URL}/api/sessions?user_id=${currentUserId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ exam_name: examName })
-        });
-        if (!sessionRes.ok) throw new Error(`HTTP ${sessionRes.status}: ${await sessionRes.text()}`);
-        const session = await sessionRes.json();
-        currentSessionId = session.id;
-        
-        const testRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`);
-        if (!testRes.ok) throw new Error(`HTTP ${testRes.status}: ${await testRes.text()}`);
-        const sessionData = await testRes.json();
-        if (!sessionData.test_results || sessionData.test_results.length === 0) throw new Error("Тест не найден");
-        const testResult = sessionData.test_results[0];
-        currentQuestions = testResult.questions;
-        
-        displayTest(currentQuestions);
-        document.getElementById('step1').style.display = 'none';
-        document.getElementById('step2').style.display = 'block';
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка создания сессии: ' + error.message);
-    }
 }
 
 // PDF RAG
@@ -2108,3 +2337,8 @@ document.getElementById('askPdfBtn')?.addEventListener('click', async () => {
         answerDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
     }
 });
+
+// Добавим в глобальную область функции для модального окна
+window.manageRoles = manageRoles;
+window.assignRole = assignRole;
+window.startNewSession = startNewSession;

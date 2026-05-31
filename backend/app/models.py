@@ -1,8 +1,16 @@
 # backend/app/models.py
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON, Boolean, Text, Index
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON, Boolean, Text, Index, Table
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
+
+# ========== ТАБЛИЦА СВЯЗИ ПОЛЬЗОВАТЕЛЬ-РОЛЬ (МНОГИЕ КО МНОГИМ) ==========
+user_roles = Table(
+    'user_roles',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True)
+)
 
 # ========== СЛУЖЕБНЫЕ ТАБЛИЦЫ (REFRESH TOKENS, PASSWORD RESETS) ==========
 
@@ -48,6 +56,7 @@ class UserAction(Base):
     url = Column(String, nullable=True)
     method = Column(String, nullable=True)
     duration_ms = Column(Integer, nullable=True)
+    module_name = Column(String, nullable=True)          # новый столбец для указания модуля (learning, tests, и т.д.)
     
     user = relationship("User", back_populates="actions")
 
@@ -64,6 +73,20 @@ class ChatMessage(Base):
     
     user = relationship("User", back_populates="chat_messages")
 
+# ========== РОЛИ ==========
+class Role(Base):
+    __tablename__ = 'roles'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)          # schoolchild, applicant, student, master, phd, researcher, professor, school_teacher, private_tutor, employer, job_seeker, freelancer, customer, startup_founder, investor, government, developer
+    display_name = Column(String, nullable=False)               # "Школьник", "Абитуриент" и т.д.
+    description = Column(String, nullable=True)
+    is_default = Column(Boolean, default=False)                 # роль по умолчанию при регистрации
+    can_be_assigned_by_user = Column(Boolean, default=True)     # может ли пользователь сам себе назначить
+    requires_approval = Column(Boolean, default=False)          # требуется ли одобрение администратора
+    
+    users = relationship("User", secondary=user_roles, back_populates="roles")
+
 # ========== ОСНОВНАЯ ТАБЛИЦА ПОЛЬЗОВАТЕЛЯ ==========
 
 class User(Base):
@@ -73,7 +96,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    role = Column(String, default='student')
+    # role = Column(String, default='student')   # УДАЛЕНО — заменено на связь многие-ко-многим с Role
     
     username = Column(String, unique=True, index=True, nullable=True)
     hashed_password = Column(String, nullable=True)
@@ -88,6 +111,15 @@ class User(Base):
     city = Column(String, nullable=True)
     timezone = Column(String, default="UTC")
     language = Column(String, default="en")
+    
+    # Новая система опыта и уровней
+    total_xp = Column(Integer, default=0)
+    level = Column(Integer, default=1)
+
+    # Связи
+    roles = relationship("Role", secondary=user_roles, back_populates="users")
+    achievements = relationship("UserAchievement", back_populates="user", cascade="all, delete-orphan")
+    api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
 
     text_reviews = relationship("TextReview", back_populates="user", cascade="all, delete-orphan")
     data_analysis_sessions = relationship("DataAnalysisSession", back_populates="user", cascade="all, delete-orphan")
@@ -122,7 +154,7 @@ class User(Base):
     projects = Column(Text, nullable=True)
     languages = Column(Text, nullable=True)
     technical_skills = Column(Text, nullable=True)
-    achievements = Column(Text, nullable=True)
+    achievements_text = Column(Text, nullable=True)
     letter_style = Column(JSON, nullable=True)
 
     documents = relationship("UserDocument", back_populates="user", cascade="all, delete-orphan")
@@ -162,6 +194,52 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+# ========== ДОСТИЖЕНИЯ И ОПЫТ ==========
+class UserAchievement(Base):
+    __tablename__ = "user_achievements"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    achievement_type = Column(String, nullable=False)
+    module_name = Column(String, nullable=True)
+    xp_awarded = Column(Integer, default=0)
+    extra_data = Column(JSON, nullable=True)      # ← ПЕРЕИМЕНОВАНО
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="achievements")
+    
+# ========== API КЛЮЧИ ДЛЯ СТОРОННИХ РАЗРАБОТЧИКОВ ==========
+class ApiKey(Base):
+    __tablename__ = "api_keys"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    key = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=False)                       # название ключа (например, "Мой сайт")
+    permissions = Column(JSON, default=list)                    # список разрешённых эндпоинтов или модулей
+    rate_limit_per_minute = Column(Integer, default=60)
+    last_used_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+    
+    user = relationship("User", back_populates="api_keys")
+
+# ========== ЛОГИ ДЕЙСТВИЙ АДМИНИСТРАТОРА ==========
+class AdminLog(Base):
+    __tablename__ = "admin_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    admin_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    target_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    action = Column(String, nullable=False)                     # 'change_role', 'view_user_data', 'ban_user' и т.д.
+    details = Column(JSON, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    
+    admin = relationship("User", foreign_keys=[admin_user_id])
+    target = relationship("User", foreign_keys=[target_user_id])
+
+# ========== ОСТАЛЬНЫЕ СУЩЕСТВУЮЩИЕ МОДЕЛИ (без изменений) ==========
 
 class UserAuth(Base):
     __tablename__ = 'user_auth'

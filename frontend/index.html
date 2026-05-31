@@ -17,7 +17,6 @@
     </script>
     <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
     <style>
-        /* Дополнительные стили */
         .step-card, .question-card, .test-item, .course-card, .lesson-card, .results-container, .theory, .example, .task, .tips {
             background: rgba(18, 8, 11, 0.85);
             backdrop-filter: blur(4px);
@@ -44,7 +43,6 @@
         @media (max-width: 640px) {
             .btn-mobile-full { width: 100%; justify-content: center; }
         }
-        /* Для полосы прокрутки списка задач */
         .tasks-scroll { max-height: 400px; overflow-y: auto; }
         .line-clamp-2 {
             display: -webkit-box;
@@ -57,7 +55,7 @@
 <body class="bg-gradient-to-br from-[#0a0305] to-[#040102] text-gray-200 font-sans antialiased">
 
 <div class="max-w-7xl mx-auto px-4 py-6">
-    <!-- Шапка с логотипом и внешними ссылками -->
+    <!-- Шапка -->
     <div class="flex flex-wrap justify-between items-center gap-4 mb-6 p-4 rounded-2xl bg-black/30 backdrop-blur-sm border border-[#5c2e3c]">
         <div class="flex items-center gap-3">
             <div class="text-4xl font-black tracking-wider bg-gradient-to-r from-[#e6b8c2] to-[#bc3f4b] bg-clip-text text-transparent">学峰</div>
@@ -88,27 +86,8 @@
         <div id="rolePanelContent" class="flex flex-wrap gap-3"></div>
     </div>
 
-    <!-- Вкладки навигации -->
-    <div id="tabsContainer" class="hidden mb-6 overflow-x-auto pb-2">
-        <div class="flex gap-2 min-w-max">
-            <button data-tab="dashboard" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-home mr-1"></i> Дашборд</button>
-            <button data-tab="learning" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-graduation-cap mr-1"></i> Обучение</button>
-            <button data-tab="courses" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-book-open mr-1"></i> Курсы / Уроки</button>
-            <button data-tab="tests" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-pen-alt mr-1"></i> Тесты</button>
-            <button data-tab="schools" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-school mr-1"></i> Школы</button>
-            <button data-tab="video" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-video mr-1"></i> Видео → текст</button>
-            <button data-tab="chat" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-comments mr-1"></i> Чат школы</button>
-            <button data-tab="pdfchat" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-file-pdf mr-1"></i> PDF чат</button>
-            <button data-tab="examtickets" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-ticket-alt mr-1"></i> Билеты</button>
-            <button data-tab="essaycheck" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-file-alt mr-1"></i> Проверка работ</button>
-            <button data-tab="planner" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-calendar-alt mr-1"></i> Планировщик</button>
-            <button data-tab="scientific" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-flask mr-1"></i> Научные статьи</button>
-            <button data-tab="syllabus" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-chalkboard-user mr-1"></i> Конструктор курсов</button>
-            <button data-tab="dataanalysis" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-chart-line mr-1"></i> Анализ данных</button>
-            <!-- НОВАЯ КНОПКА: AI-РЕЦЕНЗЕНТ -->
-            <button data-tab="reviewer" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-pen-fancy mr-1"></i> AI-рецензент</button>
-        </div>
-    </div>
+    <!-- Контейнер для динамических вкладок (заполняется из script.js) -->
+    <div id="tabsContainer" class="hidden mb-6 overflow-x-auto pb-2"></div>
 
     <!-- Контент вкладок -->
     <div id="tabContent" class="hidden fade-in">
@@ -313,22 +292,16 @@
         <div id="dataanalysis-pane" class="tab-pane hidden">
             <div class="step-card p-6">
                 <h2 class="text-xl font-bold mb-4">📊 Анализ данных для диссертации</h2>
-                
-                <!-- Загрузка файла -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1">Загрузить данные (CSV или Excel)</label>
                     <input type="file" id="dataFile" accept=".csv,.xls,.xlsx" class="modern-input w-full">
                     <button id="uploadDataBtn" class="mt-2 bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">Загрузить</button>
                     <div id="uploadStatus" class="text-sm text-gray-400 mt-2"></div>
                 </div>
-        
-                <!-- Переключатель режимов -->
                 <div class="flex gap-2 mb-4">
                     <button id="modeAI" onclick="setAnalysisMode('ai')" class="tab-btn active px-4 py-2 rounded-full text-sm bg-[#bc3f4b] text-white">🤖 Умный анализ</button>
                     <button id="modeCode" onclick="setAnalysisMode('code')" class="tab-btn px-4 py-2 rounded-full text-sm bg-black/40 text-gray-200">💻 Python-код</button>
                 </div>
-        
-                <!-- Режим ИИ -->
                 <div id="aiModeBlock">
                     <label class="block text-sm font-medium mb-1">Что нужно проанализировать?</label>
                     <div class="grid grid-cols-2 gap-2 mb-3">
@@ -342,20 +315,11 @@
                     <textarea id="aiPromptText" rows="3" placeholder="Или напишите своими словами: например, «покажи связь между возрастом и зарплатой» или «сделай топ-10 самых частых значений»" class="modern-input w-full mb-2"></textarea>
                     <button id="runAIAnalysisBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">✨ Проанализировать</button>
                 </div>
-        
-                <!-- Режим кода -->
                 <div id="codeModeBlock" class="hidden">
                     <label class="block text-sm font-medium mb-1">Python-код анализа</label>
-                    <textarea id="pythonCode" rows="12" class="modern-input w-full font-mono text-sm" placeholder="# df — ваш датафрейм
-        print(df.describe())
-        
-        import matplotlib.pyplot as plt
-        df['column'].hist()
-        plt.show()"></textarea>
+                    <textarea id="pythonCode" rows="12" class="modern-input w-full font-mono text-sm" placeholder="# df — ваш датафрейм\nprint(df.describe())\n\nimport matplotlib.pyplot as plt\ndf['column'].hist()\nplt.show()"></textarea>
                     <button id="runAnalysisBtn" class="mt-2 bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">▶ Выполнить</button>
                 </div>
-        
-                <!-- Сгенерированный код (показывается в AI-режиме) -->
                 <div id="generatedCodeBlock" class="hidden mt-3">
                     <div class="flex justify-between items-center mb-1">
                         <span class="text-xs text-gray-400">Сгенерированный код:</span>
@@ -363,14 +327,13 @@
                     </div>
                     <pre id="generatedCodeView" class="bg-[#1a0e12] p-3 rounded-xl text-xs font-mono overflow-x-auto text-gray-300"></pre>
                 </div>
-        
                 <div id="analysisResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl">
                     <div class="text-gray-400">Результат появится здесь</div>
                 </div>
             </div>
         </div>
 
-        <!-- НОВАЯ ВКЛАДКА: AI-РЕЦЕНЗЕНТ -->
+        <!-- AI-рецензент -->
         <div id="reviewer-pane" class="tab-pane hidden">
             <div class="step-card p-6">
                 <h2 class="text-xl font-bold mb-4">🔍 AI-рецензент + проверка на плагиат</h2>
@@ -398,815 +361,38 @@
 </div>
 
 <!-- Модальные окна (профиль, чат) -->
-<div id="profileModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50" onclick="if(event.target===this) closeProfileModal()"><div class="bg-[#1a0e12] p-6 rounded-2xl max-w-md w-full border border-[#c95267]"><h3 class="text-xl font-bold mb-4">Мой профиль</h3><div class="text-center mb-4"><img id="modalAvatar" class="w-24 h-24 rounded-full mx-auto cursor-pointer border-2 border-[#c75f74]" src=""><p class="text-xs text-[#c28b98] mt-1">Нажмите на аватар, чтобы изменить</p><input type="file" id="avatarUpload" class="hidden"></div><p><strong>Имя:</strong> <span id="profileName"></span></p><p><strong>Email:</strong> <span id="profileEmail"></span></p><p><strong>Роль:</strong> <span id="profileRole"></span></p><p><strong>Username:</strong> <span id="profileUsername"></span></p><div class="flex justify-end mt-4"><button onclick="closeProfileModal()" class="bg-[#2c1a20] px-4 py-2 rounded-full">Закрыть</button></div></div></div>
+<div id="profileModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50" onclick="if(event.target===this) closeProfileModal()"><div class="bg-[#1a0e12] p-6 rounded-2xl max-w-md w-full border border-[#c95267]"><h3 class="text-xl font-bold mb-4">Мой профиль</h3><div class="text-center mb-4"><img id="modalAvatar" class="w-24 h-24 rounded-full mx-auto cursor-pointer border-2 border-[#c75f74]" src=""><p class="text-xs text-[#c28b98] mt-1">Нажмите на аватар, чтобы изменить</p><input type="file" id="avatarUpload" class="hidden"></div><p><strong>Имя:</strong> <span id="profileName"></span></p><p><strong>Email:</strong> <span id="profileEmail"></span></p><p><strong>Роли:</strong> <span id="profileRole"></span></p><p><strong>Username:</strong> <span id="profileUsername"></span></p><p><strong>Опыт (XP):</strong> <span id="profileXP"></span></p><p><strong>Уровень:</strong> <span id="profileLevel"></span></p><div class="flex justify-end mt-4"><button onclick="closeProfileModal()" class="bg-[#2c1a20] px-4 py-2 rounded-full">Закрыть</button></div></div></div>
 
 <div id="chatModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50" onclick="if(event.target===this) closeChatModal()"><div class="bg-[#1a0e12] rounded-2xl w-[90%] max-w-lg h-[80vh] flex flex-col border border-[#a24558]"><div class="flex justify-between p-3 border-b border-[#883c4b]"><div><button id="chatTabGeneral" class="bg-[#b34b60] text-white px-3 py-1 rounded-md mr-2">Общий чат</button><button id="chatTabPrivate" class="bg-[#2a151d] text-white px-3 py-1 rounded-md">Личные</button></div><button onclick="closeChatModal()" class="text-gray-300 text-xl">&times;</button></div><div id="chatMessagesContainer" class="flex-1 overflow-y-auto p-3"></div><div class="p-3 border-t border-[#572a36] flex"><input type="text" id="chatInput" placeholder="Введите сообщение..." class="flex-1 bg-[#221218] border border-[#a04559] rounded-full px-4 py-2 text-white"><button onclick="sendChatMessage()" class="ml-2 bg-[#ac4158] px-4 rounded-full text-white">Отправить</button></div><div id="chatRecipientSelect" class="p-2 border-b border-[#783545] hidden"><select id="privateRecipientId" class="bg-[#2f171f] text-white p-1 rounded"><option value="">Выберите получателя</option></select></div></div></div>
 
+<!-- Основной скрипт (весь функционал вынесен сюда) -->
 <script src="/static/script.js"></script>
+
+<!-- Только инициализация после загрузки страницы -->
 <script>
-    // ========== ДОПОЛНИТЕЛЬНЫЕ УЛУЧШЕНИЯ (существующие) ==========
-    async function resumeOrCreateStudentSession() {
-    if (!currentUserId) return false;
-    try {
-        const response = await fetch(`/api/user/statistics?user_id=${currentUserId}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (!response.ok) return false;
-        const stats = await response.json();
-        
-        const sessResp = await fetch(`/api/sessions/by_user?user_id=${currentUserId}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (!sessResp.ok) return false;
-        const sessions = await sessResp.json();
-        const activeSession = Array.isArray(sessions) 
-            ? sessions.find(s => s.status !== 'completed')
-            : null;
-            
-        if (activeSession) {
-            currentSessionId = activeSession.id;
-            const sessionRes = await fetch(`/api/sessions/${currentSessionId}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-            });
-            if (sessionRes.ok) {
-                const sessionData = await sessionRes.json();
-                if (sessionData.test_results && sessionData.test_results.length) {
-                    currentQuestions = sessionData.test_results[0].questions;
-                }
-                document.getElementById('step1').style.display = 'none';
-                document.getElementById('step2').style.display = 'none';
-                document.getElementById('step3').style.display = 'none';
-                document.getElementById('step4').style.display = 'none';
-                document.getElementById('step5').style.display = 'block';
-                await loadNextLesson();
-                await updateProgress();
-                return true;
-            }
-        }
-    } catch(e) { console.warn("No active session found", e); }
-    return false;
-}
-
-    window.updateUIAfterAuth = async function() {
-    const token = localStorage.getItem('authToken');
-    const guestBlock = document.getElementById('guestBlock');
-    const profileHeader = document.getElementById('profileHeader');
-    const tabsContainer = document.getElementById('tabsContainer');
-    const tabContent = document.getElementById('tabContent');
-    const rolePanel = document.getElementById('rolePanel');
-
-    if (!token) {
-        if (profileHeader) profileHeader.classList.add('hidden');
-        if (rolePanel) rolePanel.classList.add('hidden');
-        if (tabsContainer) tabsContainer.classList.add('hidden');
-        if (tabContent) tabContent.classList.add('hidden');
-        if (guestBlock) guestBlock.classList.remove('hidden');
-        return;
-    }
-
-    if (profileHeader) profileHeader.classList.remove('hidden');
-    if (rolePanel) rolePanel.classList.remove('hidden');
-    if (tabsContainer) tabsContainer.classList.remove('hidden');
-    if (tabContent) tabContent.classList.remove('hidden');
-    if (guestBlock) guestBlock.classList.add('hidden');
-
-    try {
-        const profileResp = await fetch('/api/auth/profile', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!profileResp.ok) throw new Error();
-        const profile = await profileResp.json();
-        currentUserId = profile.id;
-        currentUserRole = profile.role;
-
-        document.getElementById('userNameDisplay').innerText = profile.name;
-        document.getElementById('userRoleDisplay').innerText = profile.role === 'teacher' ? 'Учитель' : 'Ученик';
-        const avatarEl = document.getElementById('avatarImg');
-        if (profile.avatar_url) avatarEl.src = profile.avatar_url;
-
-        const panel = document.getElementById('rolePanelContent');
-        if (profile.role === 'teacher') {
-            panel.innerHTML = `<i class="fas fa-chalkboard-teacher mr-2"></i>
-                <button onclick="showCreateSchoolForm()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🏫 Создать школу</button>
-                <button onclick="showJoinSchoolForm()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🔗 Присоединиться</button>
-                <button onclick="showMySchools()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📋 Мои школы</button>
-                <button onclick="showSchoolStats()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📊 Статистика школы</button>
-                <button onclick="showTeacherGraphs()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📈 Графы знаний</button>
-                <button onclick="buildTargetGraph()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-1 rounded-full text-sm">🎯 Целевой граф</button>`;
-            document.getElementById('teacherPanel').classList.remove('hidden');
-            document.getElementById('studentPanel').classList.add('hidden');
-        } else {
-            panel.innerHTML = `<i class="fas fa-user-graduate mr-2"></i>
-                <button onclick="joinSchool()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🔗 Вступить в школу</button>
-                <button onclick="showMySchools()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🏫 Мои школы</button>
-                <button onclick="showStudentGraphs()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📊 Мой прогресс</button>
-                <button onclick="showStudentPlan()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📅 Мой план</button>`;
-            document.getElementById('teacherPanel').classList.add('hidden');
-            document.getElementById('studentPanel').classList.remove('hidden');
-            try {
-                await resumeOrCreateStudentSession();
-            } catch(e) {
-                console.log("Нет активной сессии (пользователь ещё не начинал обучение)");
-            }
-        }
-
-        document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
-        const dashboardPane = document.getElementById('dashboard-pane');
-        if (dashboardPane) dashboardPane.classList.remove('hidden');
-        const activeTab = document.querySelector('.tab-btn[data-tab="dashboard"]');
-        if (activeTab) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            activeTab.classList.add('active');
-        }
-    } catch (e) {
-        console.error('Ошибка обновления интерфейса после авторизации:', e);
-    }
-};
-
-    window.switchToLearningTabAndStart = function() {
-        document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
-        document.getElementById('learning-pane').classList.remove('hidden');
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector('.tab-btn[data-tab="learning"]').classList.add('active');
-        if (currentSessionId && document.getElementById('step5').style.display === 'block') {
-            // already in learning
-        } else if (currentUserId && currentUserRole === 'student') {
-            resumeOrCreateStudentSession().then(restored => {
-                if (!restored) {
-                    document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-                    document.getElementById('step1').style.display = 'block';
-                }
-            });
-        } else {
-            document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-            document.getElementById('step1').style.display = 'block';
-        }
-    };
-
-    const originalLogout = window.logout;
-    if (originalLogout) {
-        window.logout = function() {
-            originalLogout();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Вызываем обновление интерфейса (авторизация, роли, вкладки)
+        if (typeof updateUIAfterAuth === 'function') {
             updateUIAfterAuth();
-        };
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        updateUIAfterAuth();
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const tab = this.getAttribute('data-tab');
-                const pane = document.getElementById(`${tab}-pane`);
-                if (!pane) return;
-                document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
-                pane.classList.remove('hidden');
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-        const roleSelect = document.getElementById('userRole');
-        if (roleSelect && typeof setRole === 'function') setRole(roleSelect.value);
-    });
-
-    // ========== PDF RAG (существующий) ==========
-    const uploadBtn = document.getElementById('uploadPdfBtn');
-    const askBtn = document.getElementById('askPdfBtn');
-    const pdfFileInput = document.getElementById('pdfFile');
-    const pdfChatStatus = document.getElementById('pdfChatStatus');
-    const pdfQuestionBlock = document.getElementById('pdfQuestionBlock');
-    const pdfQuestion = document.getElementById('pdfQuestion');
-    const pdfAnswer = document.getElementById('pdfAnswer');
-
-    if (uploadBtn) {
-        uploadBtn.addEventListener('click', async () => {
-            const file = pdfFileInput.files[0];
-            if (!file) { alert('Выберите PDF файл'); return; }
-            const formData = new FormData();
-            formData.append('file', file);
-            pdfChatStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка и индексация...';
-            try {
-                const response = await fetch('/api/upload-pdf', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-                    body: formData
-                });
-                if (!response.ok) throw new Error(await response.text());
-                const data = await response.json();
-                currentPdfDocId = data.document_id;
-                pdfChatStatus.innerHTML = `<span class="text-green-400">✅ PDF "${data.filename}" загружен, проиндексировано ${data.chunks} фрагментов.</span>`;
-                pdfQuestionBlock.style.display = 'block';
-            } catch (err) {
-                pdfChatStatus.innerHTML = `<span class="text-red-400">❌ Ошибка: ${err.message}</span>`;
-            }
-        });
-    }
-
-    if (askBtn) {
-        askBtn.addEventListener('click', async () => {
-            const question = pdfQuestion.value.trim();
-            if (!question) { alert('Введите вопрос'); return; }
-            if (!currentPdfDocId) { alert('Сначала загрузите PDF'); return; }
-            pdfAnswer.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Поиск ответа...';
-            try {
-                const response = await fetch('/api/ask-pdf', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-                    body: JSON.stringify({ document_id: currentPdfDocId, question: question })
-                });
-                if (!response.ok) throw new Error(await response.text());
-                const data = await response.json();
-                pdfAnswer.innerHTML = `<div class="prose prose-invert max-w-none">${marked.parse(data.answer)}</div>`;
-            } catch (err) {
-                pdfAnswer.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
-            }
-        });
-    }
-
-    // ========== ГЕНЕРАЦИЯ БИЛЕТОВ (существующий) ==========
-    document.getElementById('generateTicketsBtn')?.addEventListener('click', async () => {
-        const courseName = document.getElementById('examCourseName').value.trim();
-        const numQuestions = parseInt(document.getElementById('examNumQuestions').value);
-        const ticketType = document.getElementById('examTicketType').value;
-        if (!courseName) { alert('Введите название курса'); return; }
-        if (isNaN(numQuestions) || numQuestions < 1 || numQuestions > 20) { alert('Количество вопросов от 1 до 20'); return; }
-        const resultDiv = document.getElementById('ticketsResult');
-        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация...';
-        try {
-            const response = await fetch('/api/generate-exam-tickets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-                body: JSON.stringify({ course_name: courseName, num_questions: numQuestions, ticket_type: ticketType })
-            });
-            if (!response.ok) throw new Error(await response.text());
-            const data = await response.json();
-            let html = `<div class="space-y-4"><h3 class="font-bold text-lg">${escapeHtml(data.course_name)} (${data.questions.length} вопросов)</h3>`;
-            if (data.type === 'tickets') {
-                data.questions.forEach((q, idx) => {
-                    html += `<div class="border-l-2 border-[#bc3f4b] pl-3 py-1"><strong>${idx+1}.</strong> ${escapeHtml(q)}</div>`;
-                });
-            } else {
-                data.questions.forEach((q, idx) => {
-                    html += `<div class="border-l-2 border-[#bc3f4b] pl-3 py-2 mb-2"><strong>${idx+1}. ${escapeHtml(q.question)}</strong><ul class="ml-5 mt-1">`;
-                    q.options.forEach(opt => {
-                        html += `<li>${escapeHtml(opt)}</li>`;
-                    });
-                    html += `<li class="text-green-400 mt-1">✅ Правильный ответ: ${q.correct}</li></ul></div>`;
-                });
-            }
-            html += `</div>`;
-            resultDiv.innerHTML = html;
-        } catch (err) {
-            resultDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
-        }
-    });
-
-    // ========== ПРОВЕРКА ЭССЕ (существующий) ==========
-    document.getElementById('checkEssayBtn')?.addEventListener('click', async () => {
-        const text = document.getElementById('essayText').value.trim();
-        const title = document.getElementById('essayTitle').value.trim();
-        if (!text) {
-            alert('Введите текст работы');
-            return;
-        }
-        const resultDiv = document.getElementById('essayResult');
-        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ...';
-        try {
-            const response = await fetch('/api/check-essay', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-                body: JSON.stringify({ text: text, title: title })
-            });
-            if (!response.ok) throw new Error(await response.text());
-            const data = await response.json();
-            let html = `<div class="space-y-3">
-                <div class="flex justify-between items-center"><span class="font-bold">Оценка:</span> <span class="text-2xl font-bold text-[#bc3f4b]">${data.score}/100</span></div>
-                <div><span class="font-bold">Уровень:</span> ${data.grade}</div>
-                <div><span class="font-bold">✅ Сильные стороны:</span><ul class="list-disc ml-5">${data.strengths.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul></div>
-                <div><span class="font-bold">⚠️ Слабые места:</span><ul class="list-disc ml-5">${data.weaknesses.map(w => `<li>${escapeHtml(w)}</li>`).join('')}</ul></div>
-                <div><span class="font-bold">📌 Рекомендации:</span><ul class="list-disc ml-5">${data.recommendations.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul></div>
-                <div><span class="font-bold">📝 Подробный отзыв:</span><div class="mt-2 p-2 bg-black/40 rounded">${escapeHtml(data.detailed_feedback)}</div></div>
-                <div class="text-sm text-gray-400">Слов: ${data.word_count}, символов: ${data.char_count}</div>
-            </div>`;
-            resultDiv.innerHTML = html;
-        } catch (err) {
-            resultDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
-        }
-    });
-
-    // ========== ПЛАНИРОВЩИК ЗАДАЧ (существующий) ==========
-    async function loadTasks(filter = 'all') {
-        const token = localStorage.getItem('authToken');
-        if (!token) return;
-        let url = '/api/tasks';
-        if (filter === 'pending') url += '?status=pending';
-        else if (filter === 'completed') url += '?status=completed';
-        else if (filter === 'upcoming') url += '?upcoming_days=7';
-        const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!response.ok) return;
-        const tasks = await response.json();
-        const container = document.getElementById('tasksList');
-        if (!tasks || !tasks.length) {
-            container.innerHTML = '<div class="text-center text-gray-400">Нет задач</div>';
-            return;
-        }
-        container.innerHTML = tasks.map(task => `
-            <div class="bg-[#1f1219] rounded-xl p-3 flex justify-between items-center">
-                <div>
-                    <div class="font-bold ${task.status === 'completed' ? 'line-through text-gray-400' : ''}">${escapeHtml(task.title)}</div>
-                    <div class="text-sm text-gray-400">${task.description ? escapeHtml(task.description) : ''}</div>
-                    <div class="text-xs text-[#e8a0ab]">Дедлайн: ${new Date(task.deadline).toLocaleString()}</div>
-                </div>
-                <div class="flex gap-2">
-                    ${task.status !== 'completed' ? `<button onclick="completeTask(${task.id})" class="bg-green-700 px-3 py-1 rounded-full text-xs">✅ Выполнено</button>` : ''}
-                    <button onclick="deleteTask(${task.id})" class="bg-red-800 px-3 py-1 rounded-full text-xs">🗑 Удалить</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    window.completeTask = async (taskId) => {
-        const token = localStorage.getItem('authToken');
-        await fetch(`/api/tasks/${taskId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ status: 'completed' })
-        });
-        loadTasks();
-    };
-
-    window.deleteTask = async (taskId) => {
-        if (!confirm('Удалить задачу?')) return;
-        const token = localStorage.getItem('authToken');
-        await fetch(`/api/tasks/${taskId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-        loadTasks();
-    };
-
-    document.getElementById('addTaskBtn')?.addEventListener('click', async () => {
-        const title = document.getElementById('taskTitle').value.trim();
-        const description = document.getElementById('taskDesc').value.trim();
-        const deadline = document.getElementById('taskDeadline').value;
-        if (!title) { alert('Введите название задачи'); return; }
-        if (!deadline) { alert('Выберите дедлайн'); return; }
-        const date = new Date(deadline);
-        if (isNaN(date.getTime())) { alert('Некорректная дата'); return; }
-        const token = localStorage.getItem('authToken');
-        const response = await fetch('/api/tasks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ title, description, deadline: date.toISOString() })
-        });
-        if (response.ok) {
-            document.getElementById('taskTitle').value = '';
-            document.getElementById('taskDesc').value = '';
-            document.getElementById('taskDeadline').value = '';
-            loadTasks();
         } else {
-            alert('Ошибка при добавлении задачи');
+            console.warn("updateUIAfterAuth not loaded yet — waiting for script.js");
+            // Можно подождать, но script.js уже загружен синхронно, поэтому функция должна быть доступна
+        }
+        // Дополнительная инициализация обработчиков для кнопок, которые могут быть не привязаны в script.js
+        const startLearningBtn = document.getElementById('startLearningBtn');
+        if (startLearningBtn) {
+            startLearningBtn.addEventListener('click', function(e) { 
+                if (typeof startLearningMode === 'function') startLearningMode();
+            });
+        }
+        const showTestCreatorBtn = document.getElementById('showTestCreatorBtn');
+        if (showTestCreatorBtn) {
+            showTestCreatorBtn.addEventListener('click', function(e) {
+                if (typeof showTestCreator === 'function') showTestCreator();
+                else alert('Сначала зарегистрируйтесь');
+            });
         }
     });
-
-    document.getElementById('filterAll')?.addEventListener('click', () => loadTasks('all'));
-    document.getElementById('filterPending')?.addEventListener('click', () => loadTasks('pending'));
-    document.getElementById('filterCompleted')?.addEventListener('click', () => loadTasks('completed'));
-    document.getElementById('filterUpcoming')?.addEventListener('click', () => loadTasks('upcoming'));
-
-    // ========== НАУЧНЫЕ СТАТЬИ (существующий) ==========
-    let selectedArticles = [];
-    let currentSearchArticles = [];
-
-    async function searchArticles() {
-    const topic = document.getElementById('searchTopic').value.trim();
-    const maxResults = parseInt(document.getElementById('maxResults').value);
-    if (!topic) { alert('Введите тему поиска'); return; }
-    const resultsDiv = document.getElementById('searchResults');
-    resultsDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Поиск...';
-    try {
-        const response = await fetch(`/api/scientific/search?query=${encodeURIComponent(topic)}&max_results=${maxResults}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (!response.ok) throw new Error(await response.text());
-        const articles = await response.json();
-        if (!articles.length) { resultsDiv.innerHTML = '<div class="text-gray-400">Ничего не найдено</div>'; return; }
-        
-        window.selectedArticles = [];
-        window.currentSearchArticles = articles;
-        
-        resultsDiv.innerHTML = articles.map((art, idx) => `
-            <div class="bg-[#1f1219] rounded-xl p-3 flex justify-between items-start gap-3" data-art-idx="${idx}">
-                <div class="flex-1">
-                    <div class="font-bold">${escapeHtml(art.title)}</div>
-                    <div class="text-sm text-gray-400">${escapeHtml(art.authors)} (${art.published ? new Date(art.published).getFullYear() : 'n.d.'})</div>
-                    <div class="text-xs text-gray-500 mt-1 line-clamp-2">${escapeHtml(art.summary.substring(0, 200))}...</div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="viewBibtex('${art.arxiv_id}')" class="bg-[#2c1a20] px-2 py-1 rounded text-xs">📖 BibTeX</button>
-                    <button class="select-article-btn bg-[#bc3f4b] px-2 py-1 rounded text-xs" data-idx="${idx}">➕ Выбрать</button>
-                </div>
-            </div>
-        `).join('');
-        
-        document.querySelectorAll('.select-article-btn').forEach(btn => {
-            btn.removeEventListener('click', handleArticleSelect);
-            btn.addEventListener('click', handleArticleSelect);
-        });
-        
-        document.getElementById('generateReviewBtn').disabled = false;
-    } catch (err) {
-        resultsDiv.innerHTML = `<div class="text-red-400">Ошибка: ${err.message}</div>`;
-    }
-}
-
-function handleArticleSelect(e) {
-    const btn = e.currentTarget;
-    const idx = parseInt(btn.getAttribute('data-idx'));
-    const article = window.currentSearchArticles[idx];
-    if (!article) return;
-    
-    const already = window.selectedArticles.find(a => a.title === article.title);
-    if (already) {
-        window.selectedArticles = window.selectedArticles.filter(a => a.title !== article.title);
-        btn.textContent = '➕ Выбрать';
-        btn.classList.remove('bg-green-700');
-        btn.classList.add('bg-[#bc3f4b]');
-    } else {
-        window.selectedArticles.push({ title: article.title, authors: article.authors, summary: article.summary });
-        btn.textContent = '✓ Выбрано';
-        btn.classList.remove('bg-[#bc3f4b]');
-        btn.classList.add('bg-green-700');
-    }
-}
-
-document.getElementById('generateReviewBtn')?.addEventListener('click', async () => {
-    const topic = document.getElementById('searchTopic').value.trim();
-    if (!window.selectedArticles || !window.selectedArticles.length) {
-        alert('Выберите хотя бы одну статью для обзора');
-        return;
-    }
-    const reviewDiv = document.getElementById('reviewResult');
-    reviewDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация обзора...';
-    try {
-        const response = await fetch('/api/scientific/review', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-            body: JSON.stringify({ topic: topic, articles: window.selectedArticles })
-        });
-        if (!response.ok) throw new Error(await response.text());
-        const data = await response.json();
-        reviewDiv.innerHTML = `<div class="prose prose-invert max-w-none">${marked.parse(data.review)}</div>`;
-    } catch (err) {
-        reviewDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
-    }
-});
-
-    window.toggleSelectArticle = (idx, title, authors, summary) => {
-        const btn = document.querySelector(`.select-article-btn[data-idx="${idx}"]`);
-        const already = selectedArticles.find(a => a.title === title);
-        if (already) {
-            selectedArticles = selectedArticles.filter(a => a.title !== title);
-            btn.textContent = '➕ Выбрать';
-            btn.classList.remove('bg-green-700');
-            btn.classList.add('bg-[#bc3f4b]');
-        } else {
-            selectedArticles.push({ title, authors, summary });
-            btn.textContent = '✓ Выбрано';
-            btn.classList.remove('bg-[#bc3f4b]');
-            btn.classList.add('bg-green-700');
-        }
-    };
-
-    window.viewBibtex = async (arxivId) => {
-        try {
-            const response = await fetch(`/api/scientific/bibtex?arxiv_id=${arxivId}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-            });
-            if (!response.ok) throw new Error(await response.text());
-            const data = await response.json();
-            alert('BibTeX скопирован в консоль\n\n' + data.bibtex);
-            console.log(data.bibtex);
-        } catch (err) {
-            alert('Ошибка загрузки BibTeX: ' + err.message);
-        }
-    };
-
-    document.getElementById('searchArticlesBtn')?.addEventListener('click', searchArticles);
-    document.getElementById('generateReviewBtn')?.addEventListener('click', async () => {
-        const topic = document.getElementById('searchTopic').value.trim();
-        if (!selectedArticles.length) {
-            alert('Выберите хотя бы одну статью для обзора');
-            return;
-        }
-        const reviewDiv = document.getElementById('reviewResult');
-        reviewDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация обзора...';
-        try {
-            const response = await fetch('/api/scientific/review', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-                body: JSON.stringify({ topic: topic, articles: selectedArticles })
-            });
-            if (!response.ok) throw new Error(await response.text());
-            const data = await response.json();
-            reviewDiv.innerHTML = `<div class="prose prose-invert max-w-none">${marked.parse(data.review)}</div>`;
-        } catch (err) {
-            reviewDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
-        }
-    });
-
-    // ========== КОНСТРУКТОР КУРСОВ (СИЛЛАБУС) (существующий) ==========
-    async function loadSavedSyllabus() {
-        const token = localStorage.getItem('authToken');
-        if (!token) return;
-        try {
-            const response = await fetch('/api/syllabus/courses', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) return;
-            const courses = await response.json();
-            const container = document.getElementById('savedSyllabusList');
-            if (!courses.length) {
-                container.innerHTML = '<p class="text-gray-400">Нет сохранённых курсов</p>';
-                return;
-            }
-            container.innerHTML = courses.map(c => `
-                <div class="bg-[#1f1219] rounded-lg p-2 flex justify-between items-center">
-                    <div>
-                        <div class="font-bold">${escapeHtml(c.title)}</div>
-                        <div class="text-xs text-gray-400">${c.university || ''} • ${c.semester} семестр</div>
-                    </div>
-                    <button onclick="viewSyllabus(${c.id})" class="bg-[#2c1a20] px-2 py-1 rounded text-xs">Просмотр</button>
-                </div>
-            `).join('');
-        } catch(e) { console.error(e); }
-    }
-
-    window.viewSyllabus = async (id) => {
-        const token = localStorage.getItem('authToken');
-        try {
-            const response = await fetch(`/api/syllabus/courses/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error();
-            const course = await response.json();
-            let html = `<div class="bg-[#1f1219] p-4 rounded-xl space-y-3">
-                <h3 class="text-xl font-bold">${escapeHtml(course.title)}</h3>
-                <p><strong>Университет:</strong> ${course.university || '—'}</p>
-                <p><strong>Кафедра:</strong> ${course.department || '—'}</p>
-                <p><strong>Семестр:</strong> ${course.semester} | <strong>Кредиты:</strong> ${course.credits} | <strong>Часы:</strong> ${course.total_hours}</p>
-                <p><strong>Компетенции:</strong> ${course.competencies?.join(', ') || '—'}</p>
-                <div><strong>Содержание:</strong><pre class="text-sm bg-black/30 p-2 rounded mt-1 overflow-x-auto">${JSON.stringify(course.syllabus_content, null, 2)}</pre></div>
-                <div><strong>Литература:</strong><ul class="list-disc ml-5">${course.literature?.map(l => `<li>${l.authors} — ${l.title} (${l.year})</li>`).join('') || '<li>—</li>'}</ul></div>
-                <button onclick="closeModal()" class="bg-[#bc3f4b] px-3 py-1 rounded-full text-sm mt-2">Закрыть</button>
-            </div>`;
-            showModal(html);
-        } catch(e) { alert('Ошибка загрузки курса'); }
-    };
-
-    document.getElementById('generateSyllabusBtn')?.addEventListener('click', async () => {
-        const title = document.getElementById('syllabusTitle').value.trim();
-        const specialty = document.getElementById('syllabusSpecialty').value.trim();
-        const hours = parseInt(document.getElementById('syllabusHours').value);
-        const semester = parseInt(document.getElementById('syllabusSemester').value);
-        const goal = document.getElementById('syllabusGoal').value.trim();
-        if (!title) { alert('Введите название дисциплины'); return; }
-        const resultDiv = document.getElementById('syllabusResult');
-        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация...';
-        try {
-            const response = await fetch('/api/syllabus/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-                body: JSON.stringify({ title, specialty, total_hours: hours, semester, goal })
-            });
-            if (!response.ok) throw new Error(await response.text());
-            const data = await response.json();
-            resultDiv.innerHTML = `<div class="prose prose-invert max-w-none"><pre class="text-sm whitespace-pre-wrap">${JSON.stringify(data, null, 2)}</pre></div>`;
-            loadSavedSyllabus();
-        } catch (err) {
-            resultDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
-        }
-    });
-
-    const syllabusTabBtn = document.querySelector('.tab-btn[data-tab="syllabus"]');
-    if (syllabusTabBtn) {
-        syllabusTabBtn.addEventListener('click', () => {
-            loadSavedSyllabus();
-        });
-    }
-
-    const plannerTabBtn = document.querySelector('.tab-btn[data-tab="planner"]');
-    if (plannerTabBtn) {
-        plannerTabBtn.addEventListener('click', () => {
-            loadTasks();
-        });
-    }
-
-// ========== АНАЛИЗ ДАННЫХ (существующий) ==========
-let currentDataSessionId = null;
-let currentAnalysisMode = 'ai';
-let generatedCode = '';
-
-window.setAnalysisMode = function(mode) {
-    currentAnalysisMode = mode;
-    const aiBlock = document.getElementById('aiModeBlock');
-    const codeBlock = document.getElementById('codeModeBlock');
-    const modeAI = document.getElementById('modeAI');
-    const modeCode = document.getElementById('modeCode');
-    if (!aiBlock || !codeBlock) return;
-    aiBlock.classList.toggle('hidden', mode !== 'ai');
-    codeBlock.classList.toggle('hidden', mode !== 'code');
-    if (modeAI) { modeAI.style.background = mode === 'ai' ? '#bc3f4b' : ''; modeAI.style.color = mode === 'ai' ? 'white' : ''; }
-    if (modeCode) { modeCode.style.background = mode === 'code' ? '#bc3f4b' : ''; modeCode.style.color = mode === 'code' ? 'white' : ''; }
-    document.getElementById('generatedCodeBlock')?.classList.add('hidden');
-};
-
-window.setAIPrompt = function(text) {
-    const el = document.getElementById('aiPromptText');
-    if (el) el.value = text;
-};
-
-window.editGeneratedCode = function() {
-    const codeEl = document.getElementById('pythonCode');
-    if (codeEl) codeEl.value = generatedCode;
-    setAnalysisMode('code');
-};
-
-document.getElementById('uploadDataBtn')?.addEventListener('click', async () => {
-    const fileInput = document.getElementById('dataFile');
-    const file = fileInput?.files[0];
-    if (!file) { alert('Выберите файл'); return; }
-    const formData = new FormData();
-    formData.append('file', file);
-    const statusDiv = document.getElementById('uploadStatus');
-    statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
-    try {
-        const response = await fetch('/api/data/upload', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-            body: formData
-        });
-        if (!response.ok) throw new Error(await response.text());
-        const data = await response.json();
-        currentDataSessionId = data.session_id || data.id || data.data_session_id;
-        if (!currentDataSessionId) throw new Error('Сервер не вернул ID сессии');
-        statusDiv.innerHTML = `<span class="text-green-400">✅ Загружено: ${data.filename || file.name}</span>`;
-    } catch (err) {
-        statusDiv.innerHTML = `<span class="text-red-400">❌ Ошибка: ${err.message}</span>`;
-    }
-});
-
-async function runCode(code) {
-    if (!currentDataSessionId) { alert('Сначала загрузите файл данных'); return; }
-    const resultDiv = document.getElementById('analysisResult');
-    if (!resultDiv) return;
-    resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выполнение...';
-    const response = await fetch('/api/data/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-        body: JSON.stringify({ session_id: currentDataSessionId, code: code })
-    });
-    if (!response.ok) throw new Error(await response.text());
-    const data = await response.json();
-    let imagesHtml = '';
-    if (data.figures && data.figures.length) {
-        imagesHtml = '<div class="mt-3 grid gap-3">' +
-            data.figures.map(img => `<img src="data:image/png;base64,${img}" class="max-w-full rounded border border-gray-700">`).join('') + '</div>';
-    }
-    resultDiv.innerHTML = `
-        <div class="font-medium mb-1">Вывод:</div>
-        <pre class="whitespace-pre-wrap bg-black/40 p-2 rounded text-sm">${escapeHtml(data.stdout || '(нет вывода)')}</pre>
-        ${data.stderr ? `<div class="mt-2 text-yellow-400 text-xs"><pre class="whitespace-pre-wrap">${escapeHtml(data.stderr)}</pre></div>` : ''}
-        ${imagesHtml}
-    `;
-}
-
-document.getElementById('runAIAnalysisBtn')?.addEventListener('click', async () => {
-    const prompt = document.getElementById('aiPromptText')?.value.trim();
-    if (!prompt) { alert('Опишите что нужно проанализировать'); return; }
-    if (!currentDataSessionId) { alert('Сначала загрузите файл данных'); return; }
-
-    const resultDiv = document.getElementById('analysisResult');
-    resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ИИ генерирует код...';
-    document.getElementById('generatedCodeBlock')?.classList.add('hidden');
-
-    try {
-        let dfInfo = '';
-        try {
-            const previewResp = await fetch('/api/data/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-                body: JSON.stringify({ session_id: currentDataSessionId, code: 'print(df.dtypes.to_string())\nprint("---")\nprint(df.head(3).to_string())' })
-            });
-            if (previewResp.ok) {
-                const preview = await previewResp.json();
-                dfInfo = preview.stdout || '';
-            }
-        } catch(e) { console.warn('preview failed', e); }
-
-        const aiResp = await fetch('/api/ai/generate-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-            body: JSON.stringify({ prompt, df_info: dfInfo })
-        });
-        if (!aiResp.ok) throw new Error(await aiResp.text());
-        const aiData = await aiResp.json();
-        generatedCode = aiData.code || '';
-
-        const codeView = document.getElementById('generatedCodeView');
-        if (codeView) codeView.textContent = generatedCode;
-        document.getElementById('generatedCodeBlock')?.classList.remove('hidden');
-
-        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выполнение кода...';
-        await runCode(generatedCode);
-
-    } catch (err) {
-        document.getElementById('analysisResult').innerHTML = `<div class="text-red-400">Ошибка: ${err.message}</div>`;
-    }
-});
-
-document.getElementById('runAnalysisBtn')?.addEventListener('click', async () => {
-    const code = document.getElementById('pythonCode')?.value;
-    if (!code) { alert('Введите код для выполнения'); return; }
-    try { await runCode(code); }
-    catch (err) {
-        const r = document.getElementById('analysisResult');
-        if (r) r.innerHTML = `<div class="text-red-400">Ошибка: ${err.message}</div>`;
-    }
-});
-
-// ========== НОВЫЙ БЛОК: AI-РЕЦЕНЗЕНТ ==========
-async function loadReviewHistory() {
-    const token = localStorage.getItem('authToken');
-    if (!token) return;
-    try {
-        const response = await fetch('/api/review-history', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) return;
-        const history = await response.json();
-        const container = document.getElementById('reviewHistoryList');
-        if (!history.length) {
-            container.innerHTML = '<p class="text-gray-400">Нет предыдущих проверок</p>';
-            return;
-        }
-        container.innerHTML = history.map(h => `
-            <div class="bg-[#1f1219] rounded-lg p-2 flex justify-between items-center">
-                <div>
-                    <div class="font-bold">${escapeHtml(h.title)}</div>
-                    <div class="text-xs text-gray-400">Оценка: ${h.score}/100 • Уникальность: ${h.plagiarism_percent}%</div>
-                    <div class="text-xs text-gray-500">${new Date(h.created_at).toLocaleString()}</div>
-                </div>
-                <button onclick="viewReviewDetails(${h.id})" class="bg-[#2c1a20] px-2 py-1 rounded text-xs">Подробнее</button>
-            </div>
-        `).join('');
-    } catch(e) { console.error(e); }
-}
-
-window.viewReviewDetails = async (reviewId) => {
-    alert('Просмотр деталей будет доступен в следующей версии');
-};
-
-const submitReviewBtn = document.getElementById('submitReviewBtn');
-if (submitReviewBtn) {
-    submitReviewBtn.addEventListener('click', async () => {
-        const title = document.getElementById('reviewTitle').value.trim();
-        const text = document.getElementById('reviewText').value.trim();
-        if (!text) { alert('Введите текст работы'); return; }
-        const resultDiv = document.getElementById('aiReviewResult');
-        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ текста и проверка на плагиат...';
-        try {
-            const response = await fetch('/api/review-text', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-                body: JSON.stringify({ title: title, text: text })
-            });
-            if (!response.ok) throw new Error(await response.text());
-            const data = await response.json();
-            let html = `
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
-                    <span class="text-xl font-bold">Оценка: ${data.score}/100</span>
-                    <span class="text-lg text-[#bc3f4b]">Уникальность: ${data.plagiarism_percent}%</span>
-                </div>
-                <div><span class="font-bold">📋 Уровень:</span> ${data.grade}</div>
-                <div><span class="font-bold">✅ Сильные стороны:</span><ul class="list-disc ml-5">${data.strengths.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul></div>
-                <div><span class="font-bold">⚠️ Слабые места:</span><ul class="list-disc ml-5">${data.weaknesses.map(w => `<li>${escapeHtml(w)}</li>`).join('')}</ul></div>
-                <div><span class="font-bold">📌 Рекомендации:</span><ul class="list-disc ml-5">${data.recommendations.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul></div>
-                <div><span class="font-bold">📝 Подробный отзыв:</span><div class="mt-2 p-2 bg-black/40 rounded">${escapeHtml(data.detailed_feedback)}</div></div>
-            `;
-            if (data.similar_parts && data.similar_parts.length) {
-                html += `<div><span class="font-bold">⚠️ Похожие фрагменты (плагиат):</span><ul class="list-disc ml-5">${data.similar_parts.map(p => `<li>${escapeHtml(p.text)} — источник: ${p.source_title || 'другая работа'}</li>`).join('')}</ul></div>`;
-            }
-            resultDiv.innerHTML = html;
-            loadReviewHistory();
-        } catch (err) {
-            resultDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
-        }
-    });
-}
-
-const reviewerTabBtn = document.querySelector('.tab-btn[data-tab="reviewer"]');
-if (reviewerTabBtn) {
-    reviewerTabBtn.addEventListener('click', () => {
-        loadReviewHistory();
-    });
-}
 </script>
 </body>
 </html>

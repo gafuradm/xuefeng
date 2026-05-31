@@ -36,6 +36,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+def decode_token(token: str) -> dict:
+    """Декодирует JWT токен и возвращает payload без проверки БД (используется в middleware)"""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        return {}
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = credentials.credentials
     credentials_exception = HTTPException(
@@ -61,4 +69,19 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 def get_current_active_user(current_user: User = Depends(get_current_user)):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+def is_government_user(user: User) -> bool:
+    """Проверяет, имеет ли пользователь роль 'government'"""
+    if not user.roles:
+        return False
+    return any(role.name == 'government' for role in user.roles)
+
+def get_current_government_user(current_user: User = Depends(get_current_user)):
+    """Зависимость для защиты эндпоинтов, доступных только государству/администратору"""
+    if not is_government_user(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Доступ запрещён: требуется роль 'Государство'"
+        )
     return current_user
