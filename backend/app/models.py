@@ -89,6 +89,7 @@ class User(Base):
     timezone = Column(String, default="UTC")
     language = Column(String, default="en")
 
+    text_reviews = relationship("TextReview", back_populates="user", cascade="all, delete-orphan")
     data_analysis_sessions = relationship("DataAnalysisSession", back_populates="user", cascade="all, delete-orphan")
     scientific_articles = relationship("ScientificArticle", back_populates="user", cascade="all, delete-orphan")
 
@@ -693,3 +694,24 @@ class DataAnalysisSession(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = relationship("User", back_populates="data_analysis_sessions")
+
+class PlagiarismCorpus(Base):
+    __tablename__ = "plagiarism_corpus"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    text_hash = Column(String(64), unique=True, index=True)
+    shingles = Column(JSON)  # список хешей шинглов
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class TextReview(Base):
+    __tablename__ = "text_reviews"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String, nullable=True)
+    text = Column(Text, nullable=False)
+    ai_feedback = Column(JSON)   # {score, grade, strengths, weaknesses, recommendations, detailed_feedback}
+    plagiarism_percent = Column(Float, default=0.0)
+    similar_parts = Column(JSON)  # [{text, source_user_id, source_title}]
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="text_reviews")

@@ -104,8 +104,9 @@
             <button data-tab="planner" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-calendar-alt mr-1"></i> Планировщик</button>
             <button data-tab="scientific" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-flask mr-1"></i> Научные статьи</button>
             <button data-tab="syllabus" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-chalkboard-user mr-1"></i> Конструктор курсов</button>
-            <!-- ДОБАВЛЕНА КНОПКА АНАЛИЗ ДАННЫХ -->
             <button data-tab="dataanalysis" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-chart-line mr-1"></i> Анализ данных</button>
+            <!-- НОВАЯ КНОПКА: AI-РЕЦЕНЗЕНТ -->
+            <button data-tab="reviewer" class="tab-btn px-5 py-2 rounded-full bg-black/40 text-gray-200 transition-smooth"><i class="fas fa-pen-fancy mr-1"></i> AI-рецензент</button>
         </div>
     </div>
 
@@ -308,7 +309,7 @@
             </div>
         </div>
 
-        <!-- ДОБАВЛЕНА ВКЛАДКА АНАЛИЗ ДАННЫХ -->
+        <!-- Анализ данных -->
         <div id="dataanalysis-pane" class="tab-pane hidden">
             <div class="step-card p-6">
                 <h2 class="text-xl font-bold mb-4">📊 Анализ данных для диссертации</h2>
@@ -368,6 +369,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- НОВАЯ ВКЛАДКА: AI-РЕЦЕНЗЕНТ -->
+        <div id="reviewer-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">🔍 AI-рецензент + проверка на плагиат</h2>
+                <div class="mb-3">
+                    <input type="text" id="reviewTitle" placeholder="Название работы (необязательно)" class="modern-input w-full mb-2">
+                    <textarea id="reviewText" rows="12" placeholder="Вставьте текст диссертации, статьи или реферата..." class="modern-input w-full"></textarea>
+                    <button id="submitReviewBtn" class="mt-3 bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full">Получить рецензию</button>
+                </div>
+                <div id="aiReviewResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl whitespace-pre-wrap space-y-4"></div>
+                <div class="mt-6">
+                    <h3 class="font-bold text-lg mb-2">📜 История проверок</h3>
+                    <div id="reviewHistoryList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Блок для неавторизованных -->
@@ -386,18 +404,16 @@
 
 <script src="/static/script.js"></script>
 <script>
-    // ========== ДОПОЛНИТЕЛЬНЫЕ УЛУЧШЕНИЯ ==========
+    // ========== ДОПОЛНИТЕЛЬНЫЕ УЛУЧШЕНИЯ (существующие) ==========
     async function resumeOrCreateStudentSession() {
     if (!currentUserId) return false;
     try {
-        // Получаем сессии через статистику пользователя
         const response = await fetch(`/api/user/statistics?user_id=${currentUserId}`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
         });
         if (!response.ok) return false;
         const stats = await response.json();
         
-        // Ищем активную сессию через sessions напрямую из БД
         const sessResp = await fetch(`/api/sessions/by_user?user_id=${currentUserId}`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
         });
@@ -439,7 +455,6 @@
     const tabContent = document.getElementById('tabContent');
     const rolePanel = document.getElementById('rolePanel');
 
-    // Если нет токена — показываем гостевой блок, скрываем всё остальное
     if (!token) {
         if (profileHeader) profileHeader.classList.add('hidden');
         if (rolePanel) rolePanel.classList.add('hidden');
@@ -449,7 +464,6 @@
         return;
     }
 
-    // Токен есть — скрываем гостевой блок, показываем панели
     if (profileHeader) profileHeader.classList.remove('hidden');
     if (rolePanel) rolePanel.classList.remove('hidden');
     if (tabsContainer) tabsContainer.classList.remove('hidden');
@@ -496,7 +510,6 @@
             }
         }
 
-        // Показываем первую вкладку (Дашборд)
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
         const dashboardPane = document.getElementById('dashboard-pane');
         if (dashboardPane) dashboardPane.classList.remove('hidden');
@@ -544,7 +557,7 @@
             btn.addEventListener('click', function() {
                 const tab = this.getAttribute('data-tab');
                 const pane = document.getElementById(`${tab}-pane`);
-                if (!pane) return; // <-- вот эта проверка решает classList of null
+                if (!pane) return;
                 document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
                 pane.classList.remove('hidden');
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -555,7 +568,7 @@
         if (roleSelect && typeof setRole === 'function') setRole(roleSelect.value);
     });
 
-    // ========== PDF RAG ==========
+    // ========== PDF RAG (существующий) ==========
     const uploadBtn = document.getElementById('uploadPdfBtn');
     const askBtn = document.getElementById('askPdfBtn');
     const pdfFileInput = document.getElementById('pdfFile');
@@ -609,7 +622,7 @@
         });
     }
 
-    // ========== ГЕНЕРАЦИЯ БИЛЕТОВ ==========
+    // ========== ГЕНЕРАЦИЯ БИЛЕТОВ (существующий) ==========
     document.getElementById('generateTicketsBtn')?.addEventListener('click', async () => {
         const courseName = document.getElementById('examCourseName').value.trim();
         const numQuestions = parseInt(document.getElementById('examNumQuestions').value);
@@ -647,7 +660,7 @@
         }
     });
 
-    // ========== ПРОВЕРКА ЭССЕ ==========
+    // ========== ПРОВЕРКА ЭССЕ (существующий) ==========
     document.getElementById('checkEssayBtn')?.addEventListener('click', async () => {
         const text = document.getElementById('essayText').value.trim();
         const title = document.getElementById('essayTitle').value.trim();
@@ -680,7 +693,7 @@
         }
     });
 
-    // ========== ПЛАНИРОВЩИК ЗАДАЧ ==========
+    // ========== ПЛАНИРОВЩИК ЗАДАЧ (существующий) ==========
     async function loadTasks(filter = 'all') {
         const token = localStorage.getItem('authToken');
         if (!token) return;
@@ -757,7 +770,7 @@
     document.getElementById('filterCompleted')?.addEventListener('click', () => loadTasks('completed'));
     document.getElementById('filterUpcoming')?.addEventListener('click', () => loadTasks('upcoming'));
 
-    // ========== НАУЧНЫЕ СТАТЬИ ==========
+    // ========== НАУЧНЫЕ СТАТЬИ (существующий) ==========
     let selectedArticles = [];
     let currentSearchArticles = [];
 
@@ -775,7 +788,6 @@
         const articles = await response.json();
         if (!articles.length) { resultsDiv.innerHTML = '<div class="text-gray-400">Ничего не найдено</div>'; return; }
         
-        // Очищаем старые данные
         window.selectedArticles = [];
         window.currentSearchArticles = articles;
         
@@ -793,7 +805,6 @@
             </div>
         `).join('');
         
-        // Привязываем обработчики к каждой кнопке выбора
         document.querySelectorAll('.select-article-btn').forEach(btn => {
             btn.removeEventListener('click', handleArticleSelect);
             btn.addEventListener('click', handleArticleSelect);
@@ -825,7 +836,6 @@ function handleArticleSelect(e) {
     }
 }
 
-// Обновите обработчик кнопки генерации обзора
 document.getElementById('generateReviewBtn')?.addEventListener('click', async () => {
     const topic = document.getElementById('searchTopic').value.trim();
     if (!window.selectedArticles || !window.selectedArticles.length) {
@@ -901,7 +911,7 @@ document.getElementById('generateReviewBtn')?.addEventListener('click', async ()
         }
     });
 
-    // ========== КОНСТРУКТОР КУРСОВ (СИЛЛАБУС) ==========
+    // ========== КОНСТРУКТОР КУРСОВ (СИЛЛАБУС) (существующий) ==========
     async function loadSavedSyllabus() {
         const token = localStorage.getItem('authToken');
         if (!token) return;
@@ -974,7 +984,6 @@ document.getElementById('generateReviewBtn')?.addEventListener('click', async ()
         }
     });
 
-    // Загружаем сохранённые курсы при переключении на вкладку syllabus
     const syllabusTabBtn = document.querySelector('.tab-btn[data-tab="syllabus"]');
     if (syllabusTabBtn) {
         syllabusTabBtn.addEventListener('click', () => {
@@ -982,7 +991,6 @@ document.getElementById('generateReviewBtn')?.addEventListener('click', async ()
         });
     }
 
-    // При переключении на planner загружаем задачи
     const plannerTabBtn = document.querySelector('.tab-btn[data-tab="planner"]');
     if (plannerTabBtn) {
         plannerTabBtn.addEventListener('click', () => {
@@ -990,7 +998,7 @@ document.getElementById('generateReviewBtn')?.addEventListener('click', async ()
         });
     }
 
-// ========== АНАЛИЗ ДАННЫХ ==========
+// ========== АНАЛИЗ ДАННЫХ (существующий) ==========
 let currentDataSessionId = null;
 let currentAnalysisMode = 'ai';
 let generatedCode = '';
@@ -1079,7 +1087,6 @@ document.getElementById('runAIAnalysisBtn')?.addEventListener('click', async () 
     document.getElementById('generatedCodeBlock')?.classList.add('hidden');
 
     try {
-        // Получаем структуру датафрейма
         let dfInfo = '';
         try {
             const previewResp = await fetch('/api/data/analyze', {
@@ -1093,7 +1100,6 @@ document.getElementById('runAIAnalysisBtn')?.addEventListener('click', async () 
             }
         } catch(e) { console.warn('preview failed', e); }
 
-        // Генерируем код через бекенд (не напрямую к Anthropic)
         const aiResp = await fetch('/api/ai/generate-code', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
@@ -1124,6 +1130,83 @@ document.getElementById('runAnalysisBtn')?.addEventListener('click', async () =>
         if (r) r.innerHTML = `<div class="text-red-400">Ошибка: ${err.message}</div>`;
     }
 });
+
+// ========== НОВЫЙ БЛОК: AI-РЕЦЕНЗЕНТ ==========
+async function loadReviewHistory() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    try {
+        const response = await fetch('/api/review-history', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) return;
+        const history = await response.json();
+        const container = document.getElementById('reviewHistoryList');
+        if (!history.length) {
+            container.innerHTML = '<p class="text-gray-400">Нет предыдущих проверок</p>';
+            return;
+        }
+        container.innerHTML = history.map(h => `
+            <div class="bg-[#1f1219] rounded-lg p-2 flex justify-between items-center">
+                <div>
+                    <div class="font-bold">${escapeHtml(h.title)}</div>
+                    <div class="text-xs text-gray-400">Оценка: ${h.score}/100 • Уникальность: ${h.plagiarism_percent}%</div>
+                    <div class="text-xs text-gray-500">${new Date(h.created_at).toLocaleString()}</div>
+                </div>
+                <button onclick="viewReviewDetails(${h.id})" class="bg-[#2c1a20] px-2 py-1 rounded text-xs">Подробнее</button>
+            </div>
+        `).join('');
+    } catch(e) { console.error(e); }
+}
+
+window.viewReviewDetails = async (reviewId) => {
+    alert('Просмотр деталей будет доступен в следующей версии');
+};
+
+const submitReviewBtn = document.getElementById('submitReviewBtn');
+if (submitReviewBtn) {
+    submitReviewBtn.addEventListener('click', async () => {
+        const title = document.getElementById('reviewTitle').value.trim();
+        const text = document.getElementById('reviewText').value.trim();
+        if (!text) { alert('Введите текст работы'); return; }
+        const resultDiv = document.getElementById('aiReviewResult');
+        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ текста и проверка на плагиат...';
+        try {
+            const response = await fetch('/api/review-text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+                body: JSON.stringify({ title: title, text: text })
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const data = await response.json();
+            let html = `
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
+                    <span class="text-xl font-bold">Оценка: ${data.score}/100</span>
+                    <span class="text-lg text-[#bc3f4b]">Уникальность: ${data.plagiarism_percent}%</span>
+                </div>
+                <div><span class="font-bold">📋 Уровень:</span> ${data.grade}</div>
+                <div><span class="font-bold">✅ Сильные стороны:</span><ul class="list-disc ml-5">${data.strengths.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul></div>
+                <div><span class="font-bold">⚠️ Слабые места:</span><ul class="list-disc ml-5">${data.weaknesses.map(w => `<li>${escapeHtml(w)}</li>`).join('')}</ul></div>
+                <div><span class="font-bold">📌 Рекомендации:</span><ul class="list-disc ml-5">${data.recommendations.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul></div>
+                <div><span class="font-bold">📝 Подробный отзыв:</span><div class="mt-2 p-2 bg-black/40 rounded">${escapeHtml(data.detailed_feedback)}</div></div>
+            `;
+            if (data.similar_parts && data.similar_parts.length) {
+                html += `<div><span class="font-bold">⚠️ Похожие фрагменты (плагиат):</span><ul class="list-disc ml-5">${data.similar_parts.map(p => `<li>${escapeHtml(p.text)} — источник: ${p.source_title || 'другая работа'}</li>`).join('')}</ul></div>`;
+            }
+            resultDiv.innerHTML = html;
+            loadReviewHistory();
+        } catch (err) {
+            resultDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
+        }
+    });
+}
+
+const reviewerTabBtn = document.querySelector('.tab-btn[data-tab="reviewer"]');
+if (reviewerTabBtn) {
+    reviewerTabBtn.addEventListener('click', () => {
+        loadReviewHistory();
+    });
+}
 </script>
 </body>
 </html>

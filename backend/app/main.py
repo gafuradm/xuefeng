@@ -15,6 +15,10 @@ from .models import UserDocument
 import shutil
 import json
 
+from .plagiarism import check_plagiarism
+from .models import TextReview, PlagiarismCorpus
+from pydantic import BaseModel
+
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')   # для работы без GUI
@@ -104,6 +108,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class TextReviewRequest(BaseModel):
+    title: Optional[str] = None
+    text: str
 
 video_dir = os.path.join(os.path.dirname(__file__), "data", "videos")
 os.makedirs(video_dir, exist_ok=True)
@@ -2292,6 +2300,117 @@ async def generate_code_proxy(
     
     code = code.replace("```python", "").replace("```", "").strip()
     return {"code": code}
+
+@app.post("/api/review-text")
+async def review_text(
+    req: TextReviewRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(400, "Текст не может быть пустым")
+    title = req.title or "Без названия"
+    
+    # 1. Проверка на плагиат
+    plagiarism_percent, similar_parts = check_plagiarism(db, current_user.id, title, text)
+    
+    # 2. AI-рецензия (используем усовершенствованный промпт)
+    prompt = f"""Ты – строгий научный рецензент. Проведи рецензирование следующего текста.
+
+Название: {title}
+Текст:
+{text[:8000]}
+
+Оцени текст по шкале 0-100 по следующим критериям:
+- Логика и аргументация (25%)
+- Новизна и вклад (20%)
+- Структура и последовательность (15%)
+- Язык и стиль (20%)
+- Оформление ссылок и корректность цитирования (10%)
+- Соответствие теме (10%)
+
+Верни ТОЛЬКО JSON в формате:
+{{
+  "score": 75,
+  "grade": "хорошо",
+  "strengths": ["список сильных сторон"],
+  "weaknesses": ["список слабых мест"],
+  "recommendations": ["рекомендации"],
+  "detailed_feedback": "развёрнутый отзыв (3-5 предложений)"
+}}
+Дополнительно, если обнаружены явные признаки плагиата, укажи это в feedback."""
+    
+    try:
+        ai_response = await deepseek_client.chat_completion([
+            {"role": "system", "content": "Ты научный рецензент. Отвечай только JSON."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=1500, temperature=0.4)
+        
+        # Очистка от маркдауна
+        ai_response = ai_response.strip()
+        if ai_response.startswith("```json"):
+            ai_response = ai_response[7:]
+        if ai_response.startswith("```"):
+            ai_response = ai_response[3:]
+        if ai_response.endswith("```"):
+            ai_response = ai_response[:-3]
+        ai_response = ai_response.strip()
+        
+        feedback = json.loads(ai_response)
+    except Exception as e:
+        # fallback
+        feedback = {
+            "score": 50, "grade": "удовлетворительно",
+            "strengths": ["Текст содержит интересные идеи"],
+            "weaknesses": ["Не хватает структуры", "Стиль не научный"],
+            "recommendations": ["Улучшить аргументацию", "Переписать введение"],
+            "detailed_feedback": "Автоматическая проверка не удалась. Рекомендуется доработать текст."
+        }
+    
+    # Сохраняем в БД
+    review = TextReview(
+        user_id=current_user.id,
+        title=title,
+        text=text,
+        ai_feedback=feedback,
+        plagiarism_percent=plagiarism_percent,
+        similar_parts=similar_parts
+    )
+    db.add(review)
+    db.commit()
+    db.refresh(review)
+    
+    return {
+        "review_id": review.id,
+        "score": feedback["score"],
+        "grade": feedback["grade"],
+        "strengths": feedback["strengths"],
+        "weaknesses": feedback["weaknesses"],
+        "recommendations": feedback["recommendations"],
+        "detailed_feedback": feedback["detailed_feedback"],
+        "plagiarism_percent": plagiarism_percent,
+        "similar_parts": similar_parts
+    }
+
+@app.get("/api/review-history")
+async def get_review_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    limit: int = 20
+):
+    reviews = db.query(TextReview).filter(TextReview.user_id == current_user.id).order_by(TextReview.created_at.desc()).limit(limit).all()
+    return [
+        {
+            "id": r.id,
+            "title": r.title,
+            "score": r.ai_feedback.get("score"),
+            "grade": r.ai_feedback.get("grade"),
+            "plagiarism_percent": r.plagiarism_percent,
+            "created_at": r.created_at.isoformat()
+        }
+        for r in reviews
+    ]
 
 # ========== IELTS МОДУЛЬ (полностью) ==========
 # ========== IELTS МОДУЛЬ (полностью) ==========
