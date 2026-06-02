@@ -1,3 +1,5 @@
+# backend/app/role_service.py
+
 from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from .models import User, Role
@@ -7,9 +9,9 @@ ROLE_MODULE_ACCESS = {
     'schoolchild': ['learning', 'tests', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation', 'soft_skills', 'coding_interviews'],
     'applicant': ['learning', 'tests', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation'],
     'student': ['learning', 'tests', 'courses_create', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'scientific', 'data_analysis', 'ielts', 'ocr', 'video_generation', 'supervisor_search', 'internship_match', 'soft_skills', 'coding_interviews'],
-    'master': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'soft_skills', 'coding_interviews', 'planner'],
-    'phd': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'peer_review', 'soft_skills', 'coding_interviews', 'planner'],
-    'researcher': ['scientific', 'data_analysis', 'hypothesis_generator', 'publications', 'peer_review', 'planner'],
+    'master': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'soft_skills', 'coding_interviews', 'planner', 'internship_match'],
+    'phd': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'peer_review', 'soft_skills', 'coding_interviews', 'planner', 'internship_match'],
+    'researcher': ['scientific', 'data_analysis', 'hypothesis_generator', 'publications', 'peer_review', 'planner', 'supervisor_search', 'internship_match'],
     'professor': ['courses_create', 'schools_teacher', 'essay_check_reviewer', 'scientific', 'supervisor_as_mentor', 'soft_skills', 'planner'],
     'school_teacher': ['courses_create', 'schools_teacher', 'exam_tickets', 'essay_check_reviewer', 'planner', 'soft_skills'],
     'private_tutor': ['courses_create', 'tests', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'soft_skills'],

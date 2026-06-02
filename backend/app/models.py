@@ -98,6 +98,9 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     # role = Column(String, default='student')   # УДАЛЕНО — заменено на связь многие-ко-многим с Role
     
+    hypotheses = relationship("Hypothesis", back_populates="user", cascade="all, delete-orphan")
+    research_interests = Column(Text, nullable=True)
+    supervisor_requests = relationship("UserSupervisor", back_populates="user", cascade="all, delete-orphan")
     username = Column(String, unique=True, index=True, nullable=True)
     hashed_password = Column(String, nullable=True)
     full_name = Column(String, nullable=True)
@@ -111,7 +114,15 @@ class User(Base):
     city = Column(String, nullable=True)
     timezone = Column(String, default="UTC")
     language = Column(String, default="en")
-    
+
+    vacancy_applications = relationship("UserVacancy", back_populates="user", cascade="all, delete-orphan")
+    cv_summary = Column(Text, nullable=True)               # краткое резюме
+    desired_position = Column(String, nullable=True)       # желаемая должность
+    desired_salary = Column(Integer, nullable=True)
+    work_experience_years = Column(Float, default=0.0)
+    github_url = Column(String, nullable=True)
+    linkedin_url = Column(String, nullable=True)
+
     # Новая система опыта и уровней
     total_xp = Column(Integer, default=0)
     level = Column(Integer, default=1)
@@ -793,3 +804,112 @@ class TextReview(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="text_reviews")
+
+# backend/app/models.py (добавить в конец файла)
+
+class Hypothesis(Base):
+    __tablename__ = "hypotheses"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    text = Column(Text, nullable=False)                     # текст гипотезы
+    domain = Column(String, nullable=True)                  # область (AI, биология, экономика...)
+    confidence_score = Column(Float, default=0.0)           # оценка уверенности 0-1
+    relevance_score = Column(Float, default=0.0)            # релевантность профилю
+    context_snapshot = Column(JSON, nullable=True)          # срез данных пользователя (темы, достижения)
+    user_rating = Column(Integer, nullable=True)            # оценка пользователя (1-5)
+    is_accepted = Column(Boolean, default=False)            # принята ли в работу
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="hypotheses")
+
+class Supervisor(Base):
+    __tablename__ = "supervisors"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=True)
+    department = Column(String, nullable=True)          # кафедра
+    university = Column(String, nullable=True)          # вуз
+    position = Column(String, nullable=True)            # профессор, доцент, PhD и т.д.
+    research_areas = Column(JSON, default=list)         # список научных направлений
+    keywords = Column(JSON, default=list)               # ключевые слова для поиска
+    publications_summary = Column(Text, nullable=True)  # краткое описание публикаций
+    bio = Column(Text, nullable=True)                   # биография
+    avatar_url = Column(String, nullable=True)
+    contact_info = Column(JSON, nullable=True)          # телефон, сайт, соцсети
+    is_active = Column(Boolean, default=True)
+    rating = Column(Float, default=0.0)                 # рейтинг (от студентов)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Связь с пользователями, которые выбрали этого руководителя
+    user_supervisors = relationship("UserSupervisor", back_populates="supervisor", cascade="all, delete-orphan")
+
+class UserSupervisor(Base):
+    __tablename__ = "user_supervisors"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    supervisor_id = Column(Integer, ForeignKey("supervisors.id", ondelete="CASCADE"), nullable=False)
+    status = Column(String, default="pending")          # pending, accepted, rejected, favorited
+    request_message = Column(Text, nullable=True)       # сообщение студента
+    supervisor_reply = Column(Text, nullable=True)      # ответ
+    matching_score = Column(Float, default=0.0)         # вычисленный ИИ score
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", back_populates="supervisor_requests")
+    supervisor = relationship("Supervisor", back_populates="user_supervisors")
+
+class Company(Base):
+    __tablename__ = "companies"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    industry = Column(String, nullable=True)          # отрасль (IT, финансы, образование...)
+    website = Column(String, nullable=True)
+    logo_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    vacancies = relationship("Vacancy", back_populates="company", cascade="all, delete-orphan")
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # кто создал (работодатель)
+    user = relationship("User")
+
+class Vacancy(Base):
+    __tablename__ = "vacancies"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String, nullable=False)            # "Junior Python Developer"
+    description = Column(Text, nullable=False)       # полное описание
+    requirements = Column(Text, nullable=True)       # требования
+    skills = Column(JSON, default=list)              # список необходимых навыков
+    experience_years = Column(Float, default=0.0)    # требуемый опыт (лет)
+    salary_min = Column(Integer, nullable=True)
+    salary_max = Column(Integer, nullable=True)
+    location = Column(String, nullable=True)         # город / remote
+    employment_type = Column(String, default="full") # full, part, internship, contract
+    is_active = Column(Boolean, default=True)
+    posted_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    
+    company = relationship("Company", back_populates="vacancies")
+    user_vacancies = relationship("UserVacancy", back_populates="vacancy", cascade="all, delete-orphan")
+
+class UserVacancy(Base):
+    __tablename__ = "user_vacancies"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    vacancy_id = Column(Integer, ForeignKey("vacancies.id", ondelete="CASCADE"), nullable=False)
+    status = Column(String, default="pending")       # pending, applied, viewed, rejected, hired
+    matching_score = Column(Float, default=0.0)      # вычисленный ИИ score
+    cover_letter = Column(Text, nullable=True)       # сопроводительное письмо
+    applied_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", back_populates="vacancy_applications")
+    vacancy = relationship("Vacancy", back_populates="user_vacancies")

@@ -2338,6 +2338,252 @@ document.getElementById('askPdfBtn')?.addEventListener('click', async () => {
     }
 });
 
+// Генерация гипотез
+document.getElementById('generateHypothesisBtn')?.addEventListener('click', async () => {
+    const domain = document.getElementById('hypothesisDomain').value;
+    const token = localStorage.getItem('authToken');
+    const resultDiv = document.getElementById('hypothesesList');
+    resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация гипотез...';
+    try {
+        const response = await fetch(`/api/hypothesis/generate?domain=${encodeURIComponent(domain)}&num_hypotheses=3`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        let html = '<h3 class="font-bold text-lg mb-2">Сгенерированные гипотезы:</h3>';
+        for (let h of data.hypotheses) {
+            html += `
+                <div class="bg-[#1f1219] p-4 rounded-xl mb-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <p class="text-white">${escapeHtml(h.text)}</p>
+                            <div class="flex gap-4 mt-2 text-sm text-gray-400">
+                                <span>🎯 Уверенность: ${(h.confidence_score * 100).toFixed(0)}%</span>
+                                <span>📊 Релевантность: ${(h.relevance_score * 100).toFixed(0)}%</span>
+                                <span>📅 ${new Date(h.created_at).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 ml-4">
+                            <button onclick="rateHypothesis(${h.id}, 5)" class="bg-green-800 px-2 py-1 rounded text-xs">👍 Полезна</button>
+                            <button onclick="rateHypothesis(${h.id}, 1)" class="bg-red-800 px-2 py-1 rounded text-xs">👎 Не полезна</button>
+                            <button onclick="acceptHypothesis(${h.id})" class="bg-blue-800 px-2 py-1 rounded text-xs">✅ В работу</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        resultDiv.innerHTML = html;
+        loadHypothesisHistory();
+    } catch (err) {
+        resultDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
+    }
+});
+
+async function rateHypothesis(hypId, rating) {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`/api/hypothesis/${hypId}/rate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ rating, accept: false })
+    });
+    if (response.ok) alert('Спасибо за оценку!');
+    else alert('Ошибка');
+}
+
+async function acceptHypothesis(hypId) {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`/api/hypothesis/${hypId}/accept`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (response.ok) {
+        alert('Гипотеза принята! Желаем удачи в исследовании.');
+        loadHypothesisHistory();
+    } else alert('Ошибка');
+}
+
+async function loadHypothesisHistory() {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch('/api/hypothesis/list?limit=20', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) return;
+    const hypotheses = await response.json();
+    const container = document.getElementById('historyHypothesesList');
+    if (!hypotheses.length) {
+        container.innerHTML = '<p class="text-gray-400">Нет сохранённых гипотез</p>';
+        return;
+    }
+    container.innerHTML = hypotheses.map(h => `
+        <div class="bg-[#1f1219] p-2 rounded-lg text-sm">
+            <div>${escapeHtml(h.text.substring(0, 150))}...</div>
+            <div class="flex justify-between mt-1 text-xs text-gray-500">
+                <span>Оценка: ${h.user_rating ? '★'.repeat(h.user_rating) + '☆'.repeat(5-h.user_rating) : 'не оценено'}</span>
+                <span>${h.is_accepted ? '✅ Принята' : '📌 Не принята'}</span>
+                <span>${new Date(h.created_at).toLocaleDateString()}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function findSupervisors() {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        alert('Пожалуйста, войдите');
+        return;
+    }
+    const resultsDiv = document.getElementById('supervisorResults');
+    resultsDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin mr-2"></i> Поиск подходящих руководителей...</div>';
+    try {
+        const response = await fetch('/api/supervisor/match?limit=10', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        if (!data.supervisors.length) {
+            resultsDiv.innerHTML = '<div class="text-center text-gray-400">Не найдено подходящих руководителей</div>';
+            return;
+        }
+        let html = '<h3 class="font-bold text-lg mb-3">🎯 Рекомендуемые руководители:</h3>';
+        for (let sup of data.supervisors) {
+            html += `
+                <div class="bg-[#1f1219] p-4 rounded-xl mb-3 border border-[#5c2e3c]">
+                    <div class="flex flex-wrap gap-4">
+                        <img src="${sup.avatar_url || 'https://via.placeholder.com/60'}" class="w-16 h-16 rounded-full object-cover">
+                        <div class="flex-1">
+                            <div class="font-bold text-lg">${escapeHtml(sup.name)}</div>
+                            <div class="text-sm text-gray-300">${sup.position || ''} • ${sup.department || ''}</div>
+                            <div class="text-sm text-gray-400">${sup.university || ''}</div>
+                            <div class="text-xs text-gray-500 mt-1">Направления: ${sup.research_areas?.slice(0,3).join(', ') || '—'}</div>
+                            <div class="mt-2 flex gap-2">
+                                <span class="bg-blue-900 px-2 py-1 rounded text-xs">Совпадение: ${sup.matching_score}%</span>
+                                <button onclick="saveSupervisor(${sup.supervisor_id})" class="bg-green-800 px-3 py-1 rounded text-xs">⭐ В избранное</button>
+                                <button onclick="requestSupervisor(${sup.supervisor_id})" class="bg-purple-800 px-3 py-1 rounded text-xs">📩 Отправить запрос</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        resultsDiv.innerHTML = html;
+        loadFavoriteSupervisors();
+    } catch (err) {
+        resultsDiv.innerHTML = `<div class="text-red-400 text-center">Ошибка: ${err.message}</div>`;
+    }
+}
+
+async function saveSupervisor(supervisorId, message = null) {
+    const token = localStorage.getItem('authToken');
+    const body = message ? JSON.stringify({ request_message: message }) : JSON.stringify({});
+    const response = await fetch(`/api/supervisor/${supervisorId}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: body
+    });
+    if (response.ok) {
+        alert('Руководитель добавлен в избранное');
+        loadFavoriteSupervisors();
+    } else {
+        const err = await response.text();
+        alert('Ошибка: ' + err);
+    }
+}
+
+async function requestSupervisor(supervisorId) {
+    const message = prompt('Напишите краткое сообщение для руководителя (ваши интересы, почему хотите работать):');
+    if (!message) return;
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`/api/supervisor/${supervisorId}/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ message })
+    });
+    if (response.ok) {
+        alert('Запрос отправлен');
+        loadFavoriteSupervisors();
+    } else {
+        const err = await response.text();
+        alert('Ошибка: ' + err);
+    }
+}
+
+async function loadFavoriteSupervisors() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    const response = await fetch('/api/supervisor/favorites', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) return;
+    const favorites = await response.json();
+    const container = document.getElementById('favoriteSupervisorsList');
+    if (!favorites.length) {
+        container.innerHTML = '<div class="text-gray-400 text-center py-4">Нет избранных руководителей</div>';
+        return;
+    }
+    container.innerHTML = favorites.map(f => `
+        <div class="bg-[#1a0e12] p-3 rounded-lg text-sm flex justify-between items-center flex-wrap gap-2">
+            <div>
+                <div class="font-bold">${escapeHtml(f.name)}</div>
+                <div class="text-xs text-gray-400">${f.position || ''} • Совпадение: ${f.matching_score}%</div>
+                <div class="text-xs text-gray-500">Статус: ${f.status === 'pending' ? 'Запрос отправлен' : (f.status === 'accepted' ? 'Принят' : 'В избранном')}</div>
+            </div>
+            <button onclick="sendMessageToSupervisor(${f.supervisor_id})" class="bg-[#2c1a20] px-2 py-1 rounded text-xs">💬 Написать</button>
+        </div>
+    `).join('');
+}
+
+// Привязываем кнопку
+document.getElementById('findSupervisorBtn')?.addEventListener('click', findSupervisors);
+
+async function matchVacancies() {
+    const token = localStorage.getItem('authToken');
+    const resultDiv = document.getElementById('vacanciesResult');
+    resultDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin"></i> Поиск подходящих вакансий...</div>';
+    try {
+        const response = await fetch('/api/vacancies/match?limit=20', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!data.vacancies.length) {
+            resultDiv.innerHTML = '<div class="text-center text-gray-400">Нет подходящих вакансий</div>';
+            return;
+        }
+        let html = '<h3 class="font-bold text-lg mb-3">🎯 Рекомендуемые вакансии:</h3>';
+        for (let v of data.vacancies) {
+            html += `
+                <div class="bg-[#1f1219] p-4 rounded-xl mb-3">
+                    <div class="font-bold text-lg">${escapeHtml(v.title)}</div>
+                    <div class="text-sm text-gray-300">${escapeHtml(v.company_name)} • ${v.location || 'удалённо'}</div>
+                    <div class="text-xs text-gray-400 mt-1">Зарплата: ${v.salary_min || '—'} - ${v.salary_max || '—'}</div>
+                    <div class="text-sm mt-2">${escapeHtml(v.description)}</div>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <span class="bg-blue-900 px-2 py-1 rounded text-xs">Совпадение: ${v.matching_score}%</span>
+                        <button onclick="applyToVacancy(${v.vacancy_id})" class="bg-green-800 px-3 py-1 rounded text-xs">📩 Откликнуться</button>
+                    </div>
+                </div>
+            `;
+        }
+        resultDiv.innerHTML = html;
+    } catch(err) {
+        resultDiv.innerHTML = `<div class="text-red-400">Ошибка: ${err.message}</div>`;
+    }
+}
+
+async function applyToVacancy(vacancyId) {
+    const cover = prompt('Напишите сопроводительное письмо (необязательно):');
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`/api/vacancies/${vacancyId}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ cover_letter: cover })
+    });
+    if (response.ok) alert('Отклик отправлен!');
+    else alert('Ошибка');
+}
+
 // Добавим в глобальную область функции для модального окна
 window.manageRoles = manageRoles;
 window.assignRole = assignRole;

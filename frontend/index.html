@@ -349,6 +349,81 @@
                 </div>
             </div>
         </div>
+
+        <!-- Генератор гипотез -->
+        <div id="hypothesis-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">💡 Генератор исследовательских гипотез</h2>
+                <p class="mb-4 text-gray-300">На основе вашего профиля (образование, навыки, успеваемость) ИИ предложит персонализированные гипотезы для начала научной работы.</p>
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <input type="text" id="hypothesisDomain" placeholder="Область (необязательно, например: машинное обучение, биология)" class="modern-input flex-1">
+                    <button id="generateHypothesisBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full whitespace-nowrap"><i class="fas fa-lightbulb mr-2"></i> Сгенерировать</button>
+                </div>
+                <div id="hypothesesList" class="space-y-4"></div>
+                <div class="mt-8">
+                    <h3 class="font-bold text-lg mb-3">📜 История гипотез</h3>
+                    <div id="historyHypothesesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ПОИСК НАУЧНОГО РУКОВОДИТЕЛЯ -->
+        <div id="supervisor-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">🎓 Поиск научного руководителя</h2>
+                <p class="mb-4">ИИ проанализирует ваш профиль и подберёт наиболее подходящих научных руководителей.</p>
+                <div class="flex justify-center mb-6">
+                    <button id="findSupervisorBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full"><i class="fas fa-search mr-2"></i> Найти подходящих руководителей</button>
+                </div>
+                <div id="supervisorResults" class="space-y-4"></div>
+                <div class="mt-8">
+                    <h3 class="font-bold text-lg mb-3">⭐ Избранные руководители</h3>
+                    <div id="favoriteSupervisorsList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- НОВАЯ ВКЛАДКА: СТАЖИРОВКИ И ВАКАНСИИ -->
+        <div id="internship-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">💼 Стажировки и вакансии</h2>
+                
+                <!-- Вкладки внутри панели -->
+                <div class="flex gap-2 mb-6 border-b border-[#5c2e3c] pb-2">
+                    <button id="internshipFindVacanciesTab" class="px-4 py-2 rounded-t-lg bg-[#bc3f4b] text-white">🔍 Найти вакансии</button>
+                    <button id="internshipMyApplicationsTab" class="px-4 py-2 rounded-t-lg bg-black/40 text-gray-300">📋 Мои отклики</button>
+                    <button id="internshipEmployerTab" class="px-4 py-2 rounded-t-lg bg-black/40 text-gray-300 hidden employer-only">🏢 Для работодателей</button>
+                </div>
+
+                <!-- Поиск вакансий -->
+                <div id="internshipFindVacancies" class="internship-tab-content">
+                    <p class="mb-4 text-gray-300">ИИ проанализирует ваш профиль и подберёт наиболее подходящие стажировки и вакансии.</p>
+                    <div class="flex justify-center mb-6">
+                        <button id="findVacanciesBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full"><i class="fas fa-search mr-2"></i> Найти подходящие вакансии</button>
+                    </div>
+                    <div id="vacanciesResult" class="space-y-4"></div>
+                </div>
+
+                <!-- Мои отклики -->
+                <div id="internshipMyApplications" class="internship-tab-content hidden">
+                    <h3 class="font-bold text-lg mb-3">📋 Мои отклики</h3>
+                    <div id="myApplicationsList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                </div>
+
+                <!-- Для работодателей -->
+                <div id="internshipEmployer" class="internship-tab-content hidden">
+                    <div class="mb-6">
+                        <h3 class="font-bold text-lg mb-3">🏢 Мои компании</h3>
+                        <button id="createCompanyBtn" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-2 rounded-full text-sm mb-3">➕ Создать компанию</button>
+                        <div id="myCompaniesList" class="space-y-2 max-h-48 overflow-y-auto mb-4"></div>
+                        
+                        <h3 class="font-bold text-lg mb-3">📌 Мои вакансии</h3>
+                        <button id="createVacancyBtn" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-2 rounded-full text-sm mb-3">➕ Создать вакансию</button>
+                        <div id="myVacanciesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Блок для неавторизованных -->
@@ -368,30 +443,590 @@
 <!-- Основной скрипт (весь функционал вынесен сюда) -->
 <script src="/static/script.js"></script>
 
-<!-- Только инициализация после загрузки страницы -->
+<!-- Дополнительные функции -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Вызываем обновление интерфейса (авторизация, роли, вкладки)
-        if (typeof updateUIAfterAuth === 'function') {
-            updateUIAfterAuth();
+    // ========== ГИПОТЕЗЫ ==========
+    async function generateHypotheses() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert('Пожалуйста, войдите в систему');
+            return;
+        }
+        const domain = document.getElementById('hypothesisDomain')?.value || '';
+        const resultDiv = document.getElementById('hypothesesList');
+        if (!resultDiv) return;
+        resultDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin mr-2"></i> Генерация гипотез на основе вашего профиля...</div>';
+        try {
+            const response = await fetch(`/api/hypothesis/generate?domain=${encodeURIComponent(domain)}&num_hypotheses=3`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const data = await response.json();
+            let html = '<h3 class="font-bold text-lg mb-3">✨ Сгенерированные гипотезы:</h3>';
+            for (let h of data.hypotheses) {
+                html += `
+                    <div class="bg-[#1f1219] p-4 rounded-xl mb-3 border border-[#5c2e3c]">
+                        <div class="flex flex-wrap justify-between items-start gap-2">
+                            <div class="flex-1">
+                                <p class="text-white text-base">${escapeHtml(h.text)}</p>
+                                <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-400">
+                                    <span><i class="fas fa-chart-line mr-1"></i> Уверенность: ${(h.confidence_score * 100).toFixed(0)}%</span>
+                                    <span><i class="fas fa-user-check mr-1"></i> Релевантность: ${(h.relevance_score * 100).toFixed(0)}%</span>
+                                    <span><i class="far fa-calendar-alt mr-1"></i> ${new Date(h.created_at).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 mt-2 sm:mt-0">
+                                <button onclick="rateHypothesis(${h.id}, 5)" class="bg-green-800 hover:bg-green-700 px-3 py-1 rounded text-xs"><i class="fas fa-thumbs-up mr-1"></i> Полезна</button>
+                                <button onclick="rateHypothesis(${h.id}, 1)" class="bg-red-800 hover:bg-red-700 px-3 py-1 rounded text-xs"><i class="fas fa-thumbs-down mr-1"></i> Не полезна</button>
+                                <button onclick="acceptHypothesis(${h.id})" class="bg-blue-800 hover:bg-blue-700 px-3 py-1 rounded text-xs"><i class="fas fa-check-circle mr-1"></i> В работу</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            resultDiv.innerHTML = html;
+            loadHypothesisHistory();
+        } catch (err) {
+            resultDiv.innerHTML = `<div class="text-red-400 text-center p-4">Ошибка: ${err.message}</div>`;
+        }
+    }
+
+    async function rateHypothesis(hypId, rating) {
+        const token = localStorage.getItem('authToken');
+        try {
+            const response = await fetch(`/api/hypothesis/${hypId}/rate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ rating, accept: false })
+            });
+            if (response.ok) {
+                alert('Спасибо за оценку!');
+                loadHypothesisHistory();
+            } else {
+                const err = await response.text();
+                alert('Ошибка: ' + err);
+            }
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
+        }
+    }
+
+    async function acceptHypothesis(hypId) {
+        const token = localStorage.getItem('authToken');
+        try {
+            const response = await fetch(`/api/hypothesis/${hypId}/accept`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                alert('Гипотеза принята! Желаем успехов в исследовании.');
+                loadHypothesisHistory();
+                const genBtn = document.getElementById('generateHypothesisBtn');
+                if (genBtn) genBtn.click();
+            } else {
+                const err = await response.text();
+                alert('Ошибка: ' + err);
+            }
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
+        }
+    }
+
+    async function loadHypothesisHistory() {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+        try {
+            const response = await fetch('/api/hypothesis/list?limit=20', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return;
+            const hypotheses = await response.json();
+            const container = document.getElementById('historyHypothesesList');
+            if (!container) return;
+            if (!hypotheses.length) {
+                container.innerHTML = '<div class="text-gray-400 text-center py-4">Нет сохранённых гипотез</div>';
+                return;
+            }
+            container.innerHTML = hypotheses.map(h => `
+                <div class="bg-[#1a0e12] p-3 rounded-lg text-sm border border-[#3f232c]">
+                    <div class="flex justify-between items-start gap-2 flex-wrap">
+                        <div class="flex-1">
+                            <div class="line-clamp-2">${escapeHtml(h.text.substring(0, 150))}${h.text.length > 150 ? '…' : ''}</div>
+                            <div class="flex justify-between mt-1 text-xs text-gray-500">
+                                <span>Оценка: ${h.user_rating ? '★'.repeat(h.user_rating) + '☆'.repeat(5-h.user_rating) : 'не оценено'}</span>
+                                <span>${h.is_accepted ? '<span class="text-green-400">✅ Принята</span>' : '<span class="text-gray-500">📌 Не принята</span>'}</span>
+                                <span>${new Date(h.created_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <button onclick="viewHypothesisDetails(${h.id})" class="text-[#c45466] text-xs hover:underline">Подробнее</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            console.error('Failed to load hypothesis history', err);
+        }
+    }
+
+    async function viewHypothesisDetails(hypId) {
+        const token = localStorage.getItem('authToken');
+        try {
+            const response = await fetch(`/api/hypothesis/list?limit=100`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const list = await response.json();
+            const hyp = list.find(h => h.id === hypId);
+            if (hyp) {
+                alert(`Гипотеза:\n\n${hyp.text}\n\nОбласть: ${hyp.domain || 'не указана'}\nУверенность: ${(hyp.confidence_score * 100).toFixed(0)}%\nРелевантность: ${(hyp.relevance_score * 100).toFixed(0)}%\nСоздана: ${new Date(hyp.created_at).toLocaleString()}`);
+            } else {
+                alert('Гипотеза не найдена');
+            }
+        } catch (err) {
+            alert('Ошибка загрузки деталей');
+        }
+    }
+
+    // ========== ПОИСК НАУЧНОГО РУКОВОДИТЕЛЯ ==========
+    async function findSupervisors() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert('Пожалуйста, войдите');
+            return;
+        }
+        const resultsDiv = document.getElementById('supervisorResults');
+        resultsDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin mr-2"></i> Поиск подходящих руководителей...</div>';
+        try {
+            const response = await fetch('/api/supervisor/match?limit=10', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const data = await response.json();
+            if (!data.supervisors.length) {
+                resultsDiv.innerHTML = '<div class="text-center text-gray-400">Не найдено подходящих руководителей</div>';
+                return;
+            }
+            let html = '<h3 class="font-bold text-lg mb-3">🎯 Рекомендуемые руководители:</h3>';
+            for (let sup of data.supervisors) {
+                html += `
+                    <div class="bg-[#1f1219] p-4 rounded-xl mb-3 border border-[#5c2e3c]">
+                        <div class="flex flex-wrap gap-4">
+                            <img src="${sup.avatar_url || 'https://via.placeholder.com/60'}" class="w-16 h-16 rounded-full object-cover">
+                            <div class="flex-1">
+                                <div class="font-bold text-lg">${escapeHtml(sup.name)}</div>
+                                <div class="text-sm text-gray-300">${sup.position || ''} • ${sup.department || ''}</div>
+                                <div class="text-sm text-gray-400">${sup.university || ''}</div>
+                                <div class="text-xs text-gray-500 mt-1">Направления: ${sup.research_areas?.slice(0,3).join(', ') || '—'}</div>
+                                <div class="mt-2 flex gap-2">
+                                    <span class="bg-blue-900 px-2 py-1 rounded text-xs">Совпадение: ${sup.matching_score}%</span>
+                                    <button onclick="saveSupervisor(${sup.supervisor_id})" class="bg-green-800 px-3 py-1 rounded text-xs">⭐ В избранное</button>
+                                    <button onclick="requestSupervisor(${sup.supervisor_id})" class="bg-purple-800 px-3 py-1 rounded text-xs">📩 Отправить запрос</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            resultsDiv.innerHTML = html;
+            loadFavoriteSupervisors();
+        } catch (err) {
+            resultsDiv.innerHTML = `<div class="text-red-400 text-center">Ошибка: ${err.message}</div>`;
+        }
+    }
+
+    async function saveSupervisor(supervisorId) {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`/api/supervisor/${supervisorId}/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({})
+        });
+        if (response.ok) {
+            alert('Руководитель добавлен в избранное');
+            loadFavoriteSupervisors();
         } else {
-            console.warn("updateUIAfterAuth not loaded yet — waiting for script.js");
-            // Можно подождать, но script.js уже загружен синхронно, поэтому функция должна быть доступна
+            const err = await response.text();
+            alert('Ошибка: ' + err);
         }
-        // Дополнительная инициализация обработчиков для кнопок, которые могут быть не привязаны в script.js
-        const startLearningBtn = document.getElementById('startLearningBtn');
-        if (startLearningBtn) {
-            startLearningBtn.addEventListener('click', function(e) { 
-                if (typeof startLearningMode === 'function') startLearningMode();
+    }
+
+    async function requestSupervisor(supervisorId) {
+        const message = prompt('Напишите краткое сообщение для руководителя (ваши интересы, почему хотите работать):');
+        if (!message) return;
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`/api/supervisor/${supervisorId}/request`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ message })
+        });
+        if (response.ok) {
+            alert('Запрос отправлен');
+            loadFavoriteSupervisors();
+        } else {
+            const err = await response.text();
+            alert('Ошибка: ' + err);
+        }
+    }
+
+    async function loadFavoriteSupervisors() {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+        const response = await fetch('/api/supervisor/favorites', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) return;
+        const favorites = await response.json();
+        const container = document.getElementById('favoriteSupervisorsList');
+        if (!favorites.length) {
+            container.innerHTML = '<div class="text-gray-400 text-center py-4">Нет избранных руководителей</div>';
+            return;
+        }
+        container.innerHTML = favorites.map(f => `
+            <div class="bg-[#1a0e12] p-3 rounded-lg text-sm flex justify-between items-center flex-wrap gap-2">
+                <div>
+                    <div class="font-bold">${escapeHtml(f.name)}</div>
+                    <div class="text-xs text-gray-400">${f.position || ''} • Совпадение: ${f.matching_score}%</div>
+                    <div class="text-xs text-gray-500">Статус: ${f.status === 'pending' ? 'Запрос отправлен' : (f.status === 'accepted' ? 'Принят' : 'В избранном')}</div>
+                </div>
+                <button onclick="sendMessageToSupervisor(${f.supervisor_id})" class="bg-[#2c1a20] px-2 py-1 rounded text-xs">💬 Написать</button>
+            </div>
+        `).join('');
+    }
+
+    async function sendMessageToSupervisor(supervisorId) {
+        alert('Функция отправки сообщений будет доступна в ближайшее время.');
+    }
+
+    // ========== СТАЖИРОВКИ И ВАКАНСИИ ==========
+    let currentInternshipTab = 'find';
+
+    function switchInternshipTab(tab) {
+        currentInternshipTab = tab;
+        document.getElementById('internshipFindVacancies').classList.add('hidden');
+        document.getElementById('internshipMyApplications').classList.add('hidden');
+        document.getElementById('internshipEmployer').classList.add('hidden');
+        
+        document.getElementById('internshipFindVacanciesTab').classList.remove('bg-[#bc3f4b]', 'text-white');
+        document.getElementById('internshipFindVacanciesTab').classList.add('bg-black/40', 'text-gray-300');
+        document.getElementById('internshipMyApplicationsTab').classList.remove('bg-[#bc3f4b]', 'text-white');
+        document.getElementById('internshipMyApplicationsTab').classList.add('bg-black/40', 'text-gray-300');
+        document.getElementById('internshipEmployerTab').classList.remove('bg-[#bc3f4b]', 'text-white');
+        document.getElementById('internshipEmployerTab').classList.add('bg-black/40', 'text-gray-300');
+        
+        if (tab === 'find') {
+            document.getElementById('internshipFindVacancies').classList.remove('hidden');
+            document.getElementById('internshipFindVacanciesTab').classList.remove('bg-black/40', 'text-gray-300');
+            document.getElementById('internshipFindVacanciesTab').classList.add('bg-[#bc3f4b]', 'text-white');
+        } else if (tab === 'applications') {
+            document.getElementById('internshipMyApplications').classList.remove('hidden');
+            document.getElementById('internshipMyApplicationsTab').classList.remove('bg-black/40', 'text-gray-300');
+            document.getElementById('internshipMyApplicationsTab').classList.add('bg-[#bc3f4b]', 'text-white');
+            loadMyApplications();
+        } else if (tab === 'employer') {
+            document.getElementById('internshipEmployer').classList.remove('hidden');
+            document.getElementById('internshipEmployerTab').classList.remove('bg-black/40', 'text-gray-300');
+            document.getElementById('internshipEmployerTab').classList.add('bg-[#bc3f4b]', 'text-white');
+            loadMyCompanies();
+            loadMyVacancies();
+        }
+    }
+
+    async function findVacancies() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert('Пожалуйста, войдите');
+            return;
+        }
+        const resultsDiv = document.getElementById('vacanciesResult');
+        resultsDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin mr-2"></i> Поиск подходящих вакансий...</div>';
+        try {
+            const response = await fetch('/api/vacancies/match?limit=20&min_score=30', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (!response.ok) throw new Error(await response.text());
+            const data = await response.json();
+            if (!data.vacancies || !data.vacancies.length) {
+                resultsDiv.innerHTML = '<div class="text-center text-gray-400">Не найдено подходящих вакансий</div>';
+                return;
+            }
+            let html = '<h3 class="font-bold text-lg mb-3">🎯 Рекомендуемые вакансии:</h3>';
+            for (let v of data.vacancies) {
+                html += `
+                    <div class="bg-[#1f1219] p-4 rounded-xl mb-3 border border-[#5c2e3c]">
+                        <div class="flex flex-wrap justify-between items-start gap-2">
+                            <div class="flex-1">
+                                <div class="font-bold text-lg">${escapeHtml(v.title)}</div>
+                                <div class="text-sm text-gray-300">${escapeHtml(v.company_name)} • ${v.location || 'удалённо'}</div>
+                                <div class="text-xs text-gray-400 mt-1">Зарплата: ${v.salary_min || '—'} - ${v.salary_max || '—'} • ${v.employment_type === 'full' ? 'Полная' : (v.employment_type === 'part' ? 'Частичная' : 'Стажировка')}</div>
+                                <div class="text-sm mt-2 line-clamp-2">${escapeHtml(v.description)}</div>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    ${v.skills ? v.skills.map(s => `<span class="bg-[#2c1a20] px-2 py-1 rounded text-xs">${escapeHtml(s)}</span>`).join('') : ''}
+                                    <span class="bg-blue-900 px-2 py-1 rounded text-xs">Совпадение: ${v.matching_score}%</span>
+                                </div>
+                            </div>
+                            <button onclick="applyToVacancy(${v.vacancy_id})" class="bg-green-800 hover:bg-green-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">📩 Откликнуться</button>
+                        </div>
+                    </div>
+                `;
+            }
+            resultsDiv.innerHTML = html;
+        } catch (err) {
+            resultsDiv.innerHTML = `<div class="text-red-400 text-center">Ошибка: ${err.message}</div>`;
         }
-        const showTestCreatorBtn = document.getElementById('showTestCreatorBtn');
-        if (showTestCreatorBtn) {
-            showTestCreatorBtn.addEventListener('click', function(e) {
-                if (typeof showTestCreator === 'function') showTestCreator();
-                else alert('Сначала зарегистрируйтесь');
+    }
+
+    async function applyToVacancy(vacancyId) {
+        const coverLetter = prompt('Напишите сопроводительное письмо (необязательно):');
+        const token = localStorage.getItem('authToken');
+        try {
+            const response = await fetch(`/api/vacancies/${vacancyId}/apply`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ cover_letter: coverLetter })
             });
+            if (response.ok) {
+                alert('Отклик отправлен!');
+                loadMyApplications();
+            } else {
+                const err = await response.text();
+                alert('Ошибка: ' + err);
+            }
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
         }
+    }
+
+    async function loadMyApplications() {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+        const response = await fetch('/api/user/applications', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) return;
+        const apps = await response.json();
+        const container = document.getElementById('myApplicationsList');
+        if (!apps.length) {
+            container.innerHTML = '<div class="text-gray-400 text-center py-4">У вас пока нет откликов</div>';
+            return;
+        }
+        container.innerHTML = apps.map(a => `
+            <div class="bg-[#1a0e12] p-3 rounded-lg text-sm border border-[#3f232c]">
+                <div class="font-bold">${escapeHtml(a.title)}</div>
+                <div class="text-xs text-gray-400">${escapeHtml(a.company_name)}</div>
+                <div class="flex justify-between mt-1 text-xs">
+                    <span class="bg-blue-900 px-2 py-0.5 rounded">Совпадение: ${a.matching_score}%</span>
+                    <span>${a.status === 'applied' ? '📨 Отправлено' : (a.status === 'viewed' ? '👁️ Просмотрено' : (a.status === 'rejected' ? '❌ Отказ' : '✅ Принят'))}</span>
+                    <span>${new Date(a.applied_at).toLocaleDateString()}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function createCompany() {
+        const name = prompt('Название компании:');
+        if (!name) return;
+        const description = prompt('Описание компании:');
+        const industry = prompt('Отрасль (IT, финансы, образование и т.д.):');
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`/api/company?name=${encodeURIComponent(name)}&description=${encodeURIComponent(description || '')}&industry=${encodeURIComponent(industry || '')}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            alert('Компания создана');
+            loadMyCompanies();
+        } else {
+            const err = await response.text();
+            alert('Ошибка: ' + err);
+        }
+    }
+
+    async function createVacancy() {
+        const companyId = prompt('ID компании (из списка выше):');
+        if (!companyId) return;
+        const title = prompt('Название вакансии:');
+        if (!title) return;
+        const description = prompt('Описание вакансии:');
+        const skills = prompt('Необходимые навыки (через запятую):');
+        const salaryMin = prompt('Мин. зарплата:');
+        const salaryMax = prompt('Макс. зарплата:');
+        const location = prompt('Локация (город / удалённо):');
+        const employmentType = prompt('Тип занятости (full/part/internship):', 'full');
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`/api/company/${companyId}/vacancy?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&skills=${encodeURIComponent(JSON.stringify(skills.split(',').map(s => s.trim())))}&salary_min=${salaryMin || ''}&salary_max=${salaryMax || ''}&location=${encodeURIComponent(location || '')}&employment_type=${employmentType}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            alert('Вакансия создана');
+            loadMyVacancies();
+        } else {
+            const err = await response.text();
+            alert('Ошибка: ' + err);
+        }
+    }
+
+    async function loadMyCompanies() {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch('/api/company/my', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) return;
+        const companies = await response.json();
+        const container = document.getElementById('myCompaniesList');
+        if (!companies.length) {
+            container.innerHTML = '<div class="text-gray-400 text-center py-2">Нет созданных компаний</div>';
+            return;
+        }
+        container.innerHTML = companies.map(c => `
+            <div class="bg-[#1a0e12] p-2 rounded-lg text-sm">
+                <div class="font-bold">${escapeHtml(c.name)} (ID: ${c.id})</div>
+                <div class="text-xs text-gray-400">${c.industry || ''}</div>
+            </div>
+        `).join('');
+    }
+
+    async function loadMyVacancies() {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch('/api/vacancies/my', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) return;
+        const vacancies = await response.json();
+        const container = document.getElementById('myVacanciesList');
+        if (!vacancies.length) {
+            container.innerHTML = '<div class="text-gray-400 text-center py-2">Нет созданных вакансий</div>';
+            return;
+        }
+        container.innerHTML = vacancies.map(v => `
+            <div class="bg-[#1a0e12} p-3 rounded-lg text-sm border border-[#3f232c]">
+                <div class="font-bold">${escapeHtml(v.title)}</div>
+                <div class="text-xs text-gray-400">${escapeHtml(v.company_name)} • ${v.location || 'удалённо'}</div>
+                <div class="flex justify-between mt-1 text-xs">
+                    <span>Откликов: ${v.applications_count}</span>
+                    <span class="${v.is_active ? 'text-green-400' : 'text-red-400'}">${v.is_active ? 'Активна' : 'Закрыта'}</span>
+                    <span>${new Date(v.posted_at).toLocaleDateString()}</span>
+                </div>
+                <button onclick="findCandidatesForVacancy(${v.id})" class="mt-2 bg-[#2c1a20] px-2 py-1 rounded text-xs">🔍 Найти кандидатов</button>
+            </div>
+        `).join('');
+    }
+
+    async function findCandidatesForVacancy(vacancyId) {
+        const token = localStorage.getItem('authToken');
+        const resultsDiv = document.getElementById('vacanciesResult');
+        resultsDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin mr-2"></i> Поиск кандидатов...</div>';
+        try {
+            const response = await fetch(`/api/vacancies/${vacancyId}/candidates?limit=20&min_score=30`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const data = await response.json();
+            if (!data.candidates || !data.candidates.length) {
+                resultsDiv.innerHTML = '<div class="text-center text-gray-400">Не найдено подходящих кандидатов</div>';
+                return;
+            }
+            let html = '<h3 class="font-bold text-lg mb-3">🎯 Подходящие кандидаты:</h3>';
+            for (let c of data.candidates) {
+                html += `
+                    <div class="bg-[#1f1219} p-4 rounded-xl mb-3 border border-[#5c2e3c]">
+                        <div class="font-bold text-lg">${escapeHtml(c.name)}</div>
+                        <div class="text-sm text-gray-300">${c.education || ''}</div>
+                        <div class="text-xs text-gray-400 mt-1">Навыки: ${c.skills || ''}</div>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <span class="bg-blue-900 px-2 py-1 rounded text-xs">Совпадение: ${c.matching_score}%</span>
+                            <button onclick="contactCandidate(${c.user_id})" class="bg-green-800 px-3 py-1 rounded text-xs">💬 Связаться</button>
+                        </div>
+                    </div>
+                `;
+            }
+            resultsDiv.innerHTML = html;
+            switchInternshipTab('find');
+        } catch (err) {
+            resultsDiv.innerHTML = `<div class="text-red-400 text-center">Ошибка: ${err.message}</div>`;
+        }
+    }
+
+    async function contactCandidate(userId) {
+        alert(`Функция связи с кандидатом (ID: ${userId}) будет доступна в ближайшее время.`);
+    }
+
+    // Привязываем обработчики после загрузки DOM
+    document.addEventListener('DOMContentLoaded', function() {
+        // Гипотезы
+        const genBtn = document.getElementById('generateHypothesisBtn');
+        if (genBtn) genBtn.addEventListener('click', generateHypotheses);
+        
+        // Руководители
+        const findBtn = document.getElementById('findSupervisorBtn');
+        if (findBtn) findBtn.addEventListener('click', findSupervisors);
+        
+        // Стажировки
+        const findVacBtn = document.getElementById('findVacanciesBtn');
+        if (findVacBtn) findVacBtn.addEventListener('click', findVacancies);
+        
+        const findVacanciesTab = document.getElementById('internshipFindVacanciesTab');
+        if (findVacanciesTab) findVacanciesTab.addEventListener('click', () => switchInternshipTab('find'));
+        
+        const myApplicationsTab = document.getElementById('internshipMyApplicationsTab');
+        if (myApplicationsTab) myApplicationsTab.addEventListener('click', () => switchInternshipTab('applications'));
+        
+        const employerTab = document.getElementById('internshipEmployerTab');
+        if (employerTab) employerTab.addEventListener('click', () => switchInternshipTab('employer'));
+        
+        const createCompanyBtn = document.getElementById('createCompanyBtn');
+        if (createCompanyBtn) createCompanyBtn.addEventListener('click', createCompany);
+        
+        const createVacancyBtn = document.getElementById('createVacancyBtn');
+        if (createVacancyBtn) createVacancyBtn.addEventListener('click', createVacancy);
+        
+        // Показываем вкладку работодателя только если у пользователя есть роль employer
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            fetch('/api/auth/profile', { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res => res.json())
+                .then(profile => {
+                    if (profile.roles && profile.roles.includes('employer')) {
+                        document.getElementById('internshipEmployerTab').classList.remove('hidden');
+                    }
+                })
+                .catch(() => {});
+        }
+        
+        // Наблюдатель для загрузки данных при показе панелей
+        const observer = new MutationObserver(function(mutations) {
+            const hypothesisPane = document.getElementById('hypothesis-pane');
+            if (hypothesisPane && hypothesisPane.classList.contains('tab-pane') && !hypothesisPane.classList.contains('hidden')) {
+                loadHypothesisHistory();
+            }
+            const supervisorPane = document.getElementById('supervisor-pane');
+            if (supervisorPane && supervisorPane.classList.contains('tab-pane') && !supervisorPane.classList.contains('hidden')) {
+                loadFavoriteSupervisors();
+            }
+            const internshipPane = document.getElementById('internship-pane');
+            if (internshipPane && internshipPane.classList.contains('tab-pane') && !internshipPane.classList.contains('hidden')) {
+                if (currentInternshipTab === 'find') {
+                    // Не грузим автоматически, ждём нажатия кнопки
+                } else if (currentInternshipTab === 'applications') {
+                    loadMyApplications();
+                } else if (currentInternshipTab === 'employer') {
+                    loadMyCompanies();
+                    loadMyVacancies();
+                }
+            }
+        });
+        observer.observe(document.getElementById('tabContent'), { attributes: true, subtree: true, attributeFilter: ['class'] });
+        
+        // Добавляем escapeHtml в глобальную область для встроенных скриптов
+        window.escapeHtml = function(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        };
     });
 </script>
 </body>

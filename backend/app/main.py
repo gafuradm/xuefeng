@@ -16,6 +16,9 @@ from .models import UserDocument
 import shutil
 import json
 
+from .hypothesis_service import HypothesisGenerator
+from .models import Hypothesis
+
 from .plagiarism import check_plagiarism
 from .models import TextReview, PlagiarismCorpus
 from pydantic import BaseModel
@@ -28,6 +31,8 @@ import io
 import base64
 from RestrictedPython import compile_restricted, safe_globals
 from .models import DataAnalysisSession
+from .supervisor_matching import SupervisorMatcher
+from .models import Supervisor, UserSupervisor
 
 from fastapi import FastAPI, Depends, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -156,6 +161,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import smtplib
 from email.mime.text import MIMEText
 import secrets
+
+from .vacancy_matching import VacancyMatcher
+from .models import Company, Vacancy, UserVacancy
 
 # ========== КОРНЕВЫЕ ПУТИ (должны быть в самом начале) ==========
 PROJECT_ROOT = Path(__file__).parent.parent.parent      # папка, где лежат backend, frontend, frontend_hsk
@@ -2811,6 +2819,365 @@ async def get_review_history(
         }
         for r in reviews
     ]
+
+@app.post("/api/hypothesis/generate")
+async def generate_hypotheses(
+    domain: Optional[str] = None,
+    num_hypotheses: int = 3,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Генерирует персонализированные исследовательские гипотезы на основе профиля пользователя"""
+    if not check_module_access(current_user, 'hypothesis_generator'):
+        raise HTTPException(403, "Доступ к модулю 'Генератор гипотез' запрещён")
+    
+    if num_hypotheses < 1 or num_hypotheses > 10:
+        raise HTTPException(400, "num_hypotheses должно быть от 1 до 10")
+    
+    generator = HypothesisGenerator(db, current_user)
+    hypotheses_data = await generator.generate_hypotheses(domain, num_hypotheses)
+    saved_hypotheses = await generator.save_hypotheses(hypotheses_data)
+    
+    return {
+        "hypotheses": [
+            {
+                "id": h.id,
+                "text": h.text,
+                "domain": h.domain,
+                "confidence_score": h.confidence_score,
+                "relevance_score": h.relevance_score,
+                "created_at": h.created_at.isoformat()
+            }
+            for h in saved_hypotheses
+        ]
+    }
+
+@app.get("/api/hypothesis/list")
+async def list_hypotheses(
+    limit: int = 20,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Возвращает список ранее сгенерированных гипотез текущего пользователя"""
+    if not check_module_access(current_user, 'hypothesis_generator'):
+        raise HTTPException(403, "Доступ запрещён")
+    
+    hypotheses = db.query(Hypothesis).filter(
+        Hypothesis.user_id == current_user.id
+    ).order_by(Hypothesis.created_at.desc()).offset(offset).limit(limit).all()
+    
+    return [
+        {
+            "id": h.id,
+            "text": h.text,
+            "domain": h.domain,
+            "confidence_score": h.confidence_score,
+            "relevance_score": h.relevance_score,
+            "user_rating": h.user_rating,
+            "is_accepted": h.is_accepted,
+            "created_at": h.created_at.isoformat()
+        }
+        for h in hypotheses
+    ]
+
+@app.post("/api/hypothesis/{hypothesis_id}/rate")
+async def rate_hypothesis(
+    hypothesis_id: int,
+    rating: int = Body(..., embed=True),  # 1-5
+    accept: bool = Body(False, embed=True),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Оценивает полезность гипотезы (для улучшения рекомендаций)"""
+    if not check_module_access(current_user, 'hypothesis_generator'):
+        raise HTTPException(403, "Доступ запрещён")
+    if rating < 1 or rating > 5:
+        raise HTTPException(400, "Оценка должна быть от 1 до 5")
+    
+    hypothesis = db.query(Hypothesis).filter(
+        Hypothesis.id == hypothesis_id,
+        Hypothesis.user_id == current_user.id
+    ).first()
+    if not hypothesis:
+        raise HTTPException(404, "Гипотеза не найдена")
+    
+    hypothesis.user_rating = rating
+    hypothesis.is_accepted = accept
+    db.commit()
+    
+    return {"message": "Оценка сохранена"}
+
+@app.post("/api/hypothesis/{hypothesis_id}/accept")
+async def accept_hypothesis(
+    hypothesis_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Принимает гипотезу в работу (можно использовать для старта исследования)"""
+    if not check_module_access(current_user, 'hypothesis_generator'):
+        raise HTTPException(403, "Доступ запрещён")
+    
+    hypothesis = db.query(Hypothesis).filter(
+        Hypothesis.id == hypothesis_id,
+        Hypothesis.user_id == current_user.id
+    ).first()
+    if not hypothesis:
+        raise HTTPException(404, "Гипотеза не найдена")
+    
+    hypothesis.is_accepted = True
+    db.commit()
+    
+    # Можно начислить XP за принятие гипотезы
+    from .xp_service import award_hypothesis_generated
+    await award_hypothesis_generated(db, current_user.id, hypothesis.domain or "research")
+    
+    return {"message": "Гипотеза принята в работу"}
+
+@app.post("/api/supervisor/match")
+async def match_supervisors(
+    limit: int = 10,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Находит топ научных руководителей, наиболее подходящих пользователю"""
+    if not check_module_access(current_user, 'supervisor_search'):
+        raise HTTPException(403, "Доступ к модулю 'Поиск научного руководителя' запрещён")
+    
+    matcher = SupervisorMatcher(db, current_user)
+    results = await matcher.match_top_supervisors(limit)
+    return {"supervisors": results}
+
+@app.post("/api/supervisor/{supervisor_id}/save")
+async def save_supervisor(
+    supervisor_id: int,
+    request_message: str = Body(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Сохраняет руководителя в избранное или отправляет запрос на руководство"""
+    if not check_module_access(current_user, 'supervisor_search'):
+        raise HTTPException(403, "Доступ запрещён")
+    
+    supervisor = db.query(Supervisor).filter(Supervisor.id == supervisor_id).first()
+    if not supervisor:
+        raise HTTPException(404, "Руководитель не найден")
+    
+    matcher = SupervisorMatcher(db, current_user)
+    score = await matcher.compute_single_match(supervisor)  # пересчёт для точности
+    status = "favorited" if not request_message else "pending"
+    us = await matcher.save_match(supervisor_id, score, status)
+    
+    if request_message:
+        us.request_message = request_message
+        db.commit()
+    
+    return {"message": "Руководитель сохранён", "matching_score": score}
+
+@app.get("/api/supervisor/favorites")
+async def get_favorite_supervisors(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Возвращает список избранных руководителей пользователя"""
+    if not check_module_access(current_user, 'supervisor_search'):
+        raise HTTPException(403, "Доступ запрещён")
+    
+    favorites = db.query(UserSupervisor).filter(
+        UserSupervisor.user_id == current_user.id,
+        UserSupervisor.status.in_(['favorited', 'pending', 'accepted'])
+    ).order_by(UserSupervisor.matching_score.desc()).all()
+    
+    result = []
+    for fav in favorites:
+        sup = fav.supervisor
+        result.append({
+            "supervisor_id": sup.id,
+            "name": sup.name,
+            "position": sup.position,
+            "department": sup.department,
+            "university": sup.university,
+            "research_areas": sup.research_areas,
+            "avatar_url": sup.avatar_url,
+            "status": fav.status,
+            "matching_score": fav.matching_score,
+            "request_message": fav.request_message,
+            "created_at": fav.created_at.isoformat()
+        })
+    return result
+
+@app.post("/api/supervisor/{supervisor_id}/request")
+async def request_supervision(
+    supervisor_id: int,
+    message: str = Body(..., embed=True),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Отправляет запрос на научное руководство"""
+    if not check_module_access(current_user, 'supervisor_search'):
+        raise HTTPException(403, "Доступ запрещён")
+    
+    supervisor = db.query(Supervisor).filter(Supervisor.id == supervisor_id).first()
+    if not supervisor:
+        raise HTTPException(404, "Руководитель не найден")
+    
+    matcher = SupervisorMatcher(db, current_user)
+    score = await matcher.compute_single_match(supervisor)
+    us = await matcher.save_match(supervisor_id, score, "pending")
+    us.request_message = message
+    db.commit()
+    
+    # Здесь можно отправить уведомление руководителю (email/telegram)
+    return {"message": "Запрос отправлен", "matching_score": score}
+
+# --- Для компаний и работодателей ---
+@app.post("/api/company")
+async def create_company(
+    name: str, description: str = None, industry: str = None,
+    website: str = None, logo_url: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Создание компании (доступно работодателю)"""
+    if not check_module_access(current_user, 'internship_match'):
+        raise HTTPException(403, "Доступ запрещён")
+    # Проверяем, есть ли роль employer
+    if not any(role.name == 'employer' for role in current_user.roles):
+        raise HTTPException(403, "Только работодатели могут создавать компании")
+    company = Company(
+        user_id=current_user.id,
+        name=name, description=description, industry=industry,
+        website=website, logo_url=logo_url
+    )
+    db.add(company)
+    db.commit()
+    db.refresh(company)
+    return company
+
+@app.post("/api/company/{company_id}/vacancy")
+async def create_vacancy(
+    company_id: int,
+    title: str, description: str, requirements: str = None,
+    skills: List[str] = [], experience_years: float = 0.0,
+    salary_min: int = None, salary_max: int = None,
+    location: str = None, employment_type: str = "full",
+    expires_at: datetime = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not check_module_access(current_user, 'internship_match'):
+        raise HTTPException(403, "Доступ запрещён")
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(404, "Компания не найдена")
+    if company.user_id != current_user.id:
+        raise HTTPException(403, "Вы не владелец компании")
+    vacancy = Vacancy(
+        company_id=company_id,
+        title=title, description=description, requirements=requirements,
+        skills=skills, experience_years=experience_years,
+        salary_min=salary_min, salary_max=salary_max,
+        location=location, employment_type=employment_type,
+        expires_at=expires_at
+    )
+    db.add(vacancy)
+    db.commit()
+    db.refresh(vacancy)
+    return vacancy
+
+@app.get("/api/vacancies/my")
+async def get_my_vacancies(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Список вакансий компаний, созданных текущим работодателем"""
+    if not check_module_access(current_user, 'internship_match'):
+        raise HTTPException(403, "Доступ запрещён")
+    companies = db.query(Company).filter(Company.user_id == current_user.id).all()
+    vacancies = []
+    for c in companies:
+        for v in c.vacancies:
+            vacancies.append({
+                "id": v.id, "company_name": c.name, "title": v.title,
+                "location": v.location, "is_active": v.is_active,
+                "posted_at": v.posted_at, "applications_count": len(v.user_vacancies)
+            })
+    return vacancies
+
+# --- Для студентов (поиск вакансий) ---
+@app.post("/api/vacancies/match")
+async def match_vacancies_for_student(
+    limit: int = 20, min_score: int = 30,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not check_module_access(current_user, 'internship_match'):
+        raise HTTPException(403, "Доступ к модулю 'Стажировки' запрещён")
+    # Проверяем, что пользователь имеет роль соискателя (student, job_seeker, master, phd)
+    allowed_roles = ['student', 'job_seeker', 'master', 'phd']
+    if not any(role.name in allowed_roles for role in current_user.roles):
+        raise HTTPException(403, "Доступ только для соискателей")
+    matcher = VacancyMatcher(db, current_user)
+    results = await matcher.match_vacancies_for_student(limit, min_score)
+    return {"vacancies": results}
+
+@app.post("/api/vacancies/{vacancy_id}/apply")
+async def apply_to_vacancy(
+    vacancy_id: int,
+    cover_letter: str = Body(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not check_module_access(current_user, 'internship_match'):
+        raise HTTPException(403, "Доступ запрещён")
+    matcher = VacancyMatcher(db, current_user)
+    try:
+        result = await matcher.apply_to_vacancy(vacancy_id, cover_letter)
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+@app.get("/api/user/applications")
+async def get_my_applications(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Список откликов текущего студента"""
+    if not check_module_access(current_user, 'internship_match'):
+        raise HTTPException(403, "Доступ запрещён")
+    apps = db.query(UserVacancy).filter(UserVacancy.user_id == current_user.id).all()
+    return [
+        {
+            "vacancy_id": a.vacancy_id,
+            "company_name": a.vacancy.company.name,
+            "title": a.vacancy.title,
+            "status": a.status,
+            "matching_score": a.matching_score,
+            "applied_at": a.applied_at
+        }
+        for a in apps
+    ]
+
+# --- Для работодателя: поиск кандидатов по вакансии ---
+@app.post("/api/vacancies/{vacancy_id}/candidates")
+async def find_candidates_for_vacancy(
+    vacancy_id: int,
+    limit: int = 20, min_score: int = 30,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not check_module_access(current_user, 'internship_match'):
+        raise HTTPException(403, "Доступ запрещён")
+    # Проверяем, что пользователь владеет компанией этой вакансии
+    vacancy = db.query(Vacancy).filter(Vacancy.id == vacancy_id).first()
+    if not vacancy:
+        raise HTTPException(404, "Вакансия не найдена")
+    if vacancy.company.user_id != current_user.id:
+        raise HTTPException(403, "Вы не владелец этой вакансии")
+    matcher = VacancyMatcher(db, current_user)  # current_user – работодатель, но для поиска студентов он не используется напрямую
+    # Создаём временного студента? В матчере есть отдельный метод для поиска студентов по вакансии
+    results = await matcher.match_students_for_vacancy(vacancy_id, limit, min_score)
+    return {"candidates": results}
 
 # ========== IELTS МОДУЛЬ ==========
 import whisper
