@@ -11,6 +11,17 @@ from .models import (
     Role, UserAchievement, ApiKey, AdminLog
 )
 
+from .models import (
+    Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
+    UserCourse, CourseModule, CourseLesson, UserLesson,
+    UserInteraction, UserPerformance, CustomTest,
+    School, SchoolMember, LessonVideo, IELTSAttempt,
+    RefreshToken, PasswordReset, UserAction, ChatMessage,
+    Role, UserAchievement, ApiKey, AdminLog,
+    ExamTicket, Task, SyllabusCourse, ScientificArticle,
+    UserLessonProgress, CourseAssignment   # ← добавлено
+)
+
 from .pdf_rag import extract_text_from_pdf, split_text_into_chunks, create_tfidf_index, search_tfidf_index
 from .models import UserDocument
 import shutil
@@ -1056,7 +1067,21 @@ async def generate_course(course_data: UserCourseCreate, user_id: int, current_u
 async def get_user_courses(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not check_module_access(current_user, 'courses_create'):
         raise HTTPException(403, "Доступ к модулю 'Курсы' запрещён")
-    courses = db.query(UserCourse).filter(UserCourse.user_id == user_id).all()
+    # Если запрашивает свои курсы
+    if current_user.id == user_id:
+        # Ученик: курсы, привязанные к его школам (через назначения)
+        student_schools = [m.school_id for m in current_user.school_members]
+        if student_schools:
+            courses = db.query(UserCourse).filter(
+                (UserCourse.user_id == user_id) | (UserCourse.school_id.in_(student_schools))
+            ).all()
+        else:
+            courses = db.query(UserCourse).filter(UserCourse.user_id == user_id).all()
+    else:
+        # Если смотрит другой пользователь (например, учитель – нужно добавить проверку)
+        if not is_government_user(current_user):
+            raise HTTPException(403, "Доступ запрещён")
+        courses = db.query(UserCourse).filter(UserCourse.user_id == user_id).all()
     return courses
 
 @app.get("/api/courses/{course_id}")
@@ -3178,6 +3203,260 @@ async def find_candidates_for_vacancy(
     # Создаём временного студента? В матчере есть отдельный метод для поиска студентов по вакансии
     results = await matcher.match_students_for_vacancy(vacancy_id, limit, min_score)
     return {"candidates": results}
+
+# ========== КОРПОРАТИВНОЕ ОБУЧЕНИЕ (ПРИВЯЗКА КУРСОВ К ШКОЛЕ) ==========
+
+@app.post("/api/schools/{school_id}/courses")
+async def create_school_course(
+    school_id: int,
+    course_data: UserCourseCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Создать курс для школы (доступно владельцу школы или school_teacher/professor)"""
+    # проверка прав
+    school = db.query(School).filter(School.id == school_id).first()
+    if not school:
+        raise HTTPException(404, "Школа не найдена")
+    if school.owner_id != current_user.id and not any(role.name in ['school_teacher', 'professor'] for role in current_user.roles):
+        raise HTTPException(403, "Доступ запрещён")
+    new_course = UserCourse(
+        user_id=current_user.id,
+        name=course_data.name,
+        description=course_data.description,
+        success_criteria=course_data.success_criteria,
+        school_id=school_id,
+        status="published"
+    )
+    db.add(new_course)
+    db.commit()
+    db.refresh(new_course)
+    return new_course
+
+@app.get("/api/schools/{school_id}/courses")
+async def get_school_courses(
+    school_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Получить все курсы школы (доступ участникам школы)"""
+    member = db.query(SchoolMember).filter(SchoolMember.school_id == school_id, SchoolMember.user_id == current_user.id).first()
+    if not member:
+        raise HTTPException(403, "Вы не участник этой школы")
+    courses = db.query(UserCourse).filter(UserCourse.school_id == school_id).all()
+    return courses
+
+@app.post("/api/courses/{course_id}/assign")
+async def assign_course_to_students(
+    course_id: int,
+    student_ids: List[int] = Body(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Назначить курс ученикам (только учитель школы)"""
+    course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
+    if not course or not course.school:
+        raise HTTPException(404, "Курс не привязан к школе")
+    school = course.school
+    if school.owner_id != current_user.id and not any(role.name in ['school_teacher', 'professor'] for role in current_user.roles):
+        raise HTTPException(403, "Только учитель может назначать курсы")
+    assigned = 0
+    for uid in student_ids:
+        existing = db.query(CourseAssignment).filter(CourseAssignment.course_id == course_id, CourseAssignment.user_id == uid).first()
+        if not existing:
+            assign = CourseAssignment(course_id=course_id, user_id=uid, assigned_by=current_user.id, status="pending")
+            db.add(assign)
+            assigned += 1
+    db.commit()
+    return {"message": f"Курс назначен {assigned} ученикам"}
+
+@app.get("/api/courses/{course_id}/progress")
+async def get_course_progress(
+    course_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Просмотр прогресса учеников по курсу (только для учителя)"""
+    course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
+    if not course or not course.school or (course.school.owner_id != current_user.id and not any(role.name in ['school_teacher', 'professor'] for role in current_user.roles)):
+        raise HTTPException(403, "Доступ запрещён")
+    assignments = db.query(CourseAssignment).filter(CourseAssignment.course_id == course_id).all()
+    result = []
+    total_lessons = db.query(CourseLesson).join(CourseModule).filter(CourseModule.course_id == course_id).count()
+    for ass in assignments:
+        completed_lessons = db.query(UserLessonProgress).filter(
+            UserLessonProgress.user_id == ass.user_id,
+            UserLessonProgress.lesson_id.in_(
+                db.query(CourseLesson.id).join(CourseModule).filter(CourseModule.course_id == course_id)
+            ),
+            UserLessonProgress.completed == True
+        ).count()
+        progress = (completed_lessons / total_lessons * 100) if total_lessons else 0
+        result.append({
+            "user_id": ass.user_id,
+            "name": ass.user.name,
+            "status": ass.status,
+            "progress": round(progress, 1),
+            "completed_at": ass.completed_at,
+            "certificate_url": ass.certificate_url
+        })
+    return result
+
+@app.post("/api/courses/{course_id}/certificate/{user_id}")
+async def generate_certificate(
+    course_id: int,
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Сгенерировать PDF-сертификат для ученика (учитель или сам ученик)"""
+    assignment = db.query(CourseAssignment).filter(
+        CourseAssignment.course_id == course_id,
+        CourseAssignment.user_id == user_id,
+        CourseAssignment.status == "completed"
+    ).first()
+    if not assignment:
+        raise HTTPException(404, "Завершённое назначение не найдено")
+    course = assignment.course
+    school = course.school
+    is_teacher = school and (school.owner_id == current_user.id or any(role.name in ['school_teacher', 'professor'] for role in current_user.roles))
+    if not (is_teacher or current_user.id == user_id):
+        raise HTTPException(403, "Доступ запрещён")
+    if assignment.certificate_url:
+        return {"certificate_url": assignment.certificate_url}
+    # Генерация PDF (требуется библиотека reportlab)
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+    from pathlib import Path
+    cert_dir = Path("static/certificates")
+    cert_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"cert_{course_id}_{user_id}.pdf"
+    filepath = cert_dir / filename
+    c = canvas.Canvas(str(filepath), pagesize=A4)
+    width, height = A4
+    c.setFont("Helvetica-Bold", 24)
+    c.drawCentredString(width/2, height-100, "СЕРТИФИКАТ")
+    c.setFont("Helvetica", 16)
+    c.drawCentredString(width/2, height-150, "Настоящим подтверждается, что")
+    c.setFont("Helvetica-Bold", 20)
+    c.drawCentredString(width/2, height-200, assignment.user.name)
+    c.setFont("Helvetica", 16)
+    c.drawCentredString(width/2, height-250, f"успешно завершил(а) курс")
+    c.setFont("Helvetica-Bold", 18)
+    c.drawCentredString(width/2, height-300, course.name)
+    c.setFont("Helvetica", 14)
+    c.drawCentredString(width/2, height-350, f"Дата: {datetime.now().strftime('%d.%m.%Y')}")
+    if school:
+        c.drawCentredString(width/2, height-400, school.name)
+    c.save()
+    assignment.certificate_url = f"/static/certificates/{filename}"
+    db.commit()
+    return {"certificate_url": assignment.certificate_url}
+
+@app.get("/api/schools/{school_id}/export")
+async def export_school_stats(
+    school_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Экспорт статистики школы в Excel (только учитель)"""
+    school = db.query(School).filter(School.id == school_id, School.owner_id == current_user.id).first()
+    if not school:
+        raise HTTPException(403, "Доступ запрещён")
+    import pandas as pd
+    from io import BytesIO
+    from fastapi.responses import StreamingResponse
+    data = []
+    members = db.query(SchoolMember).filter(SchoolMember.school_id == school_id, SchoolMember.role == 'student').all()
+    for member in members:
+        user = member.user
+        row = {"Имя": user.name, "Email": user.email}
+        for course in school.courses:
+            assignment = db.query(CourseAssignment).filter(CourseAssignment.course_id == course.id, CourseAssignment.user_id == user.id).first()
+            row[f"Курс: {course.name}"] = assignment.status if assignment else "Не назначен"
+        data.append(row)
+    df = pd.DataFrame(data)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Статистика школы', index=False)
+    output.seek(0)
+    return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                             headers={"Content-Disposition": f"attachment; filename=school_{school_id}_stats.xlsx"})
+
+@app.get("/api/user/assigned-courses")
+async def get_my_assigned_courses(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    assignments = db.query(CourseAssignment).filter(CourseAssignment.user_id == current_user.id).all()
+    return [
+        {
+            "assignment_id": a.id,
+            "course_id": a.course_id,
+            "name": a.course.name,
+            "description": a.course.description,
+            "status": a.status,
+            "assigned_at": a.assigned_at,
+            "certificate_url": a.certificate_url
+        }
+        for a in assignments
+    ]
+
+@app.post("/api/courses/{course_id}/complete")
+async def complete_course_assignment(
+    course_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    assignment = db.query(CourseAssignment).filter(CourseAssignment.course_id == course_id, CourseAssignment.user_id == current_user.id).first()
+    if not assignment:
+        raise HTTPException(404, "Курс не назначен")
+    if assignment.status == "completed":
+        return {"message": "Курс уже завершён"}
+    # Проверка, что все уроки курса пройдены
+    total_lessons = db.query(CourseLesson).join(CourseModule).filter(CourseModule.course_id == course_id).count()
+    completed_lessons = db.query(UserLessonProgress).filter(
+        UserLessonProgress.user_id == current_user.id,
+        UserLessonProgress.lesson_id.in_(
+            db.query(CourseLesson.id).join(CourseModule).filter(CourseModule.course_id == course_id)
+        ),
+        UserLessonProgress.completed == True
+    ).count()
+    if completed_lessons < total_lessons:
+        raise HTTPException(400, "Не все уроки курса пройдены")
+    assignment.status = "completed"
+    assignment.completed_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Курс отмечен как завершённый"}
+
+@app.post("/api/course-lessons/{lesson_id}/complete")
+async def complete_course_lesson(
+    lesson_id: int,
+    score: float = Body(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    lesson = db.query(CourseLesson).filter(CourseLesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(404, "Урок не найден")
+    # Проверяем, что курс назначен пользователю
+    course_id = lesson.module.course_id
+    assignment = db.query(CourseAssignment).filter(CourseAssignment.course_id == course_id, CourseAssignment.user_id == current_user.id).first()
+    if not assignment:
+        raise HTTPException(403, "Курс не назначен")
+    progress = db.query(UserLessonProgress).filter(
+        UserLessonProgress.user_id == current_user.id,
+        UserLessonProgress.lesson_id == lesson_id
+    ).first()
+    if not progress:
+        progress = UserLessonProgress(user_id=current_user.id, lesson_id=lesson_id)
+        db.add(progress)
+    progress.completed = True
+    progress.completed_at = datetime.utcnow()
+    if score is not None:
+        progress.score = score
+    db.commit()
+    return {"message": "Урок отмечен пройденным"}
 
 # ========== IELTS МОДУЛЬ ==========
 import whisper

@@ -1904,6 +1904,7 @@ async function updateUIAfterAuth() {
 
         // Загрузка вкладок
         await loadUserTabs();
+        await addCorporateButtons();
 
         // Если у пользователя есть роль ученика, попробуем восстановить сессию
         if (currentUserRoles.includes('student') || currentUserRoles.includes('schoolchild') || currentUserRoles.includes('applicant')) {
@@ -2582,6 +2583,236 @@ async function applyToVacancy(vacancyId) {
     });
     if (response.ok) alert('Отклик отправлен!');
     else alert('Ошибка');
+}
+
+// ========== КОРПОРАТИВНОЕ ОБУЧЕНИЕ (ДЛЯ УЧИТЕЛЯ) ==========
+
+async function loadSchoolCourses() {
+    const schoolId = prompt("Введите ID школы:");
+    if (!schoolId) return;
+    const token = localStorage.getItem('authToken');
+    const container = document.getElementById('schoolCoursesList');
+    if (!container) {
+        // Создаём контейнер, если его нет
+        const coursesPane = document.getElementById('courses-pane');
+        if (coursesPane) {
+            const div = document.createElement('div');
+            div.id = 'schoolCoursesList';
+            div.className = 'mt-4 space-y-4';
+            coursesPane.appendChild(div);
+        }
+    }
+    const resultDiv = document.getElementById('schoolCoursesList') || container;
+    resultDiv.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Загрузка курсов...</div>';
+    try {
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}/courses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const courses = await response.json();
+        if (!courses.length) {
+            resultDiv.innerHTML = '<div class="text-center text-gray-400">Нет курсов в этой школе</div>';
+            return;
+        }
+        let html = '<h3 class="font-bold text-lg mb-3">📚 Курсы школы:</h3>';
+        for (let c of courses) {
+            html += `
+                <div class="bg-[#1f1219] p-4 rounded-xl mb-3 border border-[#5c2e3c]">
+                    <div class="font-bold text-lg">${escapeHtml(c.name)}</div>
+                    <p class="text-sm text-gray-300">${escapeHtml(c.description || 'Без описания')}</p>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <button onclick="assignCourseToStudents(${c.id})" class="bg-purple-800 px-3 py-1 rounded text-xs">👥 Назначить ученикам</button>
+                        <button onclick="viewCourseProgress(${c.id})" class="bg-blue-800 px-3 py-1 rounded text-xs">📊 Прогресс учеников</button>
+                        <button onclick="createCourseCertificate(${c.id})" class="bg-green-800 px-3 py-1 rounded text-xs">📜 Сертификат</button>
+                    </div>
+                </div>
+            `;
+        }
+        resultDiv.innerHTML = html;
+    } catch (err) {
+        resultDiv.innerHTML = `<div class="text-red-400">Ошибка: ${err.message}</div>`;
+    }
+}
+
+async function createSchoolCourse() {
+    const schoolId = prompt("Введите ID школы:");
+    if (!schoolId) return;
+    const name = prompt("Название курса:");
+    if (!name) return;
+    const description = prompt("Описание курса:");
+    const token = localStorage.getItem('authToken');
+    try {
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}/courses`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ name, description, success_criteria: "" })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const course = await response.json();
+        alert(`Курс "${course.name}" создан!`);
+        loadSchoolCourses();
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
+}
+
+async function assignCourseToStudents(courseId) {
+    const studentIdsInput = prompt("Введите ID учеников через запятую (например: 5,7,12):");
+    if (!studentIdsInput) return;
+    const studentIds = studentIdsInput.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+    if (!studentIds.length) return;
+    const token = localStorage.getItem('authToken');
+    try {
+        const response = await fetch(`${API_URL}/api/courses/${courseId}/assign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(studentIds)
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        alert(data.message);
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
+}
+
+async function viewCourseProgress(courseId) {
+    const token = localStorage.getItem('authToken');
+    try {
+        const response = await fetch(`${API_URL}/api/courses/${courseId}/progress`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const students = await response.json();
+        if (!students.length) {
+            alert('Нет назначенных учеников');
+            return;
+        }
+        let html = '<h3 class="font-bold text-lg mb-3">📊 Прогресс учеников:</h3><table class="w-full text-sm"><tr class="bg-[#2c1a20]"><th class="p-2">ID</th><th>Имя</th><th>Прогресс</th><th>Статус</th><th>Сертификат</th></tr>';
+        for (let s of students) {
+            html += `<tr class="border-b border-gray-700">
+                        <td class="p-2">${s.user_id}</td>
+                        <td>${escapeHtml(s.name)}</td>
+                        <td><div class="w-24 bg-gray-700 rounded-full h-2"><div class="bg-green-500 h-2 rounded-full" style="width: ${s.progress}%"></div></div> ${s.progress}%</td>
+                        <td>${s.status === 'completed' ? '✅ Завершён' : (s.status === 'in_progress' ? '🔄 В процессе' : '⏳ Назначен')}</td>
+                        <td>${s.certificate_url ? `<a href="${s.certificate_url}" target="_blank" class="text-blue-400">Скачать</a>` : '—'}</td>
+                    </tr>`;
+        }
+        html += '</table>';
+        showModal(html);
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
+}
+
+async function createCourseCertificate(courseId) {
+    const userId = prompt("Введите ID ученика:");
+    if (!userId) return;
+    const token = localStorage.getItem('authToken');
+    try {
+        const response = await fetch(`${API_URL}/api/courses/${courseId}/certificate/${userId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        alert(`Сертификат создан: ${window.location.origin}${data.certificate_url}`);
+        window.open(data.certificate_url, '_blank');
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
+}
+
+async function exportSchoolStats() {
+    const schoolId = prompt("Введите ID школы для экспорта статистики:");
+    if (!schoolId) return;
+    const token = localStorage.getItem('authToken');
+    window.open(`${API_URL}/api/schools/${schoolId}/export?token=${encodeURIComponent(token)}`, '_blank');
+}
+
+// ========== КОРПОРАТИВНОЕ ОБУЧЕНИЕ (ДЛЯ УЧЕНИКА) ==========
+
+async function loadMyAssignedCourses() {
+    const token = localStorage.getItem('authToken');
+    const container = document.getElementById('myAssignedCoursesList');
+    if (!container) return;
+    container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>';
+    try {
+        const response = await fetch(`${API_URL}/api/user/assigned-courses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const courses = await response.json();
+        if (!courses.length) {
+            container.innerHTML = '<div class="text-gray-400 text-center py-4">Нет назначенных курсов</div>';
+            return;
+        }
+        let html = '<h3 class="font-bold text-lg mb-3">📚 Назначенные курсы:</h3>';
+        for (let c of courses) {
+            html += `
+                <div class="bg-[#1f1219] p-4 rounded-xl mb-3">
+                    <div class="font-bold text-lg">${escapeHtml(c.name)}</div>
+                    <p class="text-sm text-gray-300">${escapeHtml(c.description || 'Без описания')}</p>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-xs text-gray-400">Назначен: ${new Date(c.assigned_at).toLocaleDateString()}</span>
+                        <span class="px-2 py-1 rounded text-xs ${c.status === 'completed' ? 'bg-green-800' : (c.status === 'in_progress' ? 'bg-yellow-800' : 'bg-blue-800')}">
+                            ${c.status === 'completed' ? '✅ Завершён' : (c.status === 'in_progress' ? '🔄 В процессе' : '⏳ Ожидает')}
+                        </span>
+                    </div>
+                    ${c.certificate_url ? `<div class="mt-2"><a href="${c.certificate_url}" target="_blank" class="text-blue-400 text-sm">📜 Скачать сертификат</a></div>` : ''}
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = `<div class="text-red-400">Ошибка: ${err.message}</div>`;
+    }
+}
+
+async function markLessonComplete(lessonId, score = null) {
+    const token = localStorage.getItem('authToken');
+    const body = score !== null ? JSON.stringify({ score }) : JSON.stringify({});
+    const response = await fetch(`${API_URL}/api/course-lessons/${lessonId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: body
+    });
+    if (response.ok) {
+        alert('Урок отмечен пройденным!');
+        // Обновить прогресс
+    } else {
+        const err = await response.text();
+        alert('Ошибка: ' + err);
+    }
+}
+
+// Добавляем кнопки в панель учителя и ученика
+// Эти функции можно вызвать из updateUIAfterAuth при наличии соответствующих ролей
+async function addCorporateButtons() {
+    const teacherPanel = document.getElementById('teacherPanel');
+    if (teacherPanel && (currentUserRoles.includes('school_teacher') || currentUserRoles.includes('professor'))) {
+        const buttonsHtml = `
+            <button onclick="createSchoolCourse()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">➕ Создать курс школы</button>
+            <button onclick="loadSchoolCourses()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📋 Курсы школы</button>
+            <button onclick="exportSchoolStats()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📊 Экспорт статистики</button>
+        `;
+        teacherPanel.insertAdjacentHTML('beforeend', buttonsHtml);
+    }
+    
+    const studentPanel = document.getElementById('studentPanel');
+    if (studentPanel && (currentUserRoles.includes('student') || currentUserRoles.includes('job_seeker'))) {
+        const buttonsHtml = `
+            <button onclick="loadMyAssignedCourses()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📚 Мои курсы</button>
+        `;
+        studentPanel.insertAdjacentHTML('beforeend', buttonsHtml);
+        // Создаём контейнер для списка курсов, если его нет
+        if (!document.getElementById('myAssignedCoursesList')) {
+            const container = document.createElement('div');
+            container.id = 'myAssignedCoursesList';
+            container.className = 'mt-4 space-y-4';
+            studentPanel.appendChild(container);
+        }
+    }
 }
 
 // Добавим в глобальную область функции для модального окна

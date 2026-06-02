@@ -56,7 +56,7 @@ class UserAction(Base):
     url = Column(String, nullable=True)
     method = Column(String, nullable=True)
     duration_ms = Column(Integer, nullable=True)
-    module_name = Column(String, nullable=True)          # новый столбец для указания модуля (learning, tests, и т.д.)
+    module_name = Column(String, nullable=True)
     
     user = relationship("User", back_populates="actions")
 
@@ -66,7 +66,7 @@ class ChatMessage(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     thread_id = Column(String, nullable=False, index=True)
-    role = Column(String, nullable=False)          # user, assistant
+    role = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     message_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -78,12 +78,12 @@ class Role(Base):
     __tablename__ = 'roles'
     
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, nullable=False)          # schoolchild, applicant, student, master, phd, researcher, professor, school_teacher, private_tutor, employer, job_seeker, freelancer, customer, startup_founder, investor, government, developer
-    display_name = Column(String, nullable=False)               # "Школьник", "Абитуриент" и т.д.
+    name = Column(String, unique=True, nullable=False)
+    display_name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    is_default = Column(Boolean, default=False)                 # роль по умолчанию при регистрации
-    can_be_assigned_by_user = Column(Boolean, default=True)     # может ли пользователь сам себе назначить
-    requires_approval = Column(Boolean, default=False)          # требуется ли одобрение администратора
+    is_default = Column(Boolean, default=False)
+    can_be_assigned_by_user = Column(Boolean, default=True)
+    requires_approval = Column(Boolean, default=False)
     
     users = relationship("User", secondary=user_roles, back_populates="roles")
 
@@ -96,7 +96,6 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    # role = Column(String, default='student')   # УДАЛЕНО — заменено на связь многие-ко-многим с Role
     
     hypotheses = relationship("Hypothesis", back_populates="user", cascade="all, delete-orphan")
     research_interests = Column(Text, nullable=True)
@@ -116,18 +115,16 @@ class User(Base):
     language = Column(String, default="en")
 
     vacancy_applications = relationship("UserVacancy", back_populates="user", cascade="all, delete-orphan")
-    cv_summary = Column(Text, nullable=True)               # краткое резюме
-    desired_position = Column(String, nullable=True)       # желаемая должность
+    cv_summary = Column(Text, nullable=True)
+    desired_position = Column(String, nullable=True)
     desired_salary = Column(Integer, nullable=True)
     work_experience_years = Column(Float, default=0.0)
     github_url = Column(String, nullable=True)
     linkedin_url = Column(String, nullable=True)
 
-    # Новая система опыта и уровней
     total_xp = Column(Integer, default=0)
     level = Column(Integer, default=1)
 
-    # Связи
     roles = relationship("Role", secondary=user_roles, back_populates="users")
     achievements = relationship("UserAchievement", back_populates="user", cascade="all, delete-orphan")
     api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
@@ -170,7 +167,6 @@ class User(Base):
 
     documents = relationship("UserDocument", back_populates="user", cascade="all, delete-orphan")
     
-    # Связи (все — с back_populates, без backref)
     user_courses = relationship('UserCourse', back_populates='user', cascade='all, delete-orphan')
     user_lessons = relationship('UserLesson', back_populates='user', cascade='all, delete-orphan')
     sessions = relationship('Session', back_populates='user', cascade="all, delete-orphan")
@@ -191,7 +187,6 @@ class User(Base):
     chat_messages = relationship('ChatMessage', back_populates='user', cascade='all, delete-orphan')
     study_sessions = relationship('StudySession', back_populates='user', cascade='all, delete-orphan')
     
-    # Добавленные отношения для SchoolChatMessage
     sent_messages = relationship(
         "SchoolChatMessage",
         foreign_keys="SchoolChatMessage.user_id",
@@ -205,6 +200,10 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    # Корпоративное обучение
+    course_assignments = relationship("CourseAssignment", back_populates="user", foreign_keys="CourseAssignment.user_id", cascade="all, delete-orphan")
+    assigned_courses = relationship("CourseAssignment", back_populates="assigner", foreign_keys="CourseAssignment.assigned_by")
+
 # ========== ДОСТИЖЕНИЯ И ОПЫТ ==========
 class UserAchievement(Base):
     __tablename__ = "user_achievements"
@@ -214,20 +213,20 @@ class UserAchievement(Base):
     achievement_type = Column(String, nullable=False)
     module_name = Column(String, nullable=True)
     xp_awarded = Column(Integer, default=0)
-    extra_data = Column(JSON, nullable=True)      # ← ПЕРЕИМЕНОВАНО
+    extra_data = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="achievements")
     
-# ========== API КЛЮЧИ ДЛЯ СТОРОННИХ РАЗРАБОТЧИКОВ ==========
+# ========== API КЛЮЧИ ==========
 class ApiKey(Base):
     __tablename__ = "api_keys"
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     key = Column(String, unique=True, index=True, nullable=False)
-    name = Column(String, nullable=False)                       # название ключа (например, "Мой сайт")
-    permissions = Column(JSON, default=list)                    # список разрешённых эндпоинтов или модулей
+    name = Column(String, nullable=False)
+    permissions = Column(JSON, default=list)
     rate_limit_per_minute = Column(Integer, default=60)
     last_used_at = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=True)
@@ -243,14 +242,14 @@ class AdminLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     admin_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     target_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    action = Column(String, nullable=False)                     # 'change_role', 'view_user_data', 'ban_user' и т.д.
+    action = Column(String, nullable=False)
     details = Column(JSON, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
     
     admin = relationship("User", foreign_keys=[admin_user_id])
     target = relationship("User", foreign_keys=[target_user_id])
 
-# ========== ОСТАЛЬНЫЕ СУЩЕСТВУЮЩИЕ МОДЕЛИ (без изменений) ==========
+# ========== ОСТАЛЬНЫЕ СУЩЕСТВУЮЩИЕ МОДЕЛИ ==========
 
 class UserAuth(Base):
     __tablename__ = 'user_auth'
@@ -377,6 +376,7 @@ class CustomTest(Base):
     user = relationship('User', back_populates='custom_tests')
 
 
+# ========== ПОЛЬЗОВАТЕЛЬСКИЕ КУРСЫ (ДОБАВЛЕНА ШКОЛА И НАЗНАЧЕНИЯ) ==========
 class UserCourse(Base):
     __tablename__ = 'user_courses'
     
@@ -389,8 +389,13 @@ class UserCourse(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Привязка к школе для корпоративного обучения
+    school_id = Column(Integer, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
+    
     user = relationship('User', back_populates='user_courses')
+    school = relationship("School", back_populates="courses")
     modules = relationship('CourseModule', back_populates='course', cascade='all, delete-orphan')
+    assignments = relationship("CourseAssignment", back_populates="course", cascade="all, delete-orphan")
 
 
 class CourseModule(Base):
@@ -421,6 +426,40 @@ class CourseLesson(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     module = relationship('CourseModule', back_populates='lessons')
+    user_progress = relationship("UserLessonProgress", back_populates="lesson", cascade="all, delete-orphan")
+
+
+# ========== ПРОГРЕСС ПО УРОКАМ КУРСА ==========
+class UserLessonProgress(Base):
+    __tablename__ = "user_lesson_progress"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    lesson_id = Column(Integer, ForeignKey("course_lessons.id", ondelete="CASCADE"), nullable=False)
+    completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+    score = Column(Float, nullable=True)
+    
+    user = relationship("User")
+    lesson = relationship("CourseLesson", back_populates="user_progress")
+
+
+# ========== НАЗНАЧЕНИЕ КУРСОВ УЧЕНИКАМ ==========
+class CourseAssignment(Base):
+    __tablename__ = "course_assignments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("user_courses.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    status = Column(String, default="pending")  # pending, in_progress, completed
+    completed_at = Column(DateTime, nullable=True)
+    certificate_url = Column(String, nullable=True)
+    assigned_at = Column(DateTime, default=datetime.utcnow)
+    
+    course = relationship("UserCourse", back_populates="assignments")
+    user = relationship("User", foreign_keys=[user_id], back_populates="course_assignments")
+    assigner = relationship("User", foreign_keys=[assigned_by], back_populates="assigned_courses")
 
 
 class UserLesson(Base):
@@ -497,6 +536,7 @@ class School(Base):
     
     owner = relationship('User', foreign_keys=[owner_id], back_populates='owned_schools')
     members = relationship('SchoolMember', back_populates='school', cascade='all, delete-orphan')
+    courses = relationship("UserCourse", back_populates="school", cascade="all, delete-orphan")
 
 
 class SchoolMember(Base):
@@ -541,7 +581,7 @@ class UserWord(Base):
     word_id = Column(String, nullable=False)
     word_text = Column(String, nullable=True)
     hsk_level = Column(Integer, nullable=True)
-    status = Column(String, default="new")          # new, learning, learned, review
+    status = Column(String, default="new")
     difficulty = Column(Integer, default=3)
     views_count = Column(Integer, default=0)
     practice_count = Column(Integer, default=0)
@@ -561,7 +601,7 @@ class UserTest(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     test_id = Column(String, nullable=True)
-    test_type = Column(String, nullable=False)      # hsk, grammar, vocabulary, listening, csca_math, ...
+    test_type = Column(String, nullable=False)
     test_level = Column(Integer, nullable=False)
     score = Column(Integer, nullable=True)
     max_score = Column(Integer, nullable=True)
@@ -602,7 +642,7 @@ class GrammarTopic(Base):
     name_zh = Column(String, nullable=False)
     name_en = Column(String, nullable=False)
     name_ru = Column(String, nullable=True)
-    level = Column(String, nullable=False)          # A1, A2, B1, B2, C1, HSK1-6
+    level = Column(String, nullable=False)
     category = Column(String, nullable=True)
     explanation = Column(Text, nullable=True)
     examples = Column(JSON, default=[])
@@ -630,7 +670,7 @@ class CSCATopic(Base):
     topic_id = Column(String, unique=True, index=True, nullable=False)
     name_zh = Column(String, nullable=False)
     name_en = Column(String, nullable=False)
-    subject = Column(String, nullable=False)       # math, physics, chemistry
+    subject = Column(String, nullable=False)
     difficulty = Column(String, default="Intermediate")
     order = Column(Integer, default=0)
 
@@ -675,7 +715,7 @@ class IELTSAttempt(Base):
     __tablename__ = "ielts_attempts"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    task_type = Column(String)                     # speaking_part1, writing_task2, ...
+    task_type = Column(String)
     audio_path = Column(String, nullable=True)
     transcript = Column(Text, nullable=True)
     answer_text = Column(Text, nullable=True)
@@ -691,10 +731,10 @@ class UserDocument(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    filename = Column(String, nullable=False)           # сохранённое имя
-    original_filename = Column(String, nullable=False)  # оригинальное имя
-    file_path = Column(String, nullable=False)          # путь к PDF
-    index_path = Column(String, nullable=True)          # путь к FAISS индексу
+    filename = Column(String, nullable=False)
+    original_filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    index_path = Column(String, nullable=True)
     chunks_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     
@@ -707,8 +747,8 @@ class ExamTicket(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     course_name = Column(String, nullable=False)
     num_questions = Column(Integer, nullable=False)
-    ticket_type = Column(String, default="tickets")  # 'tickets' или 'test'
-    questions = Column(JSON, nullable=False)        # список вопросов (и вариантов для теста)
+    ticket_type = Column(String, default="tickets")
+    questions = Column(JSON, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="exam_tickets")
@@ -721,7 +761,7 @@ class Task(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     deadline = Column(DateTime, nullable=False)
-    status = Column(String, default="pending")  # pending, completed, overdue
+    status = Column(String, default="pending")
     reminder_sent = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -773,7 +813,7 @@ class DataAnalysisSession(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     filename = Column(String, nullable=True)
     file_path = Column(String, nullable=True)
-    dataframe_json = Column(Text, nullable=True)   # храним данные как JSON
+    dataframe_json = Column(Text, nullable=True)
     code = Column(Text, nullable=True)
     output_text = Column(Text, nullable=True)
     output_images = Column(JSON, default=[])
@@ -789,7 +829,7 @@ class PlagiarismCorpus(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     text_hash = Column(String(64), unique=True, index=True)
-    shingles = Column(JSON)  # список хешей шинглов
+    shingles = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class TextReview(Base):
@@ -798,27 +838,25 @@ class TextReview(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     title = Column(String, nullable=True)
     text = Column(Text, nullable=False)
-    ai_feedback = Column(JSON)   # {score, grade, strengths, weaknesses, recommendations, detailed_feedback}
+    ai_feedback = Column(JSON)
     plagiarism_percent = Column(Float, default=0.0)
-    similar_parts = Column(JSON)  # [{text, source_user_id, source_title}]
+    similar_parts = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="text_reviews")
-
-# backend/app/models.py (добавить в конец файла)
 
 class Hypothesis(Base):
     __tablename__ = "hypotheses"
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    text = Column(Text, nullable=False)                     # текст гипотезы
-    domain = Column(String, nullable=True)                  # область (AI, биология, экономика...)
-    confidence_score = Column(Float, default=0.0)           # оценка уверенности 0-1
-    relevance_score = Column(Float, default=0.0)            # релевантность профилю
-    context_snapshot = Column(JSON, nullable=True)          # срез данных пользователя (темы, достижения)
-    user_rating = Column(Integer, nullable=True)            # оценка пользователя (1-5)
-    is_accepted = Column(Boolean, default=False)            # принята ли в работу
+    text = Column(Text, nullable=False)
+    domain = Column(String, nullable=True)
+    confidence_score = Column(Float, default=0.0)
+    relevance_score = Column(Float, default=0.0)
+    context_snapshot = Column(JSON, nullable=True)
+    user_rating = Column(Integer, nullable=True)
+    is_accepted = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="hypotheses")
@@ -829,21 +867,20 @@ class Supervisor(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     email = Column(String, nullable=True)
-    department = Column(String, nullable=True)          # кафедра
-    university = Column(String, nullable=True)          # вуз
-    position = Column(String, nullable=True)            # профессор, доцент, PhD и т.д.
-    research_areas = Column(JSON, default=list)         # список научных направлений
-    keywords = Column(JSON, default=list)               # ключевые слова для поиска
-    publications_summary = Column(Text, nullable=True)  # краткое описание публикаций
-    bio = Column(Text, nullable=True)                   # биография
+    department = Column(String, nullable=True)
+    university = Column(String, nullable=True)
+    position = Column(String, nullable=True)
+    research_areas = Column(JSON, default=list)
+    keywords = Column(JSON, default=list)
+    publications_summary = Column(Text, nullable=True)
+    bio = Column(Text, nullable=True)
     avatar_url = Column(String, nullable=True)
-    contact_info = Column(JSON, nullable=True)          # телефон, сайт, соцсети
+    contact_info = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    rating = Column(Float, default=0.0)                 # рейтинг (от студентов)
+    rating = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Связь с пользователями, которые выбрали этого руководителя
     user_supervisors = relationship("UserSupervisor", back_populates="supervisor", cascade="all, delete-orphan")
 
 class UserSupervisor(Base):
@@ -852,10 +889,10 @@ class UserSupervisor(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     supervisor_id = Column(Integer, ForeignKey("supervisors.id", ondelete="CASCADE"), nullable=False)
-    status = Column(String, default="pending")          # pending, accepted, rejected, favorited
-    request_message = Column(Text, nullable=True)       # сообщение студента
-    supervisor_reply = Column(Text, nullable=True)      # ответ
-    matching_score = Column(Float, default=0.0)         # вычисленный ИИ score
+    status = Column(String, default="pending")
+    request_message = Column(Text, nullable=True)
+    supervisor_reply = Column(Text, nullable=True)
+    matching_score = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -868,14 +905,14 @@ class Company(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    industry = Column(String, nullable=True)          # отрасль (IT, финансы, образование...)
+    industry = Column(String, nullable=True)
     website = Column(String, nullable=True)
     logo_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     vacancies = relationship("Vacancy", back_populates="company", cascade="all, delete-orphan")
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # кто создал (работодатель)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     user = relationship("User")
 
 class Vacancy(Base):
@@ -883,15 +920,15 @@ class Vacancy(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
-    title = Column(String, nullable=False)            # "Junior Python Developer"
-    description = Column(Text, nullable=False)       # полное описание
-    requirements = Column(Text, nullable=True)       # требования
-    skills = Column(JSON, default=list)              # список необходимых навыков
-    experience_years = Column(Float, default=0.0)    # требуемый опыт (лет)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    requirements = Column(Text, nullable=True)
+    skills = Column(JSON, default=list)
+    experience_years = Column(Float, default=0.0)
     salary_min = Column(Integer, nullable=True)
     salary_max = Column(Integer, nullable=True)
-    location = Column(String, nullable=True)         # город / remote
-    employment_type = Column(String, default="full") # full, part, internship, contract
+    location = Column(String, nullable=True)
+    employment_type = Column(String, default="full")
     is_active = Column(Boolean, default=True)
     posted_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)
@@ -905,9 +942,9 @@ class UserVacancy(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     vacancy_id = Column(Integer, ForeignKey("vacancies.id", ondelete="CASCADE"), nullable=False)
-    status = Column(String, default="pending")       # pending, applied, viewed, rejected, hired
-    matching_score = Column(Float, default=0.0)      # вычисленный ИИ score
-    cover_letter = Column(Text, nullable=True)       # сопроводительное письмо
+    status = Column(String, default="pending")
+    matching_score = Column(Float, default=0.0)
+    cover_letter = Column(Text, nullable=True)
     applied_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
