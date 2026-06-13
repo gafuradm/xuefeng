@@ -17,6 +17,8 @@ from .models import (
 )
 
 from .soft_skills_service import SoftSkillsInterview
+from .admission_service import AdmissionMentor
+from .models import AdmissionProfile, AdmissionResult
 
 from .ai_double_service import AIDoubleService
 from .rating_service import RatingService
@@ -3578,6 +3580,59 @@ async def get_video_session(
             {"role": m.role, "content": m.content, "created_at": m.created_at}
             for m in messages
         ]
+    }
+
+@app.post("/api/admission/analyze")
+async def admission_analyze(
+    country: str = Body(...),
+    user_data: str = Body(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not check_module_access(current_user, 'learning'):  # или создайте отдельный модуль 'admission'
+        raise HTTPException(403, "Доступ запрещён")
+    mentor = AdmissionMentor(db, current_user)
+    profile = await mentor.analyze_and_match(country, user_data)
+    results = await mentor.get_saved_results(profile.id)
+    return {
+        "profile_id": profile.id,
+        "country": country,
+        "universities": results
+    }
+
+@app.get("/api/admission/profiles")
+async def get_admission_profiles(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    profiles = db.query(AdmissionProfile).filter(AdmissionProfile.user_id == current_user.id).order_by(AdmissionProfile.created_at.desc()).all()
+    return [
+        {
+            "id": p.id,
+            "country": p.country,
+            "created_at": p.created_at,
+            "user_data_preview": p.user_data[:100] + "..."
+        }
+        for p in profiles
+    ]
+
+@app.get("/api/admission/result/{profile_id}")
+async def get_admission_result(
+    profile_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(AdmissionProfile).filter(AdmissionProfile.id == profile_id, AdmissionProfile.user_id == current_user.id).first()
+    if not profile:
+        raise HTTPException(404, "Профиль не найден")
+    mentor = AdmissionMentor(db, current_user)
+    results = await mentor.get_saved_results(profile_id)
+    return {
+        "profile_id": profile.id,
+        "country": profile.country,
+        "user_data": profile.user_data,
+        "created_at": profile.created_at,
+        "universities": results
     }
 
 # ========== IELTS МОДУЛЬ ==========

@@ -179,7 +179,8 @@ class User(Base):
     auth = relationship('UserAuth', back_populates='user', uselist=False, cascade='all, delete-orphan')
     school_members = relationship('SchoolMember', back_populates='user', cascade='all, delete-orphan')
     owned_schools = relationship('School', foreign_keys='School.owner_id', cascade='all, delete-orphan')
-    
+    admission_profiles = relationship("AdmissionProfile", back_populates="user", cascade="all, delete-orphan")
+
     interview_sessions = relationship('InterviewSessionDB', back_populates='user', cascade='all, delete-orphan')
     refresh_tokens = relationship('RefreshToken', back_populates='user', cascade='all, delete-orphan')
     password_resets = relationship('PasswordReset', back_populates='user', cascade='all, delete-orphan')
@@ -1058,3 +1059,37 @@ class VideoChatMessage(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     session = relationship("VideoSession", back_populates="messages")
+
+# ========== AI-МЕНТОР ПО ПОСТУПЛЕНИЮ ==========
+class AdmissionProfile(Base):
+    __tablename__ = "admission_profiles"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    country = Column(String, nullable=False)          # страна (например, "Германия")
+    user_data = Column(Text, nullable=True)          # всё, что написал пользователь о себе
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", back_populates="admission_profiles")
+    results = relationship("AdmissionResult", back_populates="profile", cascade="all, delete-orphan")
+
+class AdmissionResult(Base):
+    __tablename__ = "admission_results"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("admission_profiles.id", ondelete="CASCADE"), nullable=False)
+    university_name = Column(String, nullable=False)
+    country = Column(String, nullable=False)
+    website = Column(String, nullable=True)
+    contact_email = Column(String, nullable=True)
+    ranking = Column(Integer, nullable=True)          # мировой рейтинг (если есть)
+    match_score = Column(Float, nullable=False)      # процент совпадения 0-100
+    admission_chance = Column(Float, nullable=False) # шанс поступления %
+    strengths = Column(JSON, default=list)           # что у пользователя хорошо для этого вуза
+    gaps = Column(JSON, default=list)                # чего не хватает
+    recommendations = Column(JSON, default=list)     # конкретные шаги для поступления
+    action_plan = Column(JSON, default=list)         # детальный алгоритм действий
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    profile = relationship("AdmissionProfile", back_populates="results")

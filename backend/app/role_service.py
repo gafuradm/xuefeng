@@ -1,14 +1,13 @@
 # backend/app/role_service.py
-
 from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from .models import User, Role
 
 # Матрица доступа: роль -> список модулей
 ROLE_MODULE_ACCESS = {
-    'schoolchild': ['learning', 'tests', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation', 'soft_skills', 'coding_interviews', 'aidouble', 'rating_view'],
-    'applicant': ['learning', 'tests', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation', 'aidouble', 'rating_view'],
-    'student': ['learning', 'tests', 'courses_create', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'scientific', 'data_analysis', 'ielts', 'ocr', 'video_generation', 'supervisor_search', 'internship_match', 'soft_skills', 'coding_interviews', 'aidouble', 'rating_view'],
+    'schoolchild': ['learning', 'tests', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation', 'soft_skills', 'coding_interviews', 'aidouble', 'rating_view', 'admission'],
+    'applicant': ['learning', 'tests', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation', 'aidouble', 'rating_view', 'admission'],
+    'student': ['learning', 'tests', 'courses_create', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'scientific', 'data_analysis', 'ielts', 'ocr', 'video_generation', 'supervisor_search', 'internship_match', 'soft_skills', 'coding_interviews', 'aidouble', 'rating_view', 'admission'],
     'master': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'soft_skills', 'coding_interviews', 'planner', 'internship_match', 'aidouble', 'rating_view'],
     'phd': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'peer_review', 'soft_skills', 'coding_interviews', 'planner', 'internship_match', 'aidouble', 'rating_view'],
     'researcher': ['scientific', 'data_analysis', 'hypothesis_generator', 'publications', 'peer_review', 'planner', 'supervisor_search', 'internship_match', 'aidouble', 'rating_view'],
@@ -50,6 +49,7 @@ MODULE_TO_TAB = {
     'corporate_training': ('corporate', 'Корп. обучение', 'fa-building'),
     'api_access': ('api', 'API', 'fa-plug'),
     'aidouble': ('aidouble', 'AI-двойник', 'fa-robot'),
+    'admission': ('admission', 'Поступление', 'fa-graduation-cap'),
     'essay_check_reviewer': ('essaycheck', 'Проверка работ', 'fa-file-alt'),
     'peer_review': ('scientific', 'Научные статьи', 'fa-flask'),
     'publications': ('scientific', 'Научные статьи', 'fa-flask'),
