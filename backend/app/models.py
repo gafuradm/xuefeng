@@ -114,6 +114,7 @@ class User(Base):
     timezone = Column(String, default="UTC")
     language = Column(String, default="en")
 
+    soft_skill_assessments = relationship("SoftSkillAssessment", back_populates="user", cascade="all, delete-orphan")
     vacancy_applications = relationship("UserVacancy", back_populates="user", cascade="all, delete-orphan")
     cv_summary = Column(Text, nullable=True)
     desired_position = Column(String, nullable=True)
@@ -154,6 +155,7 @@ class User(Base):
     email_notifications = Column(Boolean, default=True)
     theme = Column(String, default="light")
     
+    video_sessions = relationship("VideoSession", back_populates="user", cascade="all, delete-orphan")
     education_background = Column(Text, nullable=True)
     university_target = Column(String, nullable=True)
     program_target = Column(String, nullable=True)
@@ -203,6 +205,8 @@ class User(Base):
     # Корпоративное обучение
     course_assignments = relationship("CourseAssignment", back_populates="user", foreign_keys="CourseAssignment.user_id", cascade="all, delete-orphan")
     assigned_courses = relationship("CourseAssignment", back_populates="assigner", foreign_keys="CourseAssignment.assigned_by")
+    ai_double = relationship("AIDouble", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    ratings = relationship("UserRating", back_populates="user", cascade="all, delete-orphan")
 
 # ========== ДОСТИЖЕНИЯ И ОПЫТ ==========
 class UserAchievement(Base):
@@ -950,3 +954,107 @@ class UserVacancy(Base):
     
     user = relationship("User", back_populates="vacancy_applications")
     vacancy = relationship("Vacancy", back_populates="user_vacancies")
+
+class SoftSkillAssessment(Base):
+    __tablename__ = "soft_skill_assessments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    session_id = Column(String, unique=True, index=True, nullable=False)  # уникальный ID сессии
+    scenario = Column(String, nullable=False)  # тип интервью: 'job_interview', 'conflict_resolution', 'team_meeting', 'presentation'
+    status = Column(String, default="in_progress")  # in_progress, completed
+    overall_score = Column(Float, nullable=True)   # общий балл 0-100
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+    messages = Column(JSON, default=list)  # список сообщений {role, content, analysis}
+    user = relationship("User", back_populates="soft_skill_assessments")
+    responses = relationship("SoftSkillResponse", back_populates="assessment", cascade="all, delete-orphan")
+
+class SoftSkillResponse(Base):
+    __tablename__ = "soft_skill_responses"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    assessment_id = Column(Integer, ForeignKey("soft_skill_assessments.id", ondelete="CASCADE"), nullable=False)
+    question = Column(Text, nullable=False)          # вопрос ИИ
+    user_answer_text = Column(Text, nullable=True)   # распознанный текст ответа
+    user_audio_path = Column(String, nullable=True)  # путь к аудио ответа
+    ai_response_text = Column(Text, nullable=True)   # ответ ИИ на русском
+    ai_audio_path = Column(String, nullable=True)    # путь к синтезированному голосу ИИ
+    analysis = Column(JSON, nullable=True)           # анализ речи (уверенность, тон, темп и т.д.)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    assessment = relationship("SoftSkillAssessment", back_populates="responses")
+
+class AIDouble(Base):
+    __tablename__ = "ai_doubles"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    name = Column(String, default="AI Двойник")
+    avatar_url = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    can_manage_roles = Column(Boolean, default=False)    # может ли управлять ролями
+    can_view_all_data = Column(Boolean, default=False)   # может ли видеть все данные
+    can_assign_achievements = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_active = Column(DateTime, nullable=True)
+    
+    user = relationship("User", back_populates="ai_double")
+    actions = relationship("AIDoubleAction", back_populates="ai_double", cascade="all, delete-orphan")
+
+class AIDoubleAction(Base):
+    __tablename__ = "ai_double_actions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ai_double_id = Column(Integer, ForeignKey("ai_doubles.id", ondelete="CASCADE"), nullable=False)
+    action_type = Column(String, nullable=False)   # 'view_user', 'change_role', 'assign_achievement', 'ban_user', 'send_notification'
+    target_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    details = Column(JSON, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    
+    ai_double = relationship("AIDouble", back_populates="actions")
+    target_user = relationship("User", foreign_keys=[target_user_id])
+
+class UserRating(Base):
+    __tablename__ = "user_ratings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    role_name = Column(String, nullable=False)           # роль, по которой считается рейтинг
+    total_xp = Column(Integer, default=0)               # общий опыт
+    level = Column(Integer, default=1)                  # уровень
+    achievements_count = Column(Integer, default=0)     # количество достижений
+    courses_completed = Column(Integer, default=0)      # завершённых курсов
+    tests_passed = Column(Integer, default=0)           # пройденных тестов
+    articles_published = Column(Integer, default=0)     # опубликованных статей (расширить позже)
+    rating_score = Column(Float, default=0.0)           # общий рейтинг (вычисляется)
+    rank_position = Column(Integer, nullable=True)      # позиция в рейтинге (обновляется периодически)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", back_populates="ratings")
+
+class VideoSession(Base):
+    __tablename__ = "video_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    url = Column(String, nullable=False)
+    original_text = Column(Text, nullable=True)
+    translated_text = Column(Text, nullable=True)
+    summary = Column(Text, nullable=True)
+    key_points = Column(JSON, default=list)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="video_sessions")
+    messages = relationship("VideoChatMessage", back_populates="session", cascade="all, delete-orphan")
+
+class VideoChatMessage(Base):
+    __tablename__ = "video_chat_messages"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("video_sessions.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String, nullable=False)  # user, assistant
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    session = relationship("VideoSession", back_populates="messages")

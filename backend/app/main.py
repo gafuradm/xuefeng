@@ -8,20 +8,22 @@ from .models import (
     UserInteraction, UserPerformance, CustomTest,
     School, SchoolMember, LessonVideo, IELTSAttempt,
     RefreshToken, PasswordReset, UserAction, ChatMessage,
-    Role, UserAchievement, ApiKey, AdminLog
-)
-
-from .models import (
-    Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
-    UserCourse, CourseModule, CourseLesson, UserLesson,
-    UserInteraction, UserPerformance, CustomTest,
-    School, SchoolMember, LessonVideo, IELTSAttempt,
-    RefreshToken, PasswordReset, UserAction, ChatMessage,
     Role, UserAchievement, ApiKey, AdminLog,
     ExamTicket, Task, SyllabusCourse, ScientificArticle,
-    UserLessonProgress, CourseAssignment   # ← добавлено
+    UserLessonProgress, CourseAssignment,
+    SoftSkillAssessment, SoftSkillResponse,
+    AIDouble, AIDoubleAction, UserRating,
+    SchoolChatMessage
 )
 
+from .soft_skills_service import SoftSkillsInterview
+
+from .ai_double_service import AIDoubleService
+from .rating_service import RatingService
+from .video_service import VideoService
+from .models import (
+    VideoSession, VideoChatMessage
+)
 from .pdf_rag import extract_text_from_pdf, split_text_into_chunks, create_tfidf_index, search_tfidf_index
 from .models import UserDocument
 import shutil
@@ -36,7 +38,7 @@ from pydantic import BaseModel
 
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')   # для работы без GUI
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -44,90 +46,6 @@ from RestrictedPython import compile_restricted, safe_globals
 from .models import DataAnalysisSession
 from .supervisor_matching import SupervisorMatcher
 from .models import Supervisor, UserSupervisor
-
-from fastapi import FastAPI, Depends, HTTPException, Request, Query
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from .database import engine, get_db, SessionLocal
-from sqlalchemy.orm import Session, joinedload
-from typing import List, Optional
-import json
-from fastapi import Body
-import concurrent.futures
-from datetime import datetime
-import asyncio
-from fastapi import UploadFile, File
-from fastapi.responses import RedirectResponse
-from .models import (
-    Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
-    UserCourse, CourseModule, CourseLesson, UserLesson,
-    UserInteraction, UserPerformance, CustomTest,
-    School, SchoolMember, LessonVideo, SchoolChatMessage
-)
-from .models import (
-    Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
-    UserCourse, CourseModule, CourseLesson, UserLesson,
-    UserInteraction, UserPerformance, CustomTest,
-    School, SchoolMember, LessonVideo
-)
-from .database import engine, get_db
-from .models import (
-    Base, User, Session as SessionModel, TestResult, Lesson, ProgressHistory,
-    UserCourse, CourseModule, CourseLesson, UserLesson,
-    UserInteraction, UserPerformance, CustomTest,
-    School, SchoolMember, LessonVideo
-)
-from .auth import get_password_hash, verify_password, create_access_token, get_current_user, get_current_active_user, decode_token, is_government_user, get_current_government_user
-from .deepseek_client import deepseek_client
-from .schemas import *
-from .services import AITeacherService
-from .config import settings
-from .role_service import get_visible_tabs, check_module_access, get_default_roles
-from .xp_service import award_xp, award_lesson_completion, award_test_passed, award_course_created, award_lesson_created
-from .middleware_logging import log_all_actions_middleware
-
-# ========== OCR РАСПОЗНАВАНИЕ РУКОПИСНОГО ТЕКСТА ==========
-import easyocr
-import numpy as np
-from PIL import Image
-import io
-import uuid
-
-from pathlib import Path
-import os
-
-# backend/app/main.py – все импорты (исправленные)
-
-import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-from .models import (
-    Base, User, UserAuth, Session as SessionModel, TestResult, Lesson, ProgressHistory,
-    UserCourse, CourseModule, CourseLesson, UserLesson,
-    UserInteraction, UserPerformance, CustomTest,
-    School, SchoolMember, LessonVideo, IELTSAttempt,
-    RefreshToken, PasswordReset, UserAction, ChatMessage,
-    Role, UserAchievement, ApiKey, AdminLog,
-    ExamTicket, Task, SyllabusCourse, ScientificArticle
-)
-
-from .pdf_rag import extract_text_from_pdf, split_text_into_chunks, create_tfidf_index, search_tfidf_index
-from .models import UserDocument
-import shutil
-import json
-
-from .plagiarism import check_plagiarism
-from .models import TextReview, PlagiarismCorpus
-from pydantic import BaseModel
-
-import pandas as pd
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import io
-import base64
-from RestrictedPython import compile_restricted, safe_globals
-from .models import DataAnalysisSession
 
 from fastapi import FastAPI, Depends, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -152,6 +70,7 @@ from .role_service import get_visible_tabs, check_module_access, get_default_rol
 from .xp_service import award_xp, award_lesson_completion, award_test_passed, award_course_created, award_lesson_created
 from .middleware_logging import log_all_actions_middleware
 
+# ========== OCR РАСПОЗНАВАНИЕ РУКОПИСНОГО ТЕКСТА ==========
 import easyocr
 import numpy as np
 from PIL import Image
@@ -177,20 +96,17 @@ from .vacancy_matching import VacancyMatcher
 from .models import Company, Vacancy, UserVacancy
 
 # ========== КОРНЕВЫЕ ПУТИ (должны быть в самом начале) ==========
-PROJECT_ROOT = Path(__file__).parent.parent.parent      # папка, где лежат backend, frontend, frontend_hsk
-BACKEND_ROOT = Path(__file__).parent.parent             # папка backend
-APP_ROOT = Path(__file__).parent                        # папка backend/app
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+BACKEND_ROOT = Path(__file__).parent.parent
+APP_ROOT = Path(__file__).parent
 
-# Папки для фронтенда
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 HSK_DIR = PROJECT_ROOT / "frontend_hsk"
 
-# Папки для данных (внутри backend)
 DATA_DIR = BACKEND_ROOT / "data"
 COURSES_DIR = DATA_DIR / "courses"
 COURSES_DIR.mkdir(parents=True, exist_ok=True)
 
-# Для совместимости со старым кодом, который может использовать BASE_DIR
 BASE_DIR = BACKEND_ROOT
 
 # Инициализируем EasyOCR один раз при старте
@@ -221,14 +137,14 @@ video_dir = os.path.join(os.path.dirname(__file__), "data", "videos")
 os.makedirs(video_dir, exist_ok=True)
 app.mount("/static/videos", StaticFiles(directory=video_dir), name="videos")
 
-# Монтируем статику (фронтенд)
+soft_skills_audio_dir = BACKEND_ROOT / "static" / "soft_skills_audio"
+soft_skills_audio_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static/soft_skills_audio", StaticFiles(directory=str(soft_skills_audio_dir)), name="soft_skills_audio")
+
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
-# Инициализация сервиса
 ai_service = AITeacherService()
-
-from pydantic import BaseModel
 
 class AvatarUpdate(BaseModel):
     avatar_url: str
@@ -272,7 +188,6 @@ def init_roles(db: Session):
 async def startup_event():
     print("🚀 Запуск Universal AI Teacher v2.0...")
     
-    # Инициализация ролей
     db = SessionLocal()
     try:
         init_roles(db)
@@ -283,7 +198,6 @@ async def startup_event():
     if ai_service.rag_available:
         print("✅ RAG система готова")
     
-    # Инициализация OCR
     global ocr_reader
     try:
         ocr_reader = easyocr.Reader(['ru', 'en'], gpu=False)
@@ -291,7 +205,6 @@ async def startup_event():
     except Exception as e:
         print(f"⚠️ Ошибка загрузки EasyOCR: {e}")
     
-    # Загрузка Whisper для IELTS
     global whisper_model
     try:
         whisper_model = whisper.load_model("base")
@@ -300,7 +213,6 @@ async def startup_event():
         print(f"⚠️ Failed to load Whisper: {e}")
 
 from fastapi.responses import HTMLResponse
-from pathlib import Path
 
 @app.get("/app", response_class=HTMLResponse)
 async def serve_app():
@@ -315,19 +227,18 @@ async def serve_app():
 async def create_user(user: UserCreate, role: str = "student", db: Session = Depends(get_db)):
     try:
         user_obj = await ai_service.create_user(db, user.email, user.name)
-        # Назначаем роли по умолчанию
         default_role_names = get_default_roles()
         default_roles = db.query(Role).filter(Role.name.in_(default_role_names)).all()
         user_obj.roles = default_roles
         db.commit()
         db.refresh(user_obj)
+        RatingService.update_user_rating(db, user_obj.id)
         return user_obj
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/", response_class=HTMLResponse)
 async def main_frontend():
-    """Главная страница Universal AI Teacher"""
     index_path = FRONTEND_DIR / "index.html"
     if index_path.exists():
         with open(index_path, "r", encoding="utf-8") as f:
@@ -356,7 +267,6 @@ if HSK_DIR.exists():
 # ========== НОВЫЕ ЭНДПОИНТЫ ДЛЯ РОЛЕЙ И ВКЛАДОК ==========
 @app.get("/api/user/roles")
 async def get_my_roles(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Получить список своих ролей и доступные для назначения"""
     my_role_names = [role.name for role in current_user.roles]
     available_roles = db.query(Role).filter(Role.can_be_assigned_by_user == True).all()
     return {
@@ -366,7 +276,6 @@ async def get_my_roles(current_user: User = Depends(get_current_user), db: Sessi
 
 @app.post("/api/user/roles/assign")
 async def assign_role_to_myself(role_name: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Пользователь запрашивает добавление себе роли"""
     role = db.query(Role).filter(Role.name == role_name).first()
     if not role:
         raise HTTPException(404, "Роль не найдена")
@@ -387,11 +296,11 @@ async def assign_role_to_myself(role_name: str, current_user: User = Depends(get
     else:
         current_user.roles.append(role)
         db.commit()
+        RatingService.update_user_rating(db, current_user.id)
         return {"message": f"Роль {role.display_name} добавлена"}
 
 @app.get("/api/user/tabs")
 async def get_user_tabs(current_user: User = Depends(get_current_user)):
-    """Получить список вкладок для отображения на фронтенде"""
     tabs = get_visible_tabs(current_user)
     return tabs
 
@@ -451,6 +360,8 @@ async def admin_set_user_roles(
     user.roles = roles
     db.commit()
     
+    RatingService.update_user_rating(db, user_id)
+    
     admin_log = AdminLog(
         admin_user_id=admin_user.id,
         target_user_id=user.id,
@@ -496,8 +407,6 @@ async def list_api_keys(current_user: User = Depends(get_current_user), db: Sess
     keys = db.query(ApiKey).filter(ApiKey.user_id == current_user.id).all()
     return [{"id": k.id, "name": k.name, "last_used_at": k.last_used_at, "is_active": k.is_active} for k in keys]
 
-import secrets
-
 # ========== СЕССИИ И ТЕСТЫ (С ПРОВЕРКОЙ ДОСТУПА) ==========
 @app.post("/api/sessions", response_model=SessionResponse)
 async def create_session(user_id: int, session_data: SessionCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -514,9 +423,9 @@ async def submit_test(session_id: int, test_data: TestSubmit, current_user: User
         raise HTTPException(403, "Доступ к модулю 'Обучение' запрещён")
     try:
         result = await ai_service.submit_test(db, session_id, test_data.answers)
-        # Начисляем XP за прохождение теста
         if result.get("overall_score", 0) > 0:
             await award_test_passed(db, current_user.id, f"session_{session_id}", result.get("overall_score", 0))
+            RatingService.update_user_rating(db, current_user.id)
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -549,9 +458,9 @@ async def submit_lesson(session_id: int, lesson_data: LessonAnswer, current_user
             db, session_id, lesson_data.lesson_id, lesson_data.user_answers,
             lesson_data.time_spent_seconds, lesson_data.task_times
         )
-        # Начисляем XP за завершение урока
         if result.get("status") == "success":
             await award_lesson_completion(db, current_user.id, f"lesson_{lesson_data.lesson_id}", result.get("score", 0))
+            RatingService.update_user_rating(db, current_user.id)
         return result
     except Exception as e:
         print(f"Error in submit_lesson endpoint: {e}")
@@ -1009,8 +918,8 @@ async def generate_course(course_data: UserCourseCreate, user_id: int, current_u
     db.commit()
     db.refresh(new_course)
     
-    # Начисляем XP за создание курса
     await award_course_created(db, user_id, course_data.name)
+    RatingService.update_user_rating(db, user_id)
     
     modules_list = []
     for module_idx, module_data in enumerate(structure.get("modules", [])):
@@ -1067,9 +976,7 @@ async def generate_course(course_data: UserCourseCreate, user_id: int, current_u
 async def get_user_courses(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not check_module_access(current_user, 'courses_create'):
         raise HTTPException(403, "Доступ к модулю 'Курсы' запрещён")
-    # Если запрашивает свои курсы
     if current_user.id == user_id:
-        # Ученик: курсы, привязанные к его школам (через назначения)
         student_schools = [m.school_id for m in current_user.school_members]
         if student_schools:
             courses = db.query(UserCourse).filter(
@@ -1078,7 +985,6 @@ async def get_user_courses(user_id: int, current_user: User = Depends(get_curren
         else:
             courses = db.query(UserCourse).filter(UserCourse.user_id == user_id).all()
     else:
-        # Если смотрит другой пользователь (например, учитель – нужно добавить проверку)
         if not is_government_user(current_user):
             raise HTTPException(403, "Доступ запрещён")
         courses = db.query(UserCourse).filter(UserCourse.user_id == user_id).all()
@@ -1157,8 +1063,8 @@ async def generate_lesson(lesson_data: UserLessonCreate, user_id: int, current_u
     db.commit()
     db.refresh(new_lesson)
     
-    # Начисляем XP за создание урока
     await award_lesson_created(db, user_id, lesson_data.title)
+    RatingService.update_user_rating(db, user_id)
     
     return new_lesson
 
@@ -1487,19 +1393,16 @@ async def register(username: str, password: str, name: str, email: str, role: st
     if existing:
         raise HTTPException(400, "Username already exists")
     
-    # Создаём пользователя (без поля role, теперь через связи)
     user = User(name=name, email=email)
     db.add(user)
     db.commit()
     db.refresh(user)
     
-    # Назначаем роли по умолчанию
     default_role_names = get_default_roles()
     default_roles = db.query(Role).filter(Role.name.in_(default_role_names)).all()
     user.roles = default_roles
     db.commit()
     
-    # Создаём аутентификацию
     user_auth = UserAuth(
         user_id=user.id,
         username=username,
@@ -1508,6 +1411,8 @@ async def register(username: str, password: str, name: str, email: str, role: st
     )
     db.add(user_auth)
     db.commit()
+    
+    RatingService.update_user_rating(db, user.id)
     
     token = create_access_token(data={"sub": user.id})
     return {
@@ -2096,11 +2001,6 @@ async def delete_task(
     return {"message": "Задача удалена"}
 
 # ========== ПЛАНИРОВЩИК НАПОМИНАНИЙ ==========
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timedelta
-import smtplib
-from email.mime.text import MIMEText
-
 def send_reminder_email(email: str, task_title: str, deadline: datetime):
     print(f"[REMINDER] Напоминание для {email}: задача '{task_title}' истекает {deadline.strftime('%Y-%m-%d %H:%M')}")
     try:
@@ -2108,11 +2008,6 @@ def send_reminder_email(email: str, task_title: str, deadline: datetime):
         msg['Subject'] = f'Напоминание: {task_title}'
         msg['From'] = 'noreply@ai-teacher.com'
         msg['To'] = email
-        # Раскомментировать при наличии SMTP
-        # with smtplib.SMTP('smtp.gmail.com', 587) as server:
-        #     server.starttls()
-        #     server.login('your_email@gmail.com', 'your_password')
-        #     server.send_message(msg)
     except Exception as e:
         print(f"SMTP error: {e}")
 
@@ -2313,9 +2208,6 @@ async def delete_syllabus_course(
     return {"message": "Курс удалён"}
 
 # ========== НАУЧНЫЕ СТАТЬИ ==========
-import httpx
-import feedparser
-
 @app.get("/api/scientific/search")
 async def search_arxiv(
     query: str,
@@ -2909,7 +2801,7 @@ async def list_hypotheses(
 @app.post("/api/hypothesis/{hypothesis_id}/rate")
 async def rate_hypothesis(
     hypothesis_id: int,
-    rating: int = Body(..., embed=True),  # 1-5
+    rating: int = Body(..., embed=True),
     accept: bool = Body(False, embed=True),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -2953,7 +2845,6 @@ async def accept_hypothesis(
     hypothesis.is_accepted = True
     db.commit()
     
-    # Можно начислить XP за принятие гипотезы
     from .xp_service import award_hypothesis_generated
     await award_hypothesis_generated(db, current_user.id, hypothesis.domain or "research")
     
@@ -2989,7 +2880,7 @@ async def save_supervisor(
         raise HTTPException(404, "Руководитель не найден")
     
     matcher = SupervisorMatcher(db, current_user)
-    score = await matcher.compute_single_match(supervisor)  # пересчёт для точности
+    score = await matcher.compute_single_match(supervisor)
     status = "favorited" if not request_message else "pending"
     us = await matcher.save_match(supervisor_id, score, status)
     
@@ -3052,7 +2943,6 @@ async def request_supervision(
     us.request_message = message
     db.commit()
     
-    # Здесь можно отправить уведомление руководителю (email/telegram)
     return {"message": "Запрос отправлен", "matching_score": score}
 
 # --- Для компаний и работодателей ---
@@ -3066,7 +2956,6 @@ async def create_company(
     """Создание компании (доступно работодателю)"""
     if not check_module_access(current_user, 'internship_match'):
         raise HTTPException(403, "Доступ запрещён")
-    # Проверяем, есть ли роль employer
     if not any(role.name == 'employer' for role in current_user.roles):
         raise HTTPException(403, "Только работодатели могут создавать компании")
     company = Company(
@@ -3138,7 +3027,6 @@ async def match_vacancies_for_student(
 ):
     if not check_module_access(current_user, 'internship_match'):
         raise HTTPException(403, "Доступ к модулю 'Стажировки' запрещён")
-    # Проверяем, что пользователь имеет роль соискателя (student, job_seeker, master, phd)
     allowed_roles = ['student', 'job_seeker', 'master', 'phd']
     if not any(role.name in allowed_roles for role in current_user.roles):
         raise HTTPException(403, "Доступ только для соискателей")
@@ -3193,14 +3081,12 @@ async def find_candidates_for_vacancy(
 ):
     if not check_module_access(current_user, 'internship_match'):
         raise HTTPException(403, "Доступ запрещён")
-    # Проверяем, что пользователь владеет компанией этой вакансии
     vacancy = db.query(Vacancy).filter(Vacancy.id == vacancy_id).first()
     if not vacancy:
         raise HTTPException(404, "Вакансия не найдена")
     if vacancy.company.user_id != current_user.id:
         raise HTTPException(403, "Вы не владелец этой вакансии")
-    matcher = VacancyMatcher(db, current_user)  # current_user – работодатель, но для поиска студентов он не используется напрямую
-    # Создаём временного студента? В матчере есть отдельный метод для поиска студентов по вакансии
+    matcher = VacancyMatcher(db, current_user)
     results = await matcher.match_students_for_vacancy(vacancy_id, limit, min_score)
     return {"candidates": results}
 
@@ -3213,8 +3099,6 @@ async def create_school_course(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Создать курс для школы (доступно владельцу школы или school_teacher/professor)"""
-    # проверка прав
     school = db.query(School).filter(School.id == school_id).first()
     if not school:
         raise HTTPException(404, "Школа не найдена")
@@ -3239,7 +3123,6 @@ async def get_school_courses(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Получить все курсы школы (доступ участникам школы)"""
     member = db.query(SchoolMember).filter(SchoolMember.school_id == school_id, SchoolMember.user_id == current_user.id).first()
     if not member:
         raise HTTPException(403, "Вы не участник этой школы")
@@ -3253,7 +3136,6 @@ async def assign_course_to_students(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Назначить курс ученикам (только учитель школы)"""
     course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
     if not course or not course.school:
         raise HTTPException(404, "Курс не привязан к школе")
@@ -3276,7 +3158,6 @@ async def get_course_progress(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Просмотр прогресса учеников по курсу (только для учителя)"""
     course = db.query(UserCourse).filter(UserCourse.id == course_id).first()
     if not course or not course.school or (course.school.owner_id != current_user.id and not any(role.name in ['school_teacher', 'professor'] for role in current_user.roles)):
         raise HTTPException(403, "Доступ запрещён")
@@ -3309,7 +3190,6 @@ async def generate_certificate(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Сгенерировать PDF-сертификат для ученика (учитель или сам ученик)"""
     assignment = db.query(CourseAssignment).filter(
         CourseAssignment.course_id == course_id,
         CourseAssignment.user_id == user_id,
@@ -3324,7 +3204,6 @@ async def generate_certificate(
         raise HTTPException(403, "Доступ запрещён")
     if assignment.certificate_url:
         return {"certificate_url": assignment.certificate_url}
-    # Генерация PDF (требуется библиотека reportlab)
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfgen import canvas
     from pathlib import Path
@@ -3359,7 +3238,6 @@ async def export_school_stats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Экспорт статистики школы в Excel (только учитель)"""
     school = db.query(School).filter(School.id == school_id, School.owner_id == current_user.id).first()
     if not school:
         raise HTTPException(403, "Доступ запрещён")
@@ -3413,7 +3291,6 @@ async def complete_course_assignment(
         raise HTTPException(404, "Курс не назначен")
     if assignment.status == "completed":
         return {"message": "Курс уже завершён"}
-    # Проверка, что все уроки курса пройдены
     total_lessons = db.query(CourseLesson).join(CourseModule).filter(CourseModule.course_id == course_id).count()
     completed_lessons = db.query(UserLessonProgress).filter(
         UserLessonProgress.user_id == current_user.id,
@@ -3427,6 +3304,7 @@ async def complete_course_assignment(
     assignment.status = "completed"
     assignment.completed_at = datetime.utcnow()
     db.commit()
+    RatingService.update_user_rating(db, current_user.id)
     return {"message": "Курс отмечен как завершённый"}
 
 @app.post("/api/course-lessons/{lesson_id}/complete")
@@ -3439,7 +3317,6 @@ async def complete_course_lesson(
     lesson = db.query(CourseLesson).filter(CourseLesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(404, "Урок не найден")
-    # Проверяем, что курс назначен пользователю
     course_id = lesson.module.course_id
     assignment = db.query(CourseAssignment).filter(CourseAssignment.course_id == course_id, CourseAssignment.user_id == current_user.id).first()
     if not assignment:
@@ -3458,14 +3335,253 @@ async def complete_course_lesson(
     db.commit()
     return {"message": "Урок отмечен пройденным"}
 
+@app.post("/api/soft-skills/start")
+async def start_soft_skills_interview(
+    scenario: str = "job_interview",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not check_module_access(current_user, 'soft_skills'):
+        raise HTTPException(403, "Доступ к модулю 'Soft Skills' запрещён")
+    interviewer = SoftSkillsInterview(db, current_user)
+    result = await interviewer.start_interview(scenario)
+    return result
+
+@app.post("/api/soft-skills/respond")
+async def respond_soft_skills(
+    assessment_id: int = Body(...),
+    audio: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not check_module_access(current_user, 'soft_skills'):
+        raise HTTPException(403, "Доступ запрещён")
+    temp_dir = Path("/tmp/soft_skills_audio")
+    temp_dir.mkdir(exist_ok=True)
+    filename = f"{uuid.uuid4()}.webm"
+    filepath = temp_dir / filename
+    content = await audio.read()
+    with open(filepath, "wb") as f:
+        f.write(content)
+    interviewer = SoftSkillsInterview(db, current_user)
+    result = await interviewer.continue_interview(assessment_id, str(filepath))
+    return result
+
+
+@app.get("/api/soft-skills/result/{assessment_id}")
+async def get_soft_skills_result(
+    assessment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    assessment = db.query(SoftSkillAssessment).filter(
+        SoftSkillAssessment.id == assessment_id,
+        SoftSkillAssessment.user_id == current_user.id
+    ).first()
+    if not assessment:
+        raise HTTPException(404, "Assessment not found")
+    responses = db.query(SoftSkillResponse).filter(SoftSkillResponse.assessment_id == assessment_id).all()
+    return {
+        "scenario": assessment.scenario,
+        "status": assessment.status,
+        "overall_score": assessment.overall_score,
+        "responses": [
+            {
+                "question": r.question,
+                "user_answer": r.user_answer_text,
+                "analysis": r.analysis,
+                "ai_response": r.ai_response_text,
+                "created_at": r.created_at
+            } for r in responses
+        ]
+    }
+
+# ========== AI-ДВОЙНИК ==========
+@app.post("/api/ai-double/command")
+async def ai_double_command(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    data = await request.json()
+    command = data.get("command", "")
+    ai_service_double = AIDoubleService(db, current_user)
+    await ai_service_double.get_or_create_ai_double()
+    response = await ai_service_double.process_command(command)
+    return {"response": response}
+
+@app.get("/api/ai-double/status")
+async def ai_double_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    ai_double = current_user.ai_double
+    if not ai_double:
+        ai_double = AIDouble(user_id=current_user.id, name=f"AI Двойник {current_user.name}")
+        db.add(ai_double)
+        db.commit()
+    return {
+        "is_active": ai_double.is_active,
+        "can_manage_roles": ai_double.can_manage_roles,
+        "can_view_all_data": ai_double.can_view_all_data,
+        "can_assign_achievements": ai_double.can_assign_achievements
+    }
+
+@app.post("/api/admin/ai-double/settings")
+async def update_ai_double_settings(
+    can_manage_roles: bool = Body(False),
+    can_view_all_data: bool = Body(False),
+    can_assign_achievements: bool = Body(False),
+    current_user: User = Depends(get_current_government_user),
+    db: Session = Depends(get_db)
+):
+    ai_double = current_user.ai_double
+    if not ai_double:
+        ai_double = AIDouble(user_id=current_user.id, name=f"AI Двойник {current_user.name}")
+        db.add(ai_double)
+    ai_double.can_manage_roles = can_manage_roles
+    ai_double.can_view_all_data = can_view_all_data
+    ai_double.can_assign_achievements = can_assign_achievements
+    db.commit()
+    return {"message": "Настройки AI-двойника обновлены"}
+
+# ========== РЕЙТИНГ ==========
+@app.post("/api/rating/update")
+async def update_my_rating(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    RatingService.update_user_rating(db, current_user.id)
+    return {"message": "Рейтинг обновлён"}
+
+@app.get("/api/rating/ranking/{role_name}")
+async def get_ranking_by_role(
+    role_name: str,
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    role = db.query(Role).filter(Role.name == role_name).first()
+    if not role:
+        raise HTTPException(404, "Роль не найдена")
+    ranking = RatingService.get_ranking_by_role(db, role_name, limit)
+    return {"role": role_name, "ranking": ranking}
+
+@app.get("/api/rating/my/{role_name}")
+async def get_my_rank(
+    role_name: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    rank_info = RatingService.get_my_rank(db, current_user.id, role_name)
+    return rank_info
+
+@app.get("/api/rating/leaderboard")
+async def get_global_leaderboard(
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    users_with_score = db.query(User).all()
+    scores = []
+    for u in users_with_score:
+        total_score = 0
+        for rating in u.ratings:
+            total_score += rating.rating_score
+        scores.append({"user_id": u.id, "name": u.name, "total_score": total_score})
+    scores.sort(key=lambda x: x["total_score"], reverse=True)
+    for i, s in enumerate(scores[:limit], 1):
+        s["rank"] = i
+    return {"leaderboard": scores[:limit]}
+
+@app.post("/api/video/process")
+async def process_video(
+    url: str = Body(...),
+    target_language: str = Body("ru"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not check_module_access(current_user, 'video'):
+        raise HTTPException(403, "Доступ запрещён")
+    # Получаем транскрипцию и перевод (используем существующий ai_service)
+    result = await ai_service.process_video(url, target_language)
+    video_service = VideoService(db, current_user)
+    session = await video_service.process_video(url, result["original_text"], result["translated_text"])
+    return {
+        "session_id": session.id,
+        "original_text": result["original_text"],
+        "translated_text": result["translated_text"],
+        "summary": session.summary,
+        "key_points": session.key_points
+    }
+
+# Эндпоинт для вопросов по видео
+@app.post("/api/video/ask")
+async def ask_video_question(
+    session_id: int = Body(...),
+    question: str = Body(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not check_module_access(current_user, 'video'):
+        raise HTTPException(403, "Доступ запрещён")
+    video_service = VideoService(db, current_user)
+    try:
+        answer = await video_service.ask_question(session_id, question)
+        return {"answer": answer}
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+# Получить историю видео-сессий пользователя
+@app.get("/api/video/sessions")
+async def get_video_sessions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    sessions = db.query(VideoSession).filter(VideoSession.user_id == current_user.id).order_by(VideoSession.created_at.desc()).all()
+    return [
+        {
+            "id": s.id,
+            "url": s.url,
+            "summary": s.summary,
+            "created_at": s.created_at
+        }
+        for s in sessions
+    ]
+
+@app.get("/api/video/session/{session_id}")
+async def get_video_session(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Получить детали видео-сессии и историю чата"""
+    session = db.query(VideoSession).filter(
+        VideoSession.id == session_id,
+        VideoSession.user_id == current_user.id
+    ).first()
+    if not session:
+        raise HTTPException(404, "Сессия не найдена")
+    
+    messages = db.query(VideoChatMessage).filter(
+        VideoChatMessage.session_id == session_id
+    ).order_by(VideoChatMessage.created_at).all()
+    
+    return {
+        "id": session.id,
+        "url": session.url,
+        "original_text": session.original_text,
+        "translated_text": session.translated_text,
+        "summary": session.summary,
+        "key_points": session.key_points,
+        "messages": [
+            {"role": m.role, "content": m.content, "created_at": m.created_at}
+            for m in messages
+        ]
+    }
+
 # ========== IELTS МОДУЛЬ ==========
-import whisper
-import tempfile
-import json
-
 whisper_model = None
-
-from app.tasks.audio_tasks import transcribe_and_analyze
 
 @app.post("/ielts/speaking/analyze")
 async def analyze_ielts_speaking(
@@ -3497,9 +3613,6 @@ async def analyze_ielts_speaking(
         "task_id": task.id,
         "message": "Audio is being transcribed and analyzed. Poll /ielts/speaking/result/{task_id} for result."
     }
-
-from celery.result import AsyncResult
-from app.celery import celery_app
 
 @app.get("/ielts/speaking/result/{task_id}")
 async def get_speaking_result(task_id: str, current_user: User = Depends(get_current_user)):

@@ -6,23 +6,23 @@ from .models import User, Role
 
 # Матрица доступа: роль -> список модулей
 ROLE_MODULE_ACCESS = {
-    'schoolchild': ['learning', 'tests', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation', 'soft_skills', 'coding_interviews'],
-    'applicant': ['learning', 'tests', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation'],
-    'student': ['learning', 'tests', 'courses_create', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'scientific', 'data_analysis', 'ielts', 'ocr', 'video_generation', 'supervisor_search', 'internship_match', 'soft_skills', 'coding_interviews'],
-    'master': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'soft_skills', 'coding_interviews', 'planner', 'internship_match'],
-    'phd': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'peer_review', 'soft_skills', 'coding_interviews', 'planner', 'internship_match'],
-    'researcher': ['scientific', 'data_analysis', 'hypothesis_generator', 'publications', 'peer_review', 'planner', 'supervisor_search', 'internship_match'],
-    'professor': ['courses_create', 'schools_teacher', 'essay_check_reviewer', 'scientific', 'supervisor_as_mentor', 'soft_skills', 'planner'],
-    'school_teacher': ['courses_create', 'schools_teacher', 'exam_tickets', 'essay_check_reviewer', 'planner', 'soft_skills'],
-    'private_tutor': ['courses_create', 'tests', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'soft_skills'],
-    'employer': ['internship_match', 'corporate_training', 'soft_skills_assessor', 'coding_interviews_creator', 'rating_view'],
-    'job_seeker': ['soft_skills', 'coding_interviews', 'internship_match', 'planner', 'essay_check_resume'],
-    'freelancer': ['courses_create', 'tests', 'essay_check', 'planner', 'rating_participant', 'soft_skills'],
-    'customer': ['freelancer_search', 'essay_check_order', 'planner'],
-    'startup_founder': ['hypothesis_generator', 'business_models', 'investor_search', 'rating_view', 'planner'],
-    'investor': ['startup_rating', 'investment_analytics', 'planner'],
+    'schoolchild': ['learning', 'tests', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation', 'soft_skills', 'coding_interviews', 'aidouble', 'rating_view'],
+    'applicant': ['learning', 'tests', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'ielts', 'ocr', 'video_generation', 'aidouble', 'rating_view'],
+    'student': ['learning', 'tests', 'courses_create', 'schools_student', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'scientific', 'data_analysis', 'ielts', 'ocr', 'video_generation', 'supervisor_search', 'internship_match', 'soft_skills', 'coding_interviews', 'aidouble', 'rating_view'],
+    'master': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'soft_skills', 'coding_interviews', 'planner', 'internship_match', 'aidouble', 'rating_view'],
+    'phd': ['learning', 'tests', 'courses_create', 'scientific', 'data_analysis', 'hypothesis_generator', 'supervisor_search', 'peer_review', 'soft_skills', 'coding_interviews', 'planner', 'internship_match', 'aidouble', 'rating_view'],
+    'researcher': ['scientific', 'data_analysis', 'hypothesis_generator', 'publications', 'peer_review', 'planner', 'supervisor_search', 'internship_match', 'aidouble', 'rating_view'],
+    'professor': ['courses_create', 'schools_teacher', 'essay_check_reviewer', 'scientific', 'supervisor_as_mentor', 'soft_skills', 'planner', 'aidouble', 'rating_view'],
+    'school_teacher': ['courses_create', 'schools_teacher', 'exam_tickets', 'essay_check_reviewer', 'planner', 'soft_skills', 'aidouble', 'rating_view'],
+    'private_tutor': ['courses_create', 'tests', 'video', 'pdf_chat', 'exam_tickets', 'essay_check', 'planner', 'soft_skills', 'aidouble', 'rating_view'],
+    'employer': ['internship_match', 'corporate_training', 'soft_skills_assessor', 'coding_interviews_creator', 'rating_view', 'aidouble'],
+    'job_seeker': ['soft_skills', 'coding_interviews', 'internship_match', 'planner', 'essay_check_resume', 'aidouble', 'rating_view'],
+    'freelancer': ['courses_create', 'tests', 'essay_check', 'planner', 'rating_participant', 'soft_skills', 'aidouble', 'rating_view'],
+    'customer': ['freelancer_search', 'essay_check_order', 'planner', 'aidouble', 'rating_view'],
+    'startup_founder': ['hypothesis_generator', 'business_models', 'investor_search', 'rating_view', 'planner', 'aidouble'],
+    'investor': ['startup_rating', 'investment_analytics', 'planner', 'aidouble', 'rating_view'],
     'government': ['admin_all'],
-    'developer': ['api_access']
+    'developer': ['api_access', 'aidouble', 'rating_view']
 }
 
 # Соответствие модуля -> идентификатор вкладки и название на UI
@@ -49,6 +49,7 @@ MODULE_TO_TAB = {
     'rating_view': ('rating', 'Рейтинг', 'fa-trophy'),
     'corporate_training': ('corporate', 'Корп. обучение', 'fa-building'),
     'api_access': ('api', 'API', 'fa-plug'),
+    'aidouble': ('aidouble', 'AI-двойник', 'fa-robot'),
     'essay_check_reviewer': ('essaycheck', 'Проверка работ', 'fa-file-alt'),
     'peer_review': ('scientific', 'Научные статьи', 'fa-flask'),
     'publications': ('scientific', 'Научные статьи', 'fa-flask'),

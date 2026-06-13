@@ -28,6 +28,7 @@ from .subject_topics import (
     get_uzbek_modules, UZBEK_TOPICS,
     get_india_modules, INDIA_TOPICS
 )
+import asyncio
 
 # Импортируем RAG
 try:
@@ -206,7 +207,7 @@ class AITeacherService:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     async def _download_audio(self, url: str, output_dir: Path) -> Path:
-        """Скачивает аудио с YouTube и возвращает путь к файлу"""
+        """Скачивает аудио с YouTube с повторными попытками и улучшенными настройками"""
         ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
@@ -216,18 +217,40 @@ class AITeacherService:
             }],
             'outtmpl': str(output_dir / '%(title)s.%(ext)s'),
             'quiet': True,
+            'no_warnings': True,
+            'ignoreerrors': True,
+            'extract_flat': False,
+            'retries': 5,
+            'fragment_retries': 5,
+            'sleep_interval': 2,
+            'max_sleep_interval': 5,
+            'socket_timeout': 30,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            base = output_dir / info['title']
-            audio_file = base.with_suffix('.mp3')
-            if not audio_file.exists():
-                for f in output_dir.glob("*"):
-                    if f.suffix in ['.mp3', '.m4a', '.webm']:
-                        audio_file = f
-                        break
-            return audio_file
-
+        # Добавляем куки, если есть (опционально)
+        # cookies_path = Path("cookies.txt")
+        # if cookies_path.exists():
+        #     ydl_opts['cookiefile'] = str(cookies_path)
+        
+        for attempt in range(3):
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(url, download=True)
+                    base = output_dir / info['title']
+                    audio_file = base.with_suffix('.mp3')
+                    if not audio_file.exists():
+                        # ищем любой аудиофайл в папке
+                        for f in output_dir.glob("*"):
+                            if f.suffix in ['.mp3', '.m4a', '.webm']:
+                                audio_file = f
+                                break
+                    return audio_file
+            except Exception as e:
+                print(f"Attempt {attempt+1} failed: {e}")
+                if attempt == 2:
+                    raise
+                await asyncio.sleep(3)
+            
     async def _transcribe_audio(self, audio_path: Path) -> str:
         """Распознаёт речь через Whisper (локально)"""
         model = whisper.load_model("base")
