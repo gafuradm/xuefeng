@@ -643,6 +643,48 @@ class DeepSeekClient:
         
         # backend/app/deepseek_client.py (добавить в класс DeepSeekClient)
 
+    async def generate_questions_by_topic(self, topic: str, num_questions: int = 5) -> List[Dict[str, str]]:
+        """
+        Генерирует вопросы по заданной теме с помощью ИИ.
+        Возвращает список объектов с ключами: question, correct_answer, explanation.
+        """
+        prompt = f"""Ты – генератор учебных вопросов. Создай {num_questions} вопросов по теме "{topic}".
+
+    Требования:
+    - Вопросы должны быть разного уровня сложности (лёгкие, средние, сложные).
+    - Каждый вопрос – это открытый вопрос с кратким ответом.
+    - Для каждого вопроса укажи правильный ответ и краткое пояснение.
+
+    Верни ТОЛЬКО JSON массив в формате:
+    [
+    {{"question": "текст вопроса", "correct_answer": "правильный ответ", "explanation": "пояснение"}},
+    ...
+    ]
+    """
+        response = await self.chat_completion([
+            {"role": "system", "content": "Ты генератор учебных вопросов. Отвечай только JSON массивом."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=3000, temperature=0.7)
+
+        # Очистка от markdown
+        response = response.strip()
+        if response.startswith("```json"):
+            response = response[7:]
+        if response.startswith("```"):
+            response = response[3:]
+        if response.endswith("```"):
+            response = response[:-3]
+        response = response.strip()
+
+        try:
+            questions = json.loads(response)
+            if not isinstance(questions, list):
+                raise ValueError("Ответ не является списком")
+            return questions
+        except Exception as e:
+            print(f"Ошибка парсинга JSON: {e}")
+            return []
+
     async def get_step_by_step_solution(self, problem: str, subject: str = "математика") -> list:
         """Генерирует пошаговое решение задачи для видео."""
         prompt = f"""

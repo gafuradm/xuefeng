@@ -82,13 +82,6 @@ async def award_hypothesis_generated(db: Session, user_id: int, topic: str) -> N
     """Начисляет XP за генерацию гипотезы"""
     await award_xp(db, user_id, 25, 'hypothesis_generated', 'hypothesis_generator', extra_data={'topic': topic})
 
-async def award_coding_solution(db: Session, user_id: int, problem_id: str, passed: bool) -> None:
-    """Начисляет XP за решение задачи по программированию"""
-    if passed:
-        await award_xp(db, user_id, 60, 'coding_solved', 'coding_interviews', extra_data={'problem_id': problem_id})
-    else:
-        await award_xp(db, user_id, 10, 'coding_attempt', 'coding_interviews', extra_data={'problem_id': problem_id})
-
 async def award_soft_skills_assessment(db: Session, user_id: int, score: float) -> None:
     """Начисляет XP за прохождение оценки soft skills"""
     await award_xp(db, user_id, 30, 'soft_skills_assessed', 'soft_skills', extra_data={'score': score})

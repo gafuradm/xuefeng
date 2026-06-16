@@ -3618,6 +3618,29 @@ async def admission_analyze(
         "universities": results
     }
 
+@app.post("/api/generate-questions")
+async def generate_questions_by_topic(
+    topic: str = Body(..., embed=True),
+    num_questions: int = Body(5, embed=True),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Генерирует вопросы по теме для создания теста"""
+    if not check_module_access(current_user, 'tests'):
+        raise HTTPException(403, "Доступ к модулю 'Тесты' запрещён")
+    
+    if not topic or len(topic.strip()) < 2:
+        raise HTTPException(400, "Тема должна содержать хотя бы 2 символа")
+    
+    if num_questions < 1 or num_questions > 20:
+        raise HTTPException(400, "Количество вопросов должно быть от 1 до 20")
+    
+    try:
+        questions = await deepseek_client.generate_questions_by_topic(topic, num_questions)
+        return {"questions": questions}
+    except Exception as e:
+        raise HTTPException(500, f"Ошибка генерации: {str(e)}")
+
 @app.get("/api/admission/profiles")
 async def get_admission_profiles(
     current_user: User = Depends(get_current_user),

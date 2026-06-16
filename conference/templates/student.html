@@ -2,665 +2,1226 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>学峰 · Студент | Живая лекция</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23831f33'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23f0ced5' font-weight='bold'%3E学%3C/text%3E%3C/svg%3E">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Bailong · Студент</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%236C5CE7'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23ffffff' font-weight='bold'%3E学%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+    </script>
     <style>
-        /* Дополнительные стили для совместимости с оригинальным JS (canvas, whiteboard) */
+        /* ─── Base ─── */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f7f6f2;
+            color: #1e1e2a;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0ede8;
+            border-radius: 12px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d0cbc4;
+            border-radius: 12px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b8b1a8;
+        }
+        ::selection {
+            background: #d5c6ff;
+            color: #1e1e2a;
+        }
+
+        /* ─── Glass ─── */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.02);
+            transition: transform 0.25s ease, box-shadow 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 48px rgba(108, 92, 231, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+        .card-solid {
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+            transition: transform 0.2s ease, box-shadow 0.25s ease;
+        }
+        .card-solid:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(108, 92, 231, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        /* ─── Buttons ─── */
+        .btn-primary {
+            background: linear-gradient(145deg, #6C5CE7, #a29bfe);
+            color: #fff;
+            border: none;
+            border-radius: 60px;
+            padding: 0.6rem 1.6rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
+            box-shadow: 0 4px 14px rgba(108, 92, 231, 0.25);
+            transition: all 0.25s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 28px rgba(108, 92, 231, 0.35);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+        .btn-secondary {
+            background: #f0ede8;
+            color: #2d2d3a;
+            border: 1px solid #e5e0d8;
+            border-radius: 60px;
+            padding: 0.6rem 1.6rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-secondary:hover {
+            background: #e8e3db;
+            border-color: #d0c8be;
+            transform: translateY(-1px);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: #6C5CE7;
+            border: 1px solid #d5c6ff;
+            border-radius: 60px;
+            padding: 0.5rem 1.4rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-ghost:hover {
+            background: #f3efff;
+            border-color: #b8a4f5;
+        }
+        .btn-pill {
+            border-radius: 60px;
+            padding: 0.4rem 1.2rem;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-pill-purple {
+            background: #ede8ff;
+            color: #5a4ad1;
+        }
+        .btn-pill-purple:hover {
+            background: #ddd4ff;
+        }
+        .btn-pill-pink {
+            background: #ffe8ef;
+            color: #d45a7a;
+        }
+        .btn-pill-pink:hover {
+            background: #ffd6e2;
+        }
+        .btn-pill-teal {
+            background: #e0f7f4;
+            color: #1b9e93;
+        }
+        .btn-pill-teal:hover {
+            background: #c8f0ec;
+        }
+        .btn-pill-gold {
+            background: #fef6e0;
+            color: #b8860b;
+        }
+        .btn-pill-gold:hover {
+            background: #fcefc8;
+        }
+
+        /* ─── Inputs ─── */
+        .input-modern {
+            background: #ffffff;
+            border: 1.5px solid #e8e3db;
+            border-radius: 18px;
+            padding: 0.7rem 1.2rem;
+            font-size: 0.95rem;
+            color: #1e1e2a;
+            width: 100%;
+            transition: all 0.2s ease;
+            outline: none;
+            font-family: inherit;
+        }
+        .input-modern:focus {
+            border-color: #a29bfe;
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.08);
+        }
+        .input-modern::placeholder {
+            color: #b0a89e;
+        }
+        select.input-modern {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2390887e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1.2rem center;
+            padding-right: 2.8rem;
+        }
+        textarea.input-modern {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .code-input {
+            background: #ffffff;
+            border: 2px solid #d5c6ff;
+            color: #1e1e2a;
+            font-size: 32px;
+            letter-spacing: 10px;
+            border-radius: 20px;
+            text-align: center;
+            font-family: 'Inter', monospace;
+            padding: 0.8rem;
+            width: 100%;
+            transition: all 0.2s ease;
+            outline: none;
+            font-weight: 600;
+        }
+        .code-input:focus {
+            border-color: #6C5CE7;
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.12);
+        }
+
+        /* ─── Status badges ─── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 1rem;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .badge-success {
+            background: #e0f7f4;
+            color: #1b9e93;
+        }
+        .badge-waiting {
+            background: #f0ede8;
+            color: #6b655c;
+        }
+        .badge-active {
+            background: #ede8ff;
+            color: #5a4ad1;
+        }
+        .badge-inactive {
+            background: #ffe8ef;
+            color: #d45a7a;
+        }
+
+        /* ─── Scrollbar thin ─── */
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f0ede8;
+            border-radius: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #d0cbc4;
+            border-radius: 4px;
+        }
+
+        /* ─── Whiteboard ─── */
         .whiteboard-container {
-            background: #140a0e;
-            border-radius: 1.5rem;
-            border: 1px solid #823544;
+            background: #ffffff;
+            border-radius: 28px;
+            border: 1px solid #ede8e2;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
         }
         .whiteboard-toolbar {
-            background: #1a0e12;
-            padding: 10px;
+            background: #f8f7f4;
+            padding: 12px 16px;
             gap: 8px;
             display: flex;
             flex-wrap: wrap;
-            border-bottom: 1px solid #602f3e;
+            border-bottom: 1px solid #ede8e2;
+            align-items: center;
         }
-        .whiteboard-toolbar button, .whiteboard-toolbar input {
-            background: #2d171f;
-            border: 1px solid #823544;
-            color: #f0cdd5;
-            border-radius: 2rem;
-            padding: 5px 12px;
+        .whiteboard-toolbar button,
+        .whiteboard-toolbar input {
+            background: #ffffff;
+            border: 1px solid #e5e0d8;
+            color: #1e1e2a;
+            border-radius: 40px;
+            padding: 4px 14px;
             cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .whiteboard-toolbar button:hover {
+            background: #ede8ff;
+            border-color: #d5c6ff;
+        }
+        .whiteboard-toolbar .wb-color {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #e5e0d8;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .whiteboard-toolbar .wb-color:hover {
+            transform: scale(1.1);
+            border-color: #6C5CE7;
+        }
+        .whiteboard-toolbar .wb-eraser {
+            background: #ffe8ef;
+            border-color: #ffd6e2;
+            color: #d45a7a;
+        }
+        .whiteboard-toolbar .wb-eraser:hover {
+            background: #ffd6e2;
+        }
+        .whiteboard-toolbar .wb-size {
+            width: 100px;
+            accent-color: #6C5CE7;
+        }
+        .whiteboard-toolbar .wb-pageinfo {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #6b655c;
+            padding: 0 6px;
         }
         .whiteboard-canvas {
             background: white;
-            border-radius: 1rem;
+            border-radius: 16px;
             width: 100%;
             height: auto;
+            display: block;
+            cursor: crosshair;
         }
-        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: #2c1a20; border-radius: 4px; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: #bc3f4b; border-radius: 4px; }
-        .code-input {
-            background: #1f1217;
-            border: 2px solid #b34b60;
-            color: #f5dce2;
-            font-size: 28px;
-            letter-spacing: 8px;
-            border-radius: 1.5rem;
-            text-align: center;
-            font-family: monospace;
+
+        /* ─── Responsive ─── */
+        @media (max-width: 640px) {
+            .glass-card {
+                border-radius: 20px;
+                padding: 1rem !important;
+            }
+            .card-solid {
+                border-radius: 20px;
+                padding: 1rem !important;
+            }
+            .btn-primary,
+            .btn-secondary,
+            .btn-ghost {
+                padding: 0.5rem 1.2rem;
+                font-size: 0.85rem;
+            }
+            .input-modern {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+                border-radius: 14px;
+            }
+            .code-input {
+                font-size: 24px;
+                letter-spacing: 6px;
+                padding: 0.6rem;
+            }
+            .whiteboard-toolbar {
+                padding: 8px 12px;
+                gap: 6px;
+            }
+            .whiteboard-toolbar button,
+            .whiteboard-toolbar input {
+                font-size: 0.7rem;
+                padding: 3px 10px;
+            }
+            .whiteboard-toolbar .wb-color {
+                width: 28px;
+                height: 28px;
+            }
         }
-        .code-input:focus {
-            border-color: #dc6f82;
-            box-shadow: 0 0 0 3px rgba(200,70,90,0.3);
-            outline: none;
+        @media (max-width: 480px) {
+            .glass-card {
+                border-radius: 16px;
+                padding: 0.8rem !important;
+            }
+            .card-solid {
+                border-radius: 16px;
+                padding: 0.8rem !important;
+            }
+            .code-input {
+                font-size: 20px;
+                letter-spacing: 4px;
+            }
+        }
+
+        /* ─── Video containers ─── */
+        .video-wrapper {
+            background: #f0ede8;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #1e1e2a;
+        }
+        .video-wrapper-sm {
+            aspect-ratio: 4/3;
+            max-width: 280px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #1e1e2a;
+        }
+        .video-wrapper-sm video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ─── Chat ─── */
+        .chat-messages {
+            background: #f8f7f4;
+            border-radius: 18px;
+            border: 1px solid #ede8e2;
+        }
+        .chat-message {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 0.6rem 1rem;
+            border: 1px solid #ede8e2;
+        }
+        .chat-message-self {
+            background: #ede8ff;
+            border-color: #d5c6ff;
+        }
+
+        /* ─── Animation ─── */
+        .fade-in {
+            animation: fadeUp 0.4s ease both;
+        }
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .hover-lift {
+            transition: transform 0.2s ease, box-shadow 0.25s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+        }
+
+        /* ─── Misc ─── */
+        .bg-soft {
+            background: #f7f6f2;
+        }
+        .text-soft {
+            color: #6b655c;
+        }
+        .border-soft {
+            border-color: #ede8e2;
+        }
+        .transition-smooth {
+            transition: all 0.25s ease;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-[#0a0305] to-[#040102] text-gray-200 font-sans antialiased">
+<body>
 
-<div class="max-w-[1600px] mx-auto px-4 py-6">
-    <!-- Шапка с логотипом -->
-    <div class="flex flex-wrap justify-between items-center gap-4 mb-6 p-4 rounded-2xl bg-black/30 backdrop-blur-sm border border-[#5c2e3c]">
-        <div class="flex items-center gap-3">
-            <div class="text-4xl font-black tracking-wider bg-gradient-to-r from-[#e6b8c2] to-[#bc3f4b] bg-clip-text text-transparent">学峰</div>
-            <div class="text-xs text-[#ca7a88] hidden sm:block">LIVE LECTURE · STUDENT</div>
-        </div>
-        <div class="flex flex-wrap gap-3">
-            <button onclick="window.location.href='/'" class="bg-[#2c1a20] hover:bg-[#3f232c] text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-home mr-1"></i> На главную</button>
-        </div>
-    </div>
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-5 sm:py-8">
 
-    <!-- Блок верификации (виден до подтверждения) -->
-    <div id="verificationBox" class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-6 text-center max-w-lg mx-auto">
-        <i class="fas fa-lock text-5xl text-[#bc3f4b] mb-3 block"></i>
-        <h2 class="text-2xl font-bold mb-2">🔐 Подтверждение присутствия</h2>
-        <p class="text-gray-400 mb-4">Введите 6-значный код с экрана преподавателя</p>
-        <input type="text" id="lectureCode" class="code-input w-full text-center text-2xl tracking-widest" maxlength="6" placeholder="XXXXXX" autocomplete="off">
-        <div class="mt-3">
-            <input type="text" id="studentIdInput" placeholder="ID студента (минимум 6 цифр)" class="w-full bg-[#1f1217] border border-[#762f3e] rounded-full px-4 py-2 text-center">
-        </div>
-        <button onclick="verifyCode()" class="mt-4 bg-[#bc3f4b] hover:bg-[#9e2e3a] text-white font-semibold px-8 py-2 rounded-full transition"><i class="fas fa-check mr-2"></i> Подтвердить</button>
-        <p id="codeTimer" class="text-sm text-[#f5a3b2] mt-3"></p>
-        <p class="text-xs text-gray-500 mt-2">Код обновляется каждые 45 секунд</p>
-    </div>
-
-    <!-- Основной интерфейс (скрыт до верификации) -->
-    <div id="mainInterface" class="hidden space-y-6">
-        <!-- Статус-бар -->
-        <div class="flex flex-wrap justify-between items-center gap-3 p-4 rounded-2xl bg-black/30 backdrop-blur-sm border border-[#5c2e3c]">
-            <div class="flex flex-wrap gap-3">
-                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920]" id="presenceStatus">⏳ Ожидание</span>
-                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920]" id="screenStatus">📺 Экран: ожидание</span>
-                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920]" id="cameraStatus">📷 Камера: ожидание</span>
-            </div>
-            <div class="flex flex-wrap items-center gap-3">
-                <select id="myLanguage" class="bg-[#1f1217] border border-[#762f3e] rounded-full px-3 py-1.5 text-sm">
-                    <option value="en">🇺🇸 English</option>
-                    <option value="ru">🇷🇺 Русский</option>
-                    <option value="kk">🇰🇿 Қазақша</option>
-                    <option value="de">🇩🇪 Deutsch</option>
-                    <option value="ja">🇯🇵 日本語</option>
-                    <option value="ko">🇰🇷 한국어</option>
-                    <option value="zh">🇨🇳 中文</option>
-                </select>
-                <div class="flex items-center gap-2">
-                    <span class="text-sm">👤 Имя:</span>
-                    <input type="text" id="userNameInput" value="Студент" class="bg-[#1f1217] border border-[#762f3e] rounded-full px-3 py-1.5 text-sm w-32">
-                    <button onclick="setName()" class="bg-[#2d7a4b] hover:bg-[#3f9a60] px-3 py-1.5 rounded-full text-sm font-medium">OK</button>
+        <!-- ===== HEADER ===== -->
+        <header class="glass-card p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
+                <div class="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-[#6C5CE7] via-[#a29bfe] to-[#fd79a8] bg-clip-text text-transparent">
+                    Bailong
                 </div>
-                <span class="text-sm">📝 Фраз: <strong id="phraseCount" class="text-[#e8a0ab]">0</strong></span>
-            </div>
-        </div>
-
-        <!-- Видео контейнер -->
-        <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4">
-            <video id="remoteScreenVideo" autoplay playsinline class="w-full rounded-xl bg-black"></video>
-            <video id="remoteCameraVideo" autoplay playsinline class="w-full max-w-[280px] mt-4 rounded-xl bg-black"></video>
-        </div>
-
-        <!-- Перевод и история -->
-        <div class="grid md:grid-cols-2 gap-6">
-            <!-- Текущий перевод -->
-            <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4">
-                <h3 class="text-lg font-bold border-l-4 border-[#d45c6f] pl-3 mb-3">📝 Перевод в реальном времени</h3>
-                <div id="currentTranslation" class="bg-[#1f1219] p-3 rounded-xl text-base font-medium"><em>Лекция начнётся...</em></div>
-                <div id="originalText" class="text-sm text-gray-400 mt-2 italic"></div>
-            </div>
-            <!-- История перевода -->
-            <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4">
-                <h3 class="text-lg font-bold border-l-4 border-[#d45c6f] pl-3 mb-3">📜 История перевода</h3>
-                <div id="historyList" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin"><em class="text-gray-400">Пусто</em></div>
-            </div>
-        </div>
-
-        <!-- Чат и управление -->
-        <div class="grid md:grid-cols-3 gap-6">
-            <!-- Чат -->
-            <div class="md:col-span-2 bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4">
-                <h3 class="text-lg font-bold border-l-4 border-[#d45c6f] pl-3 mb-3">💬 Чат (автоперевод)</h3>
-                <div id="chatMessages" class="bg-[#0d060a] rounded-xl border border-[#602f3e] h-64 overflow-y-auto p-3 space-y-2 scrollbar-thin">
-                    <div class="text-center text-gray-500">Сообщения будут здесь</div>
-                </div>
-                <div class="flex gap-2 mt-3">
-                    <input type="text" id="chatInput" placeholder="Введите сообщение..." class="flex-1 bg-[#1f1217] border border-[#762f3e] rounded-full px-4 py-2 text-sm focus:outline-none focus:border-[#bc3f4b]">
-                    <button onclick="sendChatMessage()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-5 py-2 rounded-full text-sm font-semibold">Отправить</button>
+                <div class="text-xs font-medium text-[#8b83a0] bg-white/60 px-3 py-1 rounded-full border border-[#ede8e2] hidden sm:block">
+                    LIVE LECTURE · STUDENT
                 </div>
             </div>
-            <!-- Кнопки управления -->
-            <div class="bg-black/30 backdrop-blur-sm rounded-2xl border border-[#5c2e3c] p-4 flex flex-col gap-3">
-                <button onclick="toggleSound()" id="soundBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] text-white px-4 py-2 rounded-full text-sm font-semibold"><i class="fas fa-volume-up mr-2"></i> 🔊 Озвучка включена</button>
-                <button onclick="reconnectAll()" class="bg-[#2c1a20] hover:bg-[#3f232c] text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-sync-alt mr-2"></i> Переподключиться</button>
-                <button id="toggleWhiteboardBtn" class="bg-[#2c1a20] hover:bg-[#3f232c] text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-chalkboard mr-2"></i> Открыть доску</button>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="window.location.href='/'" class="btn-ghost text-sm">
+                    <i class="fas fa-home mr-1"></i> На главную
+                </button>
             </div>
+        </header>
+
+        <!-- ===== VERIFICATION BOX ===== -->
+        <div id="verificationBox" class="glass-card p-6 sm:p-8 text-center max-w-lg mx-auto">
+            <div class="w-16 h-16 rounded-full bg-[#ede8ff] flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-lock text-3xl text-[#6C5CE7]"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2 text-[#1e1e2a]">🔐 Подтверждение присутствия</h2>
+            <p class="text-[#5a554a] mb-5">Введите 6-значный код с экрана преподавателя</p>
+            <input type="text" id="lectureCode" class="code-input text-center" maxlength="6" placeholder="XXXXXX" autocomplete="off">
+            <div class="mt-3">
+                <input type="text" id="studentIdInput" placeholder="ID студента (минимум 6 цифр)" class="input-modern text-center">
+            </div>
+            <button onclick="verifyCode()" class="btn-primary mt-5 w-full sm:w-auto px-8 py-3">
+                <i class="fas fa-check mr-2"></i> Подтвердить
+            </button>
+            <p id="codeTimer" class="text-sm text-[#6C5CE7] font-medium mt-3"></p>
+            <p class="text-xs text-[#8b83a0] mt-1">Код обновляется каждые 45 секунд</p>
         </div>
 
-        <!-- Контейнер для доски -->
-        <div id="whiteboardContainer" class="mt-4" style="display: none;"></div>
-    </div>
-</div>
+        <!-- ===== MAIN INTERFACE (hidden until verification) ===== -->
+        <div id="mainInterface" class="hidden space-y-6">
 
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-<script>
-    // ============== ПОЛНОСТЬЮ СОХРАНЁННЫЙ ФУНКЦИОНАЛ (без изменений) ==============
-    const socket = io();
-    let studentId = localStorage.getItem("student_id") || "";
-    let selectedLang = "en";
-    let soundEnabled = true;
-    let history = [];
-    let verificationTimer;
-    let screenPeer = null;
-    let cameraPeer = null;
-    let screenConnected = false;
-    let cameraConnected = false;
-    let whiteboardInstance = null;
-
-    const configuration = {
-        iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
-        ]
-    };
-
-    const verificationBox = document.getElementById('verificationBox');
-    const mainInterface = document.getElementById('mainInterface');
-    const remoteScreenVideo = document.getElementById('remoteScreenVideo');
-    const remoteCameraVideo = document.getElementById('remoteCameraVideo');
-    const currentTranslationDiv = document.getElementById('currentTranslation');
-    const originalTextDiv = document.getElementById('originalText');
-    const historyListDiv = document.getElementById('historyList');
-    const phraseCountSpan = document.getElementById('phraseCount');
-    const presenceStatus = document.getElementById('presenceStatus');
-    const screenStatusSpan = document.getElementById('screenStatus');
-    const cameraStatusSpan = document.getElementById('cameraStatus');
-    const toggleWhiteboardBtn = document.getElementById('toggleWhiteboardBtn');
-    const whiteboardContainer = document.getElementById('whiteboardContainer');
-
-    function updateStatus(verified) {
-        if (verified) {
-            presenceStatus.innerHTML = '✅ Подтверждено';
-            presenceStatus.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#1e4a2f] text-[#bbf0cf]';
-        } else {
-            presenceStatus.innerHTML = '⏳ Ожидание подтверждения';
-            presenceStatus.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920] text-[#f0e2e6]';
-        }
-    }
-
-    function updateScreenStreamStatus(active) {
-        if (active) {
-            screenStatusSpan.innerHTML = '📺 Экран: идёт';
-            screenStatusSpan.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#1e4a2f] text-[#bbf0cf]';
-        } else {
-            screenStatusSpan.innerHTML = '📺 Экран: ожидание';
-            screenStatusSpan.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920] text-[#f0e2e6]';
-        }
-    }
-
-    function updateCameraStreamStatus(active) {
-        if (active) {
-            cameraStatusSpan.innerHTML = '📷 Камера: идёт';
-            cameraStatusSpan.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#1e4a2f] text-[#bbf0cf]';
-        } else {
-            cameraStatusSpan.innerHTML = '📷 Камера: ожидание';
-            cameraStatusSpan.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#2d1920] text-[#f0e2e6]';
-        }
-    }
-
-    function addToHistory(translation, original) {
-        const time = new Date().toLocaleTimeString();
-        history.unshift({ time, translation, original });
-        if (history.length > 30) history.pop();
-        if (historyListDiv.children[0]?.innerText === 'Пусто') historyListDiv.innerHTML = '';
-        historyListDiv.innerHTML = history.map(item => `
-            <div class="bg-[#0f070b80] rounded-lg p-2 text-sm border-l-2 border-[#bc3f4b]">
-                <div class="text-[10px] text-[#bc8f9b]">${item.time}</div>
-                <div class="font-medium">${item.translation}</div>
-                <div class="text-xs text-gray-400">${item.original || ''}</div>
+            <!-- Status bar -->
+            <div class="glass-card p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap gap-2">
+                    <span class="badge badge-waiting" id="presenceStatus">
+                        <i class="fas fa-clock"></i> Ожидание
+                    </span>
+                    <span class="badge badge-waiting" id="screenStatus">
+                        <i class="fas fa-desktop"></i> Экран: ожидание
+                    </span>
+                    <span class="badge badge-waiting" id="cameraStatus">
+                        <i class="fas fa-video"></i> Камера: ожидание
+                    </span>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <select id="myLanguage" class="input-modern text-sm w-auto min-w-[120px]">
+                        <option value="en">🇺🇸 English</option>
+                        <option value="ru">🇷🇺 Русский</option>
+                        <option value="kk">🇰🇿 Қазақша</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                        <option value="ja">🇯🇵 日本語</option>
+                        <option value="ko">🇰🇷 한국어</option>
+                        <option value="zh">🇨🇳 中文</option>
+                    </select>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-[#5a554a]">👤</span>
+                        <input type="text" id="userNameInput" value="Студент" class="input-modern text-sm w-28 sm:w-32">
+                        <button onclick="setName()" class="btn-pill btn-pill-teal text-xs">OK</button>
+                    </div>
+                    <span class="text-sm text-[#5a554a] whitespace-nowrap">
+                        📝 Фраз: <strong id="phraseCount" class="text-[#6C5CE7]">0</strong>
+                    </span>
+                </div>
             </div>
-        `).join('');
-    }
 
-    function createPeerConnection(type) {
-        const pc = new RTCPeerConnection(configuration);
-        
-        pc.ontrack = (event) => {
-            console.log(`🎥 Трек получен для ${type}`);
-            if (type === 'screen') {
-                if (remoteScreenVideo.srcObject !== event.streams[0]) {
-                    remoteScreenVideo.srcObject = event.streams[0];
-                    remoteScreenVideo.play().catch(e => console.log(e));
-                    updateScreenStreamStatus(true);
-                    screenConnected = true;
-                }
+            <!-- Video streams -->
+            <div class="glass-card p-4 sm:p-5">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="lg:col-span-2 video-wrapper bg-[#1e1e2a] rounded-2xl overflow-hidden aspect-video">
+                        <video id="remoteScreenVideo" autoplay playsinline class="w-full h-full object-contain"></video>
+                    </div>
+                    <div class="video-wrapper-sm rounded-2xl overflow-hidden bg-[#1e1e2a] aspect-video max-w-full lg:max-w-[280px] mx-auto lg:mx-0">
+                        <video id="remoteCameraVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Translation & History -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Current translation -->
+                <div class="card-solid p-5 sm:p-6">
+                    <h3 class="text-lg font-bold border-l-4 border-[#6C5CE7] pl-3 mb-4 text-[#1e1e2a]">
+                        <i class="fas fa-language text-[#6C5CE7] mr-2"></i> Перевод в реальном времени
+                    </h3>
+                    <div id="currentTranslation" class="bg-[#f8f7f4] p-4 rounded-2xl text-base font-medium text-[#1e1e2a] min-h-[60px] flex items-center">
+                        <em class="text-[#8b83a0]">Лекция начнётся…</em>
+                    </div>
+                    <div id="originalText" class="text-sm text-[#8b83a0] mt-2 italic"></div>
+                </div>
+                <!-- History -->
+                <div class="card-solid p-5 sm:p-6">
+                    <h3 class="text-lg font-bold border-l-4 border-[#fd79a8] pl-3 mb-4 text-[#1e1e2a]">
+                        <i class="fas fa-history text-[#fd79a8] mr-2"></i> История перевода
+                    </h3>
+                    <div id="historyList" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin pr-1">
+                        <em class="text-[#8b83a0] text-sm">Пусто</em>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat & Controls -->
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Chat -->
+                <div class="md:col-span-2 card-solid p-5 sm:p-6">
+                    <h3 class="text-lg font-bold border-l-4 border-[#a29bfe] pl-3 mb-4 text-[#1e1e2a]">
+                        <i class="fas fa-comment-dots text-[#6C5CE7] mr-2"></i> Чат (автоперевод)
+                    </h3>
+                    <div id="chatMessages" class="chat-messages h-64 overflow-y-auto p-3 space-y-2 scrollbar-thin">
+                        <div class="text-center text-[#8b83a0] py-6">Сообщения будут здесь</div>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <input type="text" id="chatInput" placeholder="Введите сообщение…" class="input-modern flex-1 text-sm" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                        <button onclick="sendChatMessage()" class="btn-primary text-sm whitespace-nowrap">Отправить</button>
+                    </div>
+                </div>
+                <!-- Controls -->
+                <div class="card-solid p-5 sm:p-6 flex flex-col gap-3">
+                    <button onclick="toggleSound()" id="soundBtn" class="btn-primary w-full justify-center text-sm">
+                        <i class="fas fa-volume-up mr-2"></i> 🔊 Озвучка включена
+                    </button>
+                    <button onclick="reconnectAll()" class="btn-secondary w-full justify-center text-sm">
+                        <i class="fas fa-sync-alt mr-2"></i> Переподключиться
+                    </button>
+                    <button id="toggleWhiteboardBtn" class="btn-secondary w-full justify-center text-sm">
+                        <i class="fas fa-chalkboard mr-2"></i> Открыть доску
+                    </button>
+                </div>
+            </div>
+
+            <!-- Whiteboard container -->
+            <div id="whiteboardContainer" class="whiteboard-container" style="display: none;"></div>
+
+        </div><!-- /mainInterface -->
+
+    </div><!-- /container -->
+
+    <!-- ===== SCRIPTS ===== -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js">
+    </script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js">
+    </script>
+    <script>
+        // ============== FULL PRESERVED FUNCTIONALITY ==============
+        const socket = io();
+        let studentId = localStorage.getItem("student_id") || "";
+        let selectedLang = "en";
+        let soundEnabled = true;
+        let history = [];
+        let verificationTimer;
+        let screenPeer = null;
+        let cameraPeer = null;
+        let screenConnected = false;
+        let cameraConnected = false;
+        let whiteboardInstance = null;
+
+        const configuration = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        const verificationBox = document.getElementById('verificationBox');
+        const mainInterface = document.getElementById('mainInterface');
+        const remoteScreenVideo = document.getElementById('remoteScreenVideo');
+        const remoteCameraVideo = document.getElementById('remoteCameraVideo');
+        const currentTranslationDiv = document.getElementById('currentTranslation');
+        const originalTextDiv = document.getElementById('originalText');
+        const historyListDiv = document.getElementById('historyList');
+        const phraseCountSpan = document.getElementById('phraseCount');
+        const presenceStatus = document.getElementById('presenceStatus');
+        const screenStatusSpan = document.getElementById('screenStatus');
+        const cameraStatusSpan = document.getElementById('cameraStatus');
+        const toggleWhiteboardBtn = document.getElementById('toggleWhiteboardBtn');
+        const whiteboardContainer = document.getElementById('whiteboardContainer');
+
+        function updateStatus(verified) {
+            if (verified) {
+                presenceStatus.innerHTML = '<i class="fas fa-check-circle"></i> Подтверждено';
+                presenceStatus.className = 'badge badge-success';
             } else {
-                if (remoteCameraVideo.srcObject !== event.streams[0]) {
-                    remoteCameraVideo.srcObject = event.streams[0];
-                    remoteCameraVideo.style.display = 'block';
-                    remoteCameraVideo.play().catch(e => console.log(e));
-                    updateCameraStreamStatus(true);
-                    cameraConnected = true;
-                }
+                presenceStatus.innerHTML = '<i class="fas fa-clock"></i> Ожидание';
+                presenceStatus.className = 'badge badge-waiting';
             }
-        };
-        
-        pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                socket.emit('webrtc_ice_candidate', { studentId: studentId, candidate: event.candidate, type: type });
-            }
-        };
-        
-        pc.oniceconnectionstatechange = () => {
-            console.log(`${type} ICE состояние:`, pc.iceConnectionState);
-            if (pc.iceConnectionState === 'connected') {
-                console.log(`✅ ${type} WebRTC соединение установлено`);
-            } else if (pc.iceConnectionState === 'disconnected') {
-                if (type === 'screen') updateScreenStreamStatus(false);
-                else updateCameraStreamStatus(false);
-            }
-        };
-        return pc;
-    }
-
-    function reconnectAll() {
-        console.log('🔄 Переподключение всех потоков...');
-        if (screenPeer) screenPeer.close();
-        if (cameraPeer) cameraPeer.close();
-        screenPeer = createPeerConnection('screen');
-        cameraPeer = createPeerConnection('camera');
-        socket.emit('request_webrtc_restart', { studentId: studentId });
-    }
-
-    function setStudentId() {
-        const input = document.getElementById('studentIdInput');
-        const id = input.value.trim();
-        if (id && /^\d{6,}$/.test(id)) {
-            studentId = id;
-            localStorage.setItem("student_id", id);
-            return true;
-        } else {
-            alert("Введите корректный ID (минимум 6 цифр)");
-            return false;
-        }
-    }
-
-    function verifyCode() {
-        if (!setStudentId()) return;
-        const code = document.getElementById('lectureCode').value.trim().toUpperCase();
-        if (code.length !== 6) {
-            alert("Введите 6-значный код");
-            return;
-        }
-        socket.emit('verify_code', { code: code, student_id: studentId });
-    }
-
-    function startCodeTimer() {
-        let secondsLeft = 45;
-        clearInterval(verificationTimer);
-        verificationTimer = setInterval(() => {
-            secondsLeft--;
-            if (secondsLeft >= 0) {
-                document.getElementById("codeTimer").innerText = `Код действителен: ${secondsLeft} сек`;
-                if (secondsLeft <= 5) document.getElementById("codeTimer").style.color = "#f098a8";
-                if (secondsLeft <= 0) {
-                    clearInterval(verificationTimer);
-                    document.getElementById("codeTimer").innerText = "🔄 Код обновлён!";
-                }
-            }
-        }, 1000);
-    }
-
-    function toggleSound() {
-        soundEnabled = !soundEnabled;
-        const btn = document.getElementById('soundBtn');
-        btn.innerHTML = soundEnabled ? '<i class="fas fa-volume-up mr-2"></i> 🔊 Озвучка включена' : '<i class="fas fa-volume-mute mr-2"></i> 🔇 Озвучка выключена';
-        if (!soundEnabled) speechSynthesis.cancel();
-    }
-
-    function setName() {
-        const name = document.getElementById('userNameInput').value.trim();
-        if (name) socket.emit('set_name', { name: name });
-    }
-
-    function sendChatMessage() {
-        const input = document.getElementById('chatInput');
-        const message = input.value.trim();
-        if (message) {
-            socket.emit('send_message', { message: message });
-            input.value = '';
-        }
-    }
-
-    // ================== ДОСКА (Whiteboard) ==================
-    class Whiteboard {
-        constructor(containerId, socket, isTeacher, roomName) {
-            this.container = document.getElementById(containerId);
-            this.socket = socket;
-            this.isTeacher = isTeacher;
-            this.roomName = roomName;
-            this.currentPage = 0;
-            this.pages = [];
-            this.ctx = null;
-            this.drawing = false;
-            this.lastX = 0;
-            this.lastY = 0;
-            this.currentColor = '#000000';
-            this.currentSize = 2;
-            this.eraserMode = false;
-            this.init();
         }
 
-        init() {
-            this.toolbar = document.createElement('div');
-            this.toolbar.className = 'whiteboard-toolbar';
-            this.toolbar.style.background = '#140a0e';
-            this.toolbar.innerHTML = `
-                <button class="wb-color" data-color="#000000" style="background:#000; color:white;">Чёрный</button>
-                <button class="wb-color" data-color="#ff0000" style="background:#ff0000;">Красный</button>
-                <button class="wb-color" data-color="#0000ff" style="background:#0000ff;">Синий</button>
-                <button class="wb-color" data-color="#00aa00" style="background:#00aa00;">Зелёный</button>
-                <button class="wb-eraser">🧽 Ластик</button>
-                <input type="range" class="wb-size" min="1" max="20" value="2" title="Размер">
-                <button class="wb-clear">🗑 Очистить страницу</button>
-                <button class="wb-newpage">📄 Новая страница</button>
-                <button class="wb-prevpage" disabled>◀ Пред.</button>
-                <span class="wb-pageinfo">Страница 1</span>
-                <button class="wb-nextpage" disabled>След. ▶</button>
-                <button class="wb-savepdf">📑 Сохранить PDF</button>
-            `;
-            this.container.appendChild(this.toolbar);
-            this.canvasContainer = document.createElement('div');
-            this.container.appendChild(this.canvasContainer);
-            this.addNewPage();
-
-            this.socket.on('whiteboard_draw', (data) => {
-                if (data.room === this.roomName && !this.isTeacher) this.applyDrawEvent(data);
-            });
-            this.socket.on('whiteboard_clear', (data) => {
-                if (data.room === this.roomName && !this.isTeacher && this.pages[this.currentPage]) {
-                    this.clearCanvas(this.pages[this.currentPage].canvas);
-                }
-            });
-            this.socket.on('whiteboard_new_page', (data) => {
-                if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) {
-                    while (this.pages.length <= data.pageIndex) this.addNewPage(false);
-                    this.switchToPage(data.pageIndex);
-                }
-            });
-            this.socket.on('whiteboard_switch_page', (data) => {
-                if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) {
-                    this.switchToPage(data.pageIndex);
-                }
-            });
-
-            this.toolbar.querySelectorAll('.wb-color').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    this.eraserMode = false;
-                    this.currentColor = btn.dataset.color;
-                    this.updateToolbarUI();
-                });
-            });
-            this.toolbar.querySelector('.wb-eraser').addEventListener('click', () => {
-                this.eraserMode = true;
-                this.updateToolbarUI();
-            });
-            this.toolbar.querySelector('.wb-size').addEventListener('input', (e) => {
-                this.currentSize = parseInt(e.target.value);
-            });
-            this.toolbar.querySelector('.wb-clear').addEventListener('click', () => {
-                if (confirm('Очистить текущую страницу?')) {
-                    this.clearCanvas(this.pages[this.currentPage].canvas);
-                    this.broadcastDraw({ type: 'clear' });
-                }
-            });
-            this.toolbar.querySelector('.wb-newpage').addEventListener('click', () => {
-                this.addNewPage(true);
-                this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length - 1 });
-                this.switchToPage(this.pages.length - 1);
-            });
-            this.toolbar.querySelector('.wb-prevpage').addEventListener('click', () => {
-                if (this.currentPage > 0) this.switchToPage(this.currentPage - 1);
-            });
-            this.toolbar.querySelector('.wb-nextpage').addEventListener('click', () => {
-                if (this.currentPage < this.pages.length - 1) this.switchToPage(this.currentPage + 1);
-            });
-            this.toolbar.querySelector('.wb-savepdf').addEventListener('click', () => this.saveAsPDF());
-        }
-
-        updateToolbarUI() {
-            const eraserBtn = this.toolbar.querySelector('.wb-eraser');
-            if (this.eraserMode) {
-                eraserBtn.style.background = '#ddd';
-                eraserBtn.style.color = '#000';
+        function updateScreenStreamStatus(active) {
+            if (active) {
+                screenStatusSpan.innerHTML = '<i class="fas fa-desktop"></i> Экран: идёт';
+                screenStatusSpan.className = 'badge badge-success';
             } else {
-                eraserBtn.style.background = '';
-                eraserBtn.style.color = '';
+                screenStatusSpan.innerHTML = '<i class="fas fa-desktop"></i> Экран: ожидание';
+                screenStatusSpan.className = 'badge badge-waiting';
             }
         }
 
-        addNewPage(broadcast = false) {
-            const pageDiv = document.createElement('div');
-            pageDiv.className = 'whiteboard-page';
-            pageDiv.style.display = this.pages.length === this.currentPage ? 'block' : 'none';
-            const canvas = document.createElement('canvas');
-            canvas.className = 'whiteboard-canvas';
-            canvas.width = 800;
-            canvas.height = 500;
-            canvas.style.width = '100%';
-            canvas.style.height = 'auto';
-            canvas.style.border = '1px solid #823544';
-            canvas.style.borderRadius = '12px';
-            canvas.style.background = 'white';
-            pageDiv.appendChild(canvas);
-            this.canvasContainer.appendChild(pageDiv);
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            this.setupCanvasEvents(canvas, ctx);
-            this.pages.push({ canvas, ctx, div: pageDiv });
-            if (broadcast && this.isTeacher) this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length - 1 });
-            this.updateNavButtons();
+        function updateCameraStreamStatus(active) {
+            if (active) {
+                cameraStatusSpan.innerHTML = '<i class="fas fa-video"></i> Камера: идёт';
+                cameraStatusSpan.className = 'badge badge-success';
+            } else {
+                cameraStatusSpan.innerHTML = '<i class="fas fa-video"></i> Камера: ожидание';
+                cameraStatusSpan.className = 'badge badge-waiting';
+            }
         }
 
-        setupCanvasEvents(canvas, ctx) {
-            const getCoords = (e) => {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                let clientX, clientY;
-                if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
-                else { clientX = e.clientX; clientY = e.clientY; }
-                let x = (clientX - rect.left) * scaleX;
-                let y = (clientY - rect.top) * scaleY;
-                x = Math.min(Math.max(0, x), canvas.width);
-                y = Math.min(Math.max(0, y), canvas.height);
-                return { x, y };
-            };
-            const startDraw = (e) => {
-                e.preventDefault();
-                this.drawing = true;
-                const { x, y } = getCoords(e);
-                this.lastX = x; this.lastY = y;
-                ctx.beginPath();
-                ctx.arc(x, y, this.currentSize / 2, 0, 2 * Math.PI);
-                ctx.fillStyle = this.eraserMode ? 'white' : this.currentColor;
-                ctx.fill();
-                this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor, size: this.currentSize, isStart: true });
-            };
-            const draw = (e) => {
-                if (!this.drawing) return;
-                e.preventDefault();
-                const { x, y } = getCoords(e);
-                ctx.beginPath();
-                ctx.moveTo(this.lastX, this.lastY);
-                ctx.lineTo(x, y);
-                ctx.strokeStyle = this.eraserMode ? 'white' : this.currentColor;
-                ctx.lineWidth = this.currentSize;
-                ctx.lineCap = 'round';
-                ctx.stroke();
-                this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor, size: this.currentSize, fromX: this.lastX, fromY: this.lastY });
-                this.lastX = x; this.lastY = y;
-            };
-            const endDraw = () => { this.drawing = false; };
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', endDraw);
-            canvas.addEventListener('mouseleave', endDraw);
-            canvas.addEventListener('touchstart', startDraw);
-            canvas.addEventListener('touchmove', draw);
-            canvas.addEventListener('touchend', endDraw);
+        function addToHistory(translation, original) {
+            const time = new Date().toLocaleTimeString();
+            history.unshift({ time, translation, original });
+            if (history.length > 30) history.pop();
+            if (historyListDiv.children[0]?.innerText === 'Пусто' || historyListDiv.children[0]?.innerText === '') historyListDiv
+                .innerHTML = '';
+            historyListDiv.innerHTML = history.map(item => `
+                    <div class="bg-white rounded-xl p-3 text-sm border border-[#ede8e2] shadow-sm">
+                        <div class="text-[10px] text-[#8b83a0] font-medium">${item.time}</div>
+                        <div class="font-medium text-[#1e1e2a]">${item.translation}</div>
+                        ${item.original ? `<div class="text-xs text-[#8b83a0] mt-0.5">${item.original}</div>` : ''}
+                    </div>
+                `).join('');
         }
 
-        clearCanvas(canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
+        function createPeerConnection(type) {
+            const pc = new RTCPeerConnection(configuration);
 
-        applyDrawEvent(data) {
-            if (data.type === 'draw') {
-                const canvasObj = this.pages[this.currentPage];
-                if (!canvasObj) return;
-                const ctx = canvasObj.ctx;
-                if (data.isStart) {
-                    ctx.beginPath();
-                    ctx.arc(data.x, data.y, data.size / 2, 0, 2 * Math.PI);
-                    ctx.fillStyle = data.color;
-                    ctx.fill();
-                } else if (data.fromX !== undefined) {
-                    ctx.beginPath();
-                    ctx.moveTo(data.fromX, data.fromY);
-                    ctx.lineTo(data.x, data.y);
-                    ctx.strokeStyle = data.color;
-                    ctx.lineWidth = data.size;
-                    ctx.stroke();
+            pc.ontrack = (event) => {
+                console.log(`🎥 Трек получен для ${type}`);
+                if (type === 'screen') {
+                    if (remoteScreenVideo.srcObject !== event.streams[0]) {
+                        remoteScreenVideo.srcObject = event.streams[0];
+                        remoteScreenVideo.play().catch(e => console.log(e));
+                        updateScreenStreamStatus(true);
+                        screenConnected = true;
+                    }
+                } else {
+                    if (remoteCameraVideo.srcObject !== event.streams[0]) {
+                        remoteCameraVideo.srcObject = event.streams[0];
+                        remoteCameraVideo.style.display = 'block';
+                        remoteCameraVideo.play().catch(e => console.log(e));
+                        updateCameraStreamStatus(true);
+                        cameraConnected = true;
+                    }
                 }
-            } else if (data.type === 'clear') this.clearCanvas(this.pages[this.currentPage].canvas);
+            };
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc_ice_candidate', { studentId: studentId, candidate: event.candidate, type: type });
+                }
+            };
+
+            pc.oniceconnectionstatechange = () => {
+                console.log(`${type} ICE состояние:`, pc.iceConnectionState);
+                if (pc.iceConnectionState === 'connected') {
+                    console.log(`✅ ${type} WebRTC соединение установлено`);
+                } else if (pc.iceConnectionState === 'disconnected') {
+                    if (type === 'screen') updateScreenStreamStatus(false);
+                    else updateCameraStreamStatus(false);
+                }
+            };
+            return pc;
         }
 
-        broadcastDraw(data) { data.room = this.roomName; this.socket.emit('whiteboard_draw', data); }
-        switchToPage(index) {
-            if (index < 0 || index >= this.pages.length) return;
-            this.pages[this.currentPage].div.style.display = 'none';
-            this.currentPage = index;
-            this.pages[this.currentPage].div.style.display = 'block';
-            this.toolbar.querySelector('.wb-pageinfo').innerText = `Страница ${this.currentPage + 1}`;
-            this.updateNavButtons();
-            if (this.isTeacher) this.socket.emit('whiteboard_switch_page', { room: this.roomName, pageIndex: this.currentPage });
-        }
-        updateNavButtons() {
-            const prevBtn = this.toolbar.querySelector('.wb-prevpage');
-            const nextBtn = this.toolbar.querySelector('.wb-nextpage');
-            if (prevBtn) prevBtn.disabled = (this.currentPage === 0);
-            if (nextBtn) nextBtn.disabled = (this.currentPage >= this.pages.length - 1);
-        }
-        async saveAsPDF() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('landscape');
-            for (let i = 0; i < this.pages.length; i++) {
-                const canvas = this.pages[i].canvas;
-                try {
-                    const imgData = canvas.toDataURL('image/png');
-                    const imgProps = pdf.getImageProperties(imgData);
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                    if (i !== 0) pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                } catch (err) { console.error(err); }
-            }
-            pdf.save(`whiteboard_${new Date().toISOString().slice(0,19)}.pdf`);
-        }
-    }
-
-    // Socket handlers
-    socket.on('connect', () => {
-        console.log('Connected');
-        if (studentId) socket.emit('restore_session', { student_id: studentId });
-        const savedLang = localStorage.getItem('student_lang') || 'en';
-        document.getElementById('myLanguage').value = savedLang;
-        socket.emit('set_language', { lang: savedLang });
-        selectedLang = savedLang;
-    });
-    socket.on('verification_required', () => { verificationBox.style.display = 'block'; mainInterface.style.display = 'none'; startCodeTimer(); });
-    socket.on('verification_result', (data) => {
-        if (data.success) {
-            verificationBox.style.display = 'none';
-            mainInterface.style.display = 'block';
-            updateStatus(true);
+        function reconnectAll() {
+            console.log('🔄 Переподключение всех потоков…');
+            if (screenPeer) screenPeer.close();
+            if (cameraPeer) cameraPeer.close();
             screenPeer = createPeerConnection('screen');
             cameraPeer = createPeerConnection('camera');
-            setTimeout(() => {
-                socket.emit('join_student_room', { studentId: studentId });
-                socket.emit('request_webrtc_restart', { studentId: studentId });
-            }, 500);
-        } else { alert(`Ошибка: ${data.message}`); document.getElementById('lectureCode').value = ''; document.getElementById('lectureCode').focus(); }
-    });
-    socket.on('screen_share_started', () => { if (!screenPeer) screenPeer = createPeerConnection('screen'); socket.emit('request_webrtc_restart', { studentId: studentId }); });
-    socket.on('screen_share_stopped', () => { if (screenPeer) screenPeer.close(); screenPeer = null; remoteScreenVideo.srcObject = null; updateScreenStreamStatus(false); screenConnected = false; });
-    socket.on('camera_state', (data) => {
-        if (data.enabled) { if (!cameraPeer) cameraPeer = createPeerConnection('camera'); socket.emit('request_webrtc_restart', { studentId: studentId }); }
-        else { if (cameraPeer) cameraPeer.close(); cameraPeer = null; remoteCameraVideo.srcObject = null; remoteCameraVideo.style.display = 'none'; updateCameraStreamStatus(false); cameraConnected = false; }
-    });
-    socket.on('webrtc_offer', async (data) => {
-        let pc = data.type === 'screen' ? screenPeer : cameraPeer;
-        if (!pc) { pc = createPeerConnection(data.type); if (data.type === 'screen') screenPeer = pc; else cameraPeer = pc; }
-        try { await pc.setRemoteDescription(new RTCSessionDescription(data.offer)); const answer = await pc.createAnswer(); await pc.setLocalDescription(answer); socket.emit('webrtc_answer', { studentId: studentId, answer: answer, type: data.type }); } catch(err) { console.error(err); }
-    });
-    socket.on('webrtc_ice_candidate', (data) => { let pc = data.type === 'screen' ? screenPeer : cameraPeer; if (pc && data.candidate) pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e=>console.error(e)); });
-    socket.on('stats', (data) => { phraseCountSpan.innerText = data.phrases; });
-    socket.on('new_translation', (data) => {
-        currentTranslationDiv.innerHTML = `<strong>${data.translation}</strong>`;
-        if (data.original) originalTextDiv.innerHTML = `<i class="text-gray-400">Оригинал: "${data.original}"</i>`;
-        if (data.is_final) {
-            addToHistory(data.translation, data.original);
-            if (soundEnabled) {
-                const utterance = new SpeechSynthesisUtterance(data.translation);
-                const langMap = { 'kk':'kk-KZ','ru':'ru-RU','en':'en-US','de':'de-DE','ja':'ja-JP','ko':'ko-KR','zh':'zh-CN' };
-                utterance.lang = langMap[selectedLang] || 'en-US';
-                speechSynthesis.cancel();
-                speechSynthesis.speak(utterance);
+            socket.emit('request_webrtc_restart', { studentId: studentId });
+        }
+
+        function setStudentId() {
+            const input = document.getElementById('studentIdInput');
+            const id = input.value.trim();
+            if (id && /^\d{6,}$/.test(id)) {
+                studentId = id;
+                localStorage.setItem("student_id", id);
+                return true;
+            } else {
+                alert("Введите корректный ID (минимум 6 цифр)");
+                return false;
             }
         }
-    });
-    socket.on('chat_message', (data) => {
-        const chatDiv = document.getElementById('chatMessages');
-        if (chatDiv.children[0]?.innerText.includes('Сообщения будут здесь')) chatDiv.innerHTML = '';
-        chatDiv.innerHTML += `<div class="bg-[#1f1219] rounded-lg p-2"><div class="font-semibold text-sm">${data.sender === 'me' ? 'Я' : data.sender}</div><div>${data.translated}</div><div class="text-xs text-gray-400 mt-1">${data.original}</div></div>`;
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-    });
-    socket.on('language_set', (data) => { console.log('Language set', data.lang); });
-    document.getElementById('myLanguage').addEventListener('change', (e) => { selectedLang = e.target.value; localStorage.setItem('student_lang', selectedLang); socket.emit('set_language', { lang: selectedLang }); });
-    toggleWhiteboardBtn.addEventListener('click', () => {
-        if (whiteboardContainer.style.display === 'none') {
-            whiteboardContainer.style.display = 'block';
-            toggleWhiteboardBtn.innerHTML = '<i class="fas fa-chalkboard mr-2"></i> Закрыть доску';
-            if (!whiteboardInstance) whiteboardInstance = new Whiteboard('whiteboardContainer', socket, false, 'teacher_room');
-        } else { whiteboardContainer.style.display = 'none'; toggleWhiteboardBtn.innerHTML = '<i class="fas fa-chalkboard mr-2"></i> Открыть доску'; }
-    });
-    if (studentId) document.getElementById('studentIdInput').value = studentId;
-    startCodeTimer();
-</script>
+
+        function verifyCode() {
+            if (!setStudentId()) return;
+            const code = document.getElementById('lectureCode').value.trim().toUpperCase();
+            if (code.length !== 6) {
+                alert("Введите 6-значный код");
+                return;
+            }
+            socket.emit('verify_code', { code: code, student_id: studentId });
+        }
+
+        function startCodeTimer() {
+            let secondsLeft = 45;
+            clearInterval(verificationTimer);
+            verificationTimer = setInterval(() => {
+                secondsLeft--;
+                const timerEl = document.getElementById("codeTimer");
+                if (secondsLeft >= 0) {
+                    timerEl.innerText = `🔄 Код действителен: ${secondsLeft} сек`;
+                    timerEl.style.color = secondsLeft <= 5 ? '#d45a7a' : '#6C5CE7';
+                    if (secondsLeft <= 0) {
+                        clearInterval(verificationTimer);
+                        timerEl.innerText = "✅ Код обновлён!";
+                        timerEl.style.color = '#1b9e93';
+                    }
+                }
+            }, 1000);
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundBtn');
+            if (soundEnabled) {
+                btn.innerHTML = '<i class="fas fa-volume-up mr-2"></i> 🔊 Озвучка включена';
+                btn.className = 'btn-primary w-full justify-center text-sm';
+            } else {
+                btn.innerHTML = '<i class="fas fa-volume-mute mr-2"></i> 🔇 Озвучка выключена';
+                btn.className = 'btn-secondary w-full justify-center text-sm';
+                speechSynthesis.cancel();
+            }
+        }
+
+        function setName() {
+            const name = document.getElementById('userNameInput').value.trim();
+            if (name) socket.emit('set_name', { name: name });
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (message) {
+                socket.emit('send_message', { message: message });
+                input.value = '';
+            }
+        }
+
+        // ================== WHITEBOARD ==================
+        class Whiteboard {
+            constructor(containerId, socket, isTeacher, roomName) {
+                this.container = document.getElementById(containerId);
+                this.socket = socket;
+                this.isTeacher = isTeacher;
+                this.roomName = roomName;
+                this.currentPage = 0;
+                this.pages = [];
+                this.ctx = null;
+                this.drawing = false;
+                this.lastX = 0;
+                this.lastY = 0;
+                this.currentColor = '#000000';
+                this.currentSize = 2;
+                this.eraserMode = false;
+                this.init();
+            }
+
+            init() {
+                this.toolbar = document.createElement('div');
+                this.toolbar.className = 'whiteboard-toolbar';
+                this.toolbar.innerHTML = `
+                        <button class="wb-color" data-color="#000000" style="background:#1e1e2a; border-color:#1e1e2a; color:white;">⚫</button>
+                        <button class="wb-color" data-color="#d45a7a" style="background:#d45a7a; border-color:#d45a7a;"></button>
+                        <button class="wb-color" data-color="#6C5CE7" style="background:#6C5CE7; border-color:#6C5CE7;"></button>
+                        <button class="wb-color" data-color="#1b9e93" style="background:#1b9e93; border-color:#1b9e93;"></button>
+                        <button class="wb-color" data-color="#b8860b" style="background:#b8860b; border-color:#b8860b;"></button>
+                        <button class="wb-eraser">🧽 Ластик</button>
+                        <input type="range" class="wb-size" min="1" max="20" value="2" title="Размер">
+                        <button class="wb-clear">🗑 Очистить</button>
+                        <button class="wb-newpage">📄 Новая</button>
+                        <button class="wb-prevpage" disabled>◀</button>
+                        <span class="wb-pageinfo">Стр. 1</span>
+                        <button class="wb-nextpage" disabled>▶</button>
+                        <button class="wb-savepdf">📑 PDF</button>
+                    `;
+                this.container.appendChild(this.toolbar);
+                this.canvasContainer = document.createElement('div');
+                this.canvasContainer.style.padding = '16px';
+                this.container.appendChild(this.canvasContainer);
+                this.addNewPage();
+
+                this.socket.on('whiteboard_draw', (data) => {
+                    if (data.room === this.roomName && !this.isTeacher) this.applyDrawEvent(data);
+                });
+                this.socket.on('whiteboard_clear', (data) => {
+                    if (data.room === this.roomName && !this.isTeacher && this.pages[this.currentPage]) {
+                        this.clearCanvas(this.pages[this.currentPage].canvas);
+                    }
+                });
+                this.socket.on('whiteboard_new_page', (data) => {
+                    if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) {
+                        while (this.pages.length <= data.pageIndex) this.addNewPage(false);
+                        this.switchToPage(data.pageIndex);
+                    }
+                });
+                this.socket.on('whiteboard_switch_page', (data) => {
+                    if (data.room === this.roomName && !this.isTeacher && data.pageIndex !== undefined) {
+                        this.switchToPage(data.pageIndex);
+                    }
+                });
+
+                this.toolbar.querySelectorAll('.wb-color').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.eraserMode = false;
+                        this.currentColor = btn.dataset.color;
+                        this.updateToolbarUI();
+                    });
+                });
+                this.toolbar.querySelector('.wb-eraser').addEventListener('click', () => {
+                    this.eraserMode = true;
+                    this.updateToolbarUI();
+                });
+                this.toolbar.querySelector('.wb-size').addEventListener('input', (e) => {
+                    this.currentSize = parseInt(e.target.value);
+                });
+                this.toolbar.querySelector('.wb-clear').addEventListener('click', () => {
+                    if (confirm('Очистить текущую страницу?')) {
+                        this.clearCanvas(this.pages[this.currentPage].canvas);
+                        this.broadcastDraw({ type: 'clear' });
+                    }
+                });
+                this.toolbar.querySelector('.wb-newpage').addEventListener('click', () => {
+                    this.addNewPage(true);
+                    this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length - 1 });
+                    this.switchToPage(this.pages.length - 1);
+                });
+                this.toolbar.querySelector('.wb-prevpage').addEventListener('click', () => {
+                    if (this.currentPage > 0) this.switchToPage(this.currentPage - 1);
+                });
+                this.toolbar.querySelector('.wb-nextpage').addEventListener('click', () => {
+                    if (this.currentPage < this.pages.length - 1) this.switchToPage(this.currentPage + 1);
+                });
+                this.toolbar.querySelector('.wb-savepdf').addEventListener('click', () => this.saveAsPDF());
+            }
+
+            updateToolbarUI() {
+                const eraserBtn = this.toolbar.querySelector('.wb-eraser');
+                if (this.eraserMode) {
+                    eraserBtn.style.background = '#ede8ff';
+                    eraserBtn.style.borderColor = '#6C5CE7';
+                    eraserBtn.style.color = '#6C5CE7';
+                } else {
+                    eraserBtn.style.background = '';
+                    eraserBtn.style.borderColor = '#e5e0d8';
+                    eraserBtn.style.color = '#1e1e2a';
+                }
+            }
+
+            addNewPage(broadcast = false) {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'whiteboard-page';
+                pageDiv.style.display = this.pages.length === this.currentPage ? 'block' : 'none';
+                const canvas = document.createElement('canvas');
+                canvas.className = 'whiteboard-canvas';
+                canvas.width = 800;
+                canvas.height = 500;
+                canvas.style.width = '100%';
+                canvas.style.height = 'auto';
+                canvas.style.border = '1px solid #ede8e2';
+                canvas.style.borderRadius = '16px';
+                canvas.style.background = 'white';
+                pageDiv.appendChild(canvas);
+                this.canvasContainer.appendChild(pageDiv);
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                this.setupCanvasEvents(canvas, ctx);
+                this.pages.push({ canvas, ctx, div: pageDiv });
+                if (broadcast && this.isTeacher) this.broadcastDraw({ type: 'new_page', pageIndex: this.pages.length -
+                        1 });
+                this.updateNavButtons();
+            }
+
+            setupCanvasEvents(canvas, ctx) {
+                const getCoords = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const scaleX = canvas.width / rect.width;
+                    const scaleY = canvas.height / rect.height;
+                    let clientX, clientY;
+                    if (e.touches) { clientX = e.touches[0].clientX;
+                        clientY = e.touches[0].clientY; } else { clientX = e.clientX;
+                        clientY = e.clientY; }
+                    let x = (clientX - rect.left) * scaleX;
+                    let y = (clientY - rect.top) * scaleY;
+                    x = Math.min(Math.max(0, x), canvas.width);
+                    y = Math.min(Math.max(0, y), canvas.height);
+                    return { x, y };
+                };
+                const startDraw = (e) => {
+                    e.preventDefault();
+                    this.drawing = true;
+                    const { x, y } = getCoords(e);
+                    this.lastX = x;
+                    this.lastY = y;
+                    ctx.beginPath();
+                    ctx.arc(x, y, this.currentSize / 2, 0, 2 * Math.PI);
+                    ctx.fillStyle = this.eraserMode ? 'white' : this.currentColor;
+                    ctx.fill();
+                    this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor,
+                        size: this.currentSize, isStart: true });
+                };
+                const draw = (e) => {
+                    if (!this.drawing) return;
+                    e.preventDefault();
+                    const { x, y } = getCoords(e);
+                    ctx.beginPath();
+                    ctx.moveTo(this.lastX, this.lastY);
+                    ctx.lineTo(x, y);
+                    ctx.strokeStyle = this.eraserMode ? 'white' : this.currentColor;
+                    ctx.lineWidth = this.currentSize;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                    this.broadcastDraw({ type: 'draw', x, y, color: this.eraserMode ? 'white' : this.currentColor,
+                        size: this.currentSize, fromX: this.lastX, fromY: this.lastY });
+                    this.lastX = x;
+                    this.lastY = y;
+                };
+                const endDraw = () => { this.drawing = false; };
+                canvas.addEventListener('mousedown', startDraw);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mouseup', endDraw);
+                canvas.addEventListener('mouseleave', endDraw);
+                canvas.addEventListener('touchstart', startDraw);
+                canvas.addEventListener('touchmove', draw);
+                canvas.addEventListener('touchend', endDraw);
+            }
+
+            clearCanvas(canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            applyDrawEvent(data) {
+                if (data.type === 'draw') {
+                    const canvasObj = this.pages[this.currentPage];
+                    if (!canvasObj) return;
+                    const ctx = canvasObj.ctx;
+                    if (data.isStart) {
+                        ctx.beginPath();
+                        ctx.arc(data.x, data.y, data.size / 2, 0, 2 * Math.PI);
+                        ctx.fillStyle = data.color;
+                        ctx.fill();
+                    } else if (data.fromX !== undefined) {
+                        ctx.beginPath();
+                        ctx.moveTo(data.fromX, data.fromY);
+                        ctx.lineTo(data.x, data.y);
+                        ctx.strokeStyle = data.color;
+                        ctx.lineWidth = data.size;
+                        ctx.stroke();
+                    }
+                } else if (data.type === 'clear') this.clearCanvas(this.pages[this.currentPage].canvas);
+            }
+
+            broadcastDraw(data) { data.room = this.roomName;
+                this.socket.emit('whiteboard_draw', data); }
+
+            switchToPage(index) {
+                if (index < 0 || index >= this.pages.length) return;
+                this.pages[this.currentPage].div.style.display = 'none';
+                this.currentPage = index;
+                this.pages[this.currentPage].div.style.display = 'block';
+                this.toolbar.querySelector('.wb-pageinfo').innerText = `Стр. ${this.currentPage + 1}`;
+                this.updateNavButtons();
+                if (this.isTeacher) this.socket.emit('whiteboard_switch_page', { room: this.roomName,
+                    pageIndex: this.currentPage });
+            }
+
+            updateNavButtons() {
+                const prevBtn = this.toolbar.querySelector('.wb-prevpage');
+                const nextBtn = this.toolbar.querySelector('.wb-nextpage');
+                if (prevBtn) prevBtn.disabled = (this.currentPage === 0);
+                if (nextBtn) nextBtn.disabled = (this.currentPage >= this.pages.length - 1);
+            }
+
+            async saveAsPDF() {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('landscape');
+                for (let i = 0; i < this.pages.length; i++) {
+                    const canvas = this.pages[i].canvas;
+                    try {
+                        const imgData = canvas.toDataURL('image/png');
+                        const imgProps = pdf.getImageProperties(imgData);
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                        if (i !== 0) pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    } catch (err) { console.error(err); }
+                }
+                pdf.save(`whiteboard_${new Date().toISOString().slice(0,19)}.pdf`);
+            }
+        }
+
+        // ================== SOCKET HANDLERS ==================
+        socket.on('connect', () => {
+            console.log('Connected');
+            if (studentId) socket.emit('restore_session', { student_id: studentId });
+            const savedLang = localStorage.getItem('student_lang') || 'en';
+            document.getElementById('myLanguage').value = savedLang;
+            socket.emit('set_language', { lang: savedLang });
+            selectedLang = savedLang;
+        });
+
+        socket.on('verification_required', () => {
+            verificationBox.style.display = 'block';
+            mainInterface.style.display = 'none';
+            startCodeTimer();
+        });
+
+        socket.on('verification_result', (data) => {
+            if (data.success) {
+                verificationBox.style.display = 'none';
+                mainInterface.style.display = 'block';
+                updateStatus(true);
+                screenPeer = createPeerConnection('screen');
+                cameraPeer = createPeerConnection('camera');
+                setTimeout(() => {
+                    socket.emit('join_student_room', { studentId: studentId });
+                    socket.emit('request_webrtc_restart', { studentId: studentId });
+                }, 500);
+            } else {
+                alert(`Ошибка: ${data.message}`);
+                document.getElementById('lectureCode').value = '';
+                document.getElementById('lectureCode').focus();
+            }
+        });
+
+        socket.on('screen_share_started', () => {
+            if (!screenPeer) screenPeer = createPeerConnection('screen');
+            socket.emit('request_webrtc_restart', { studentId: studentId });
+        });
+
+        socket.on('screen_share_stopped', () => {
+            if (screenPeer) screenPeer.close();
+            screenPeer = null;
+            remoteScreenVideo.srcObject = null;
+            updateScreenStreamStatus(false);
+            screenConnected = false;
+        });
+
+        socket.on('camera_state', (data) => {
+            if (data.enabled) {
+                if (!cameraPeer) cameraPeer = createPeerConnection('camera');
+                socket.emit('request_webrtc_restart', { studentId: studentId });
+            } else {
+                if (cameraPeer) cameraPeer.close();
+                cameraPeer = null;
+                remoteCameraVideo.srcObject = null;
+                remoteCameraVideo.style.display = 'none';
+                updateCameraStreamStatus(false);
+                cameraConnected = false;
+            }
+        });
+
+        socket.on('webrtc_offer', async (data) => {
+            let pc = data.type === 'screen' ? screenPeer : cameraPeer;
+            if (!pc) { pc = createPeerConnection(data.type); if (data.type === 'screen') screenPeer = pc;
+                else cameraPeer = pc; }
+            try {
+                await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                socket.emit('webrtc_answer', { studentId: studentId, answer: answer, type: data.type });
+            } catch (err) { console.error(err); }
+        });
+
+        socket.on('webrtc_ice_candidate', (data) => {
+            let pc = data.type === 'screen' ? screenPeer : cameraPeer;
+            if (pc && data.candidate) pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.error(
+                e));
+        });
+
+        socket.on('stats', (data) => { phraseCountSpan.innerText = data.phrases; });
+
+        socket.on('new_translation', (data) => {
+            currentTranslationDiv.innerHTML = `<strong>${data.translation}</strong>`;
+            if (data.original) originalTextDiv.innerHTML = `<i class="text-[#8b83a0]">Оригинал: "${data.original}"</i>`;
+            if (data.is_final) {
+                addToHistory(data.translation, data.original);
+                if (soundEnabled) {
+                    const utterance = new SpeechSynthesisUtterance(data.translation);
+                    const langMap = { 'kk': 'kk-KZ', 'ru': 'ru-RU', 'en': 'en-US', 'de': 'de-DE', 'ja': 'ja-JP',
+                        'ko': 'ko-KR', 'zh': 'zh-CN' };
+                    utterance.lang = langMap[selectedLang] || 'en-US';
+                    speechSynthesis.cancel();
+                    speechSynthesis.speak(utterance);
+                }
+            }
+        });
+
+        socket.on('chat_message', (data) => {
+            const chatDiv = document.getElementById('chatMessages');
+            if (chatDiv.children[0]?.innerText.includes('Сообщения будут здесь')) chatDiv.innerHTML = '';
+            const isSelf = data.sender === 'me';
+            chatDiv.innerHTML += `
+                    <div class="chat-message ${isSelf ? 'chat-message-self' : ''}">
+                        <div class="font-semibold text-sm text-[#5a554a]">${isSelf ? 'Я' : data.sender}</div>
+                        <div class="text-[#1e1e2a]">${data.translated}</div>
+                        ${data.original ? `<div class="text-xs text-[#8b83a0] mt-0.5">${data.original}</div>` : ''}
+                    </div>
+                `;
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        });
+
+        socket.on('language_set', (data) => { console.log('Language set', data.lang); });
+
+        document.getElementById('myLanguage').addEventListener('change', (e) => {
+            selectedLang = e.target.value;
+            localStorage.setItem('student_lang', selectedLang);
+            socket.emit('set_language', { lang: selectedLang });
+        });
+
+        toggleWhiteboardBtn.addEventListener('click', () => {
+            if (whiteboardContainer.style.display === 'none') {
+                whiteboardContainer.style.display = 'block';
+                toggleWhiteboardBtn.innerHTML = '<i class="fas fa-chalkboard mr-2"></i> Закрыть доску';
+                toggleWhiteboardBtn.className = 'btn-primary w-full justify-center text-sm';
+                if (!whiteboardInstance) whiteboardInstance = new Whiteboard('whiteboardContainer', socket, false,
+                    'teacher_room');
+            } else {
+                whiteboardContainer.style.display = 'none';
+                toggleWhiteboardBtn.innerHTML = '<i class="fas fa-chalkboard mr-2"></i> Открыть доску';
+                toggleWhiteboardBtn.className = 'btn-secondary w-full justify-center text-sm';
+            }
+        });
+
+        if (studentId) document.getElementById('studentIdInput').value = studentId;
+        startCodeTimer();
+
+        // ===== Keyboard shortcut for chat =====
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.activeElement?.id === 'chatInput') {
+                sendChatMessage();
+            }
+        });
+    </script>
 </body>
 </html>

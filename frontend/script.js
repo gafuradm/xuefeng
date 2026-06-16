@@ -108,73 +108,73 @@ window.setRole = function(role) {
 
 // ========== ОСНОВНЫЕ ФУНКЦИИ ОБУЧЕНИЯ ==========
 async function startLearning() {
-    const name = document.getElementById('userName').value;
-    const email = document.getElementById('userEmail').value;
-    const exam = document.getElementById('examName').value;
+    // Проверяем, залогинен ли пользователь
+    if (!authToken) {
+        alert('Пожалуйста, войдите в систему');
+        showAuthModal();
+        return;
+    }
 
-    if (!name || !email || !exam) {
-        alert('Пожалуйста, заполните все поля');
+    // Если currentUserId ещё не загружен — пробуем получить профиль
+    if (!currentUserId) {
+        await updateUIAfterAuth();
+        if (!currentUserId) {
+            alert('Не удалось загрузить профиль. Попробуйте войти снова.');
+            return;
+        }
+    }
+
+    const exam = document.getElementById('examName').value;
+    if (!exam) {
+        alert('Введите название экзамена');
         return;
     }
 
     try {
-        const roleSelect = document.getElementById('userRole');
-        const role = roleSelect ? roleSelect.value : 'student';
-        console.log("1. Создаём пользователя с ролью:", role);
-
-        const userRes = await fetch(`${API_URL}/api/users?role=${role}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email })
-        });
-        if (!userRes.ok) throw new Error(`HTTP ${userRes.status}: ${await userRes.text()}`);
-        const user = await userRes.json();
-        currentUserId = user.id;
-
-        console.log("Пользователь создан:", user);
-
-        if (role === 'teacher') {
-            alert(`Добро пожаловать, учитель ${name}!`);
-            document.getElementById('step1').style.display = 'none';
-            document.getElementById('teacherPanel').style.display = 'block';
-            document.getElementById('studentPanel').style.display = 'none';
-            return;
-        }
-
-        alert(`Добро пожаловать, ${name}! Вы можете вступить в школу через кнопку "Вступить в школу" или продолжить обучение.`);
-
-        document.getElementById('teacherPanel').style.display = 'none';
-        document.getElementById('studentPanel').style.display = 'block';
-
-        console.log("2. Создаём сессию...");
+        // Создаём сессию для текущего пользователя с токеном
         const sessionRes = await fetch(`${API_URL}/api/sessions?user_id=${currentUserId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
             body: JSON.stringify({ exam_name: exam })
         });
-        if (!sessionRes.ok) throw new Error(`HTTP ${sessionRes.status}: ${await sessionRes.text()}`);
+
+        if (!sessionRes.ok) {
+            const errorText = await sessionRes.text();
+            throw new Error(`HTTP ${sessionRes.status}: ${errorText}`);
+        }
+
         const session = await sessionRes.json();
         currentSessionId = session.id;
         localStorage.setItem('currentSessionId', currentSessionId);
-        console.log("Сессия создана:", session);
 
-        console.log("3. Получаем тест...");
-        const testRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`);
+        // Загружаем тест
+        const testRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
         if (!testRes.ok) throw new Error(`HTTP ${testRes.status}: ${await testRes.text()}`);
+
         const sessionData = await testRes.json();
-        if (!sessionData.test_results || sessionData.test_results.length === 0) throw new Error("Тест не найден");
-        const testResult = sessionData.test_results[0];
-        currentQuestions = testResult.questions;
-        console.log(`Загружено ${currentQuestions.length} вопросов`);
+        if (!sessionData.test_results || sessionData.test_results.length === 0) {
+            throw new Error('Тест не найден');
+        }
+        currentQuestions = sessionData.test_results[0].questions;
 
         displayTest(currentQuestions);
         document.getElementById('step1').style.display = 'none';
         document.getElementById('step2').style.display = 'block';
 
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Ошибка:', error);
         alert('Ошибка: ' + error.message);
     }
+}
+
+function switchToLearningTabAndStart() {
+    showTabPane('learning');
+    startLearning();
 }
 
 function displayTest(questions) {
@@ -552,6 +552,23 @@ function showTestCreator() {
     addQuestionField();
     document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
     document.getElementById('step6').style.display = 'block';
+    
+    // Добавляем кнопку генерации, если её ещё нет
+    const container = document.getElementById('step6').querySelector('.card-solid');
+    if (!document.getElementById('aiGenerateBtn')) {
+        const genBtn = document.createElement('button');
+        genBtn.id = 'aiGenerateBtn';
+        genBtn.className = 'btn-secondary text-sm mt-2 ml-2';
+        genBtn.innerHTML = '<i class="fas fa-robot mr-1"></i> Сгенерировать вопросы ИИ';
+        genBtn.onclick = showAIQuestionModal;
+        // Найти блок с кнопкой "Добавить вопрос" и вставить после него
+        const addBtn = container.querySelector('button[onclick="addQuestionField()"]');
+        if (addBtn) {
+            addBtn.parentNode.insertBefore(genBtn, addBtn.nextSibling);
+        } else {
+            container.querySelector('.space-y-4').appendChild(genBtn);
+        }
+    }
 }
 
 function addQuestionField() {
@@ -567,6 +584,101 @@ function addQuestionField() {
         </div>
     `;
     container.insertAdjacentHTML('beforeend', questionHtml);
+}
+
+function showAIQuestionModal() {
+    const modalHtml = `
+        <div id="aiGenModal" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4" onclick="if(event.target===this) closeAIModal()">
+            <div class="glass-card w-full max-w-md p-6 relative">
+                <button onclick="closeAIModal()" class="absolute top-3 right-4 text-2xl text-[#8b83a0] hover:text-[#1e1e2a] transition">&times;</button>
+                <h3 class="text-xl font-bold mb-4 text-[#1e1e2a]">🤖 Генерация вопросов ИИ</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-[#5a554a] mb-1">Тема / предмет</label>
+                        <input type="text" id="aiTopic" class="input-modern" placeholder="Например: 'Квадратные уравнения' или 'HTML'">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[#5a554a] mb-1">Количество вопросов (1–20)</label>
+                        <input type="number" id="aiNumQuestions" class="input-modern" value="5" min="1" max="20">
+                    </div>
+                    <button onclick="generateQuestionsByTopic()" class="btn-primary w-full justify-center py-2">
+                        <i class="fas fa-magic mr-2"></i> Сгенерировать
+                    </button>
+                </div>
+                <div id="aiGenStatus" class="mt-3 text-sm text-[#8b83a0]"></div>
+            </div>
+        </div>
+    `;
+    // Удаляем старую модалку, если есть
+    const old = document.getElementById('aiGenModal');
+    if (old) old.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeAIModal() {
+    const modal = document.getElementById('aiGenModal');
+    if (modal) modal.remove();
+}
+
+async function generateQuestionsByTopic() {
+    const topic = document.getElementById('aiTopic').value.trim();
+    const num = parseInt(document.getElementById('aiNumQuestions').value) || 5;
+    if (!topic) {
+        alert('Введите тему');
+        return;
+    }
+    if (num < 1 || num > 20) {
+        alert('Количество вопросов должно быть от 1 до 20');
+        return;
+    }
+    const status = document.getElementById('aiGenStatus');
+    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация...';
+    const token = localStorage.getItem('authToken');
+    try {
+        const response = await fetch('/api/generate-questions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ topic, num_questions: num })
+        });
+        if (!response.ok) {
+            const err = await response.text();
+            throw new Error(err);
+        }
+        const data = await response.json();
+        if (!data.questions || !data.questions.length) {
+            status.innerHTML = '<span class="text-red-500">Не удалось сгенерировать вопросы</span>';
+            return;
+        }
+        // Добавляем вопросы в список
+        const container = document.getElementById('questionsList');
+        // Очищаем старые вопросы, если нужно (или можно добавить к существующим)
+        // По умолчанию очищаем и добавляем новые
+        container.innerHTML = '';
+        data.questions.forEach(q => {
+            const questionId = Date.now() + Math.random();
+            container.insertAdjacentHTML('beforeend', `
+                <div id="question_${questionId}" class="question-card">
+                    <h4>Вопрос ${container.children.length + 1}</h4>
+                    <textarea id="q_text_${questionId}" rows="3" style="width:100%">${escapeHtml(q.question)}</textarea>
+                    <input type="text" id="q_answer_${questionId}" value="${escapeHtml(q.correct_answer)}">
+                    <textarea id="q_hint_${questionId}" rows="2" style="width:100%">${escapeHtml(q.explanation || '')}</textarea>
+                    <button onclick="removeQuestionField(${questionId})" class="remove-question">Удалить вопрос</button>
+                </div>
+            `);
+        });
+        // Обновляем нумерацию
+        const titles = document.querySelectorAll('#questionsList .question-card h4');
+        titles.forEach((title, idx) => {
+            title.textContent = `Вопрос ${idx + 1}`;
+        });
+        status.innerHTML = `<span class="text-green-600">✅ Добавлено ${data.questions.length} вопросов</span>`;
+        setTimeout(closeAIModal, 1500);
+    } catch (err) {
+        status.innerHTML = `<span class="text-red-500">Ошибка: ${err.message}</span>`;
+    }
 }
 
 function removeQuestionField(questionId) {
@@ -1796,9 +1908,7 @@ async function loadUserTabs() {
             'scientific': 'fa-flask',
             'syllabus': 'fa-chalkboard-user',
             'dataanalysis': 'fa-chart-line',
-            'ielts': 'fa-language',
             'softskills': 'fa-comments',
-            'coding': 'fa-code',
             'supervisor': 'fa-user-graduate',
             'internship': 'fa-briefcase',
             'hypothesis': 'fa-lightbulb',
@@ -1893,21 +2003,53 @@ async function updateUIAfterAuth() {
         const panel = document.getElementById('rolePanelContent');
         if (panel) {
             if (currentUserRoles.includes('school_teacher') || currentUserRoles.includes('professor')) {
-                panel.innerHTML = `<i class="fas fa-chalkboard-teacher mr-2"></i>
-                    <button onclick="showCreateSchoolForm()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🏫 Создать школу</button>
-                    <button onclick="showJoinSchoolForm()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🔗 Присоединиться</button>
-                    <button onclick="showMySchools()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📋 Мои школы</button>
-                    <button onclick="showSchoolStats()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📊 Статистика школы</button>
-                    <button onclick="showTeacherGraphs()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📈 Графы знаний</button>
-                    <button onclick="buildTargetGraph()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-1 rounded-full text-sm">🎯 Целевой граф</button>
-                    <button onclick="manageRoles()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">👥 Роли</button>`;
+                panel.innerHTML = `
+                    <span class="text-sm font-medium text-[#5a554a] mr-1 flex items-center">
+                        <i class="fas fa-chalkboard-teacher mr-2 text-[#6C5CE7]"></i> Учитель:
+                    </span>
+                    <button onclick="showCreateSchoolForm()" class="btn-pill btn-pill-purple text-sm">
+                        <i class="fas fa-plus-circle mr-1"></i> Создать школу
+                    </button>
+                    <button onclick="showJoinSchoolForm()" class="btn-pill btn-pill-teal text-sm">
+                        <i class="fas fa-link mr-1"></i> Присоединиться
+                    </button>
+                    <button onclick="showMySchools()" class="btn-pill btn-pill-gold text-sm">
+                        <i class="fas fa-school mr-1"></i> Мои школы
+                    </button>
+                    <button onclick="showSchoolStats()" class="btn-pill btn-pill-pink text-sm">
+                        <i class="fas fa-chart-bar mr-1"></i> Статистика
+                    </button>
+                    <button onclick="showTeacherGraphs()" class="btn-pill btn-pill-purple text-sm">
+                        <i class="fas fa-project-diagram mr-1"></i> Графы знаний
+                    </button>
+                    <button onclick="buildTargetGraph()" class="btn-pill btn-pill-teal text-sm">
+                        <i class="fas fa-bullseye mr-1"></i> Целевой граф
+                    </button>
+                    <button onclick="manageRoles()" class="btn-pill btn-pill-pink text-sm">
+                        <i class="fas fa-user-tag mr-1"></i> Роли
+                    </button>
+                `;
             } else {
-                panel.innerHTML = `<i class="fas fa-user-graduate mr-2"></i>
-                    <button onclick="joinSchool()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🔗 Вступить в школу</button>
-                    <button onclick="showMySchools()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">🏫 Мои школы</button>
-                    <button onclick="showStudentGraphs()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📊 Мой прогресс</button>
-                    <button onclick="showStudentPlan()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📅 Мой план</button>
-                    <button onclick="manageRoles()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">👥 Роли</button>`;
+                panel.innerHTML = `
+                    <span class="text-sm font-medium text-[#5a554a] mr-1 flex items-center">
+                        <i class="fas fa-user-graduate mr-2 text-[#6C5CE7]"></i> Студент:
+                    </span>
+                    <button onclick="joinSchool()" class="btn-pill btn-pill-teal text-sm">
+                        <i class="fas fa-sign-in-alt mr-1"></i> Вступить в школу
+                    </button>
+                    <button onclick="showMySchools()" class="btn-pill btn-pill-gold text-sm">
+                        <i class="fas fa-school mr-1"></i> Мои школы
+                    </button>
+                    <button onclick="showStudentGraphs()" class="btn-pill btn-pill-purple text-sm">
+                        <i class="fas fa-chart-line mr-1"></i> Мой прогресс
+                    </button>
+                    <button onclick="showStudentPlan()" class="btn-pill btn-pill-pink text-sm">
+                        <i class="fas fa-calendar-alt mr-1"></i> Мой план
+                    </button>
+                    <button onclick="manageRoles()" class="btn-pill btn-pill-purple text-sm">
+                        <i class="fas fa-user-tag mr-1"></i> Роли
+                    </button>
+                `;
             }
         }
 
@@ -2073,33 +2215,73 @@ async function authLogin() {
 }
 
 function showAuthModal() {
-    const modalHtml = `
-        <div id="authModal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; z-index: 1002;">
-            <h3>Вход / Регистрация</h3>
-            <div style="margin-bottom: 15px;">
-                <input type="text" id="authUsername" placeholder="Username" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-                <input type="password" id="authPassword" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-                <input type="text" id="authName" placeholder="Имя (при регистрации)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-                <input type="email" id="authEmail" placeholder="Email (при регистрации)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-                <!-- Селектор роли убран, теперь роли назначаются автоматически -->
-            </div>
-            <button onclick="authLogin()" class="btn-primary" style="margin-right: 10px;">Войти</button>
-            <button onclick="authRegister()" class="btn-secondary">Зарегистрироваться</button>
-            <button onclick="closeAuthModal()" class="btn-outline" style="margin-top: 10px;">Закрыть</button>
-        </div>
-    `;
+    // Удаляем старые модалки, если есть
+    const oldModal = document.getElementById('authModal');
+    const oldOverlay = document.getElementById('authOverlay');
+    if (oldModal) oldModal.remove();
+    if (oldOverlay) oldOverlay.remove();
+
+    // Создаём подложку
     const overlay = document.createElement('div');
     overlay.id = 'authOverlay';
-    overlay.style.position = 'fixed';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.background = 'rgba(0,0,0,0.5)';
-    overlay.style.zIndex = '1001';
-    overlay.onclick = closeAuthModal;
+    overlay.className = 'fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+    overlay.onclick = (e) => { if (e.target === overlay) closeAuthModal(); };
+
+    // Создаём само модальное окно
+    const modal = document.createElement('div');
+    modal.id = 'authModal';
+    modal.className = 'glass-card w-full max-w-md p-6 sm:p-8 relative animate-fade-in-up shadow-2xl';
+    modal.style.animation = 'fadeUp 0.3s ease both';
+
+    modal.innerHTML = `
+        <!-- Кнопка закрытия -->
+        <button onclick="closeAuthModal()" 
+                class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none transition-colors">
+            &times;
+        </button>
+
+        <!-- Заголовок -->
+        <h3 class="text-2xl font-bold text-[#1e1e2a] mb-6 text-center">Вход / Регистрация</h3>
+
+        <!-- Поля формы -->
+        <div class="space-y-4">
+            <input type="text" id="authUsername" placeholder="Username" class="input-modern w-full" autocomplete="username">
+            <input type="password" id="authPassword" placeholder="Пароль" class="input-modern w-full" autocomplete="current-password">
+            <input type="text" id="authName" placeholder="Имя (при регистрации)" class="input-modern w-full" autocomplete="name">
+            <input type="email" id="authEmail" placeholder="Email (при регистрации)" class="input-modern w-full" autocomplete="email">
+            <p class="text-xs text-gray-400 text-center mt-1">Роли назначаются автоматически</p>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div class="flex flex-col sm:flex-row gap-3 mt-6">
+            <button onclick="authLogin()" class="btn-primary w-full sm:w-auto flex-1 justify-center">
+                <i class="fas fa-sign-in-alt mr-2"></i> Войти
+            </button>
+            <button onclick="authRegister()" class="btn-secondary w-full sm:w-auto flex-1 justify-center">
+                <i class="fas fa-user-plus mr-2"></i> Зарегистрироваться
+            </button>
+        </div>
+    `;
+
+    // Добавляем элементы в DOM
     document.body.appendChild(overlay);
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    overlay.appendChild(modal);
+
+    // Добавляем анимацию (если ещё нет)
+    if (!document.getElementById('auth-modal-styles')) {
+        const style = document.createElement('style');
+        style.id = 'auth-modal-styles';
+        style.textContent = `
+            @keyframes fadeUp {
+                0% { opacity: 0; transform: translateY(20px) scale(0.96); }
+                100% { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            .animate-fade-in-up {
+                animation: fadeUp 0.3s ease both;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }
 
 function closeAuthModal() {

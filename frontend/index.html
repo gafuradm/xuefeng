@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>学峰 · AI Mentor | Персональный ИИ-учитель</title>
+    <title>Bailong · AI Образование</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -15,585 +15,1079 @@
     </script>
     <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
     <style>
-        .step-card, .question-card, .test-item, .course-card, .lesson-card, .results-container, .theory, .example, .task, .tips {
-            background: rgba(18, 8, 11, 0.85);
+        /* ─── ОБНОВЛЁННЫЙ ДИЗАЙН ─── */
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(145deg, #f8f6ff 0%, #f0edf9 50%, #faf3f0 100%);
+            color: #1e1e2a;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Декоративные фоновые круги */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            z-index: 0;
+            pointer-events: none;
+        }
+        body::before {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #a29bfe, transparent 70%);
+            top: -100px;
+            right: -100px;
+        }
+        body::after {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #fd79a8, transparent 70%);
+            bottom: -150px;
+            left: -150px;
+        }
+
+        .main-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Стили для скролла */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.3); border-radius: 12px; }
+        ::-webkit-scrollbar-thumb { background: #c5b8e6; border-radius: 12px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a89bd4; }
+
+        /* Карточки с эффектом стекла – улучшенные */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 40px rgba(108, 92, 231, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 56px rgba(108, 92, 231, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Сплошные карточки – более мягкие */
+        .card-solid {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 32px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .card-solid:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 48px rgba(108, 92, 231, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        /* Кнопки – градиенты и тени */
+        .btn-primary {
+            background: linear-gradient(135deg, #6C5CE7, #a29bfe);
+            color: #fff;
+            border: none;
+            border-radius: 60px;
+            padding: 0.7rem 1.8rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.3);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent 60%);
+            pointer-events: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 32px rgba(108, 92, 231, 0.4);
+        }
+        .btn-primary:active { transform: scale(0.96); }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(4px);
-            border-radius: 1.5rem;
-            border: 1px solid #5c2e3c;
+            color: #2d2d3a;
+            border: 1px solid rgba(200, 190, 220, 0.4);
+            border-radius: 60px;
+            padding: 0.7rem 1.8rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
-        .progress-fill { background: linear-gradient(90deg, #c95267, #871f34); }
-        .modern-input, select.modern-input, textarea.modern-input {
-            background: #1f1217;
-            border: 1px solid #762f3e;
-            color: #f0e2e6;
-            border-radius: 1rem;
-            padding: 0.5rem 1rem;
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: #b8a8e0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(108, 92, 231, 0.08);
         }
-        button, .btn, [onclick] { cursor: pointer; }
-        .tab-btn.active {
-            background: #bc3f4b !important;
-            color: white !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+
+        .btn-ghost {
+            background: transparent;
+            color: #6C5CE7;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 60px;
+            padding: 0.6rem 1.6rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .transition-smooth { transition: all 0.2s ease; }
-        .fade-in { animation: fadeIn 0.2s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @media (max-width: 640px) {
-            .btn-mobile-full { width: 100%; justify-content: center; }
+        .btn-ghost:hover {
+            background: rgba(108, 92, 231, 0.08);
+            border-color: #6C5CE7;
+            transform: translateY(-1px);
         }
-        .tasks-scroll { max-height: 400px; overflow-y: auto; }
+
+        .btn-pill {
+            border-radius: 60px;
+            padding: 0.4rem 1.2rem;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(200,190,220,0.2);
+        }
+        .btn-pill-purple { background: #ede8ff; color: #5a4ad1; border-color: #d5c6ff; }
+        .btn-pill-purple:hover { background: #ddd4ff; transform: translateY(-2px); }
+        .btn-pill-pink { background: #ffe8ef; color: #d45a7a; border-color: #ffd6e2; }
+        .btn-pill-pink:hover { background: #ffd6e2; transform: translateY(-2px); }
+        .btn-pill-teal { background: #e0f7f4; color: #1b9e93; border-color: #b8ede6; }
+        .btn-pill-teal:hover { background: #c8f0ec; transform: translateY(-2px); }
+        .btn-pill-gold { background: #fef6e0; color: #b8860b; border-color: #fcefc8; }
+        .btn-pill-gold:hover { background: #fcefc8; transform: translateY(-2px); }
+
+        /* Инпуты – более мягкие */
+        .input-modern {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            border: 1.5px solid rgba(200, 190, 220, 0.3);
+            border-radius: 20px;
+            padding: 0.75rem 1.2rem;
+            font-size: 0.95rem;
+            color: #1e1e2a;
+            width: 100%;
+            transition: all 0.25s ease;
+            outline: none;
+            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .input-modern:focus {
+            border-color: #a29bfe;
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1), 0 4px 12px rgba(0,0,0,0.02);
+            background: #fff;
+        }
+        .input-modern::placeholder { color: #b0a89e; }
+
+        select.input-modern {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2390887e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1.2rem center;
+            padding-right: 2.8rem;
+        }
+        textarea.input-modern { resize: vertical; min-height: 80px; }
+
+        /* Вкладки – стильные пилюли */
+        .tab-modern {
+            padding: 0.6rem 1.4rem;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            background: rgba(255,255,255,0.4);
+            backdrop-filter: blur(4px);
+            color: #6b655c;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+        .tab-modern.active {
+            background: linear-gradient(135deg, #6C5CE7, #a29bfe);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(108, 92, 231, 0.25);
+            border-color: transparent;
+        }
+        .tab-modern:hover:not(.active) {
+            background: rgba(255,255,255,0.7);
+            color: #1e1e2a;
+            border-color: rgba(200,190,220,0.3);
+        }
+
+        /* Прогресс-бар */
+        .progress-track {
+            background: rgba(200, 190, 220, 0.25);
+            border-radius: 60px;
+            height: 6px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #6C5CE7, #a29bfe, #fd79a8);
+            height: 100%;
+            border-radius: 60px;
+            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            width: 0%;
+            box-shadow: 0 0 12px rgba(108, 92, 231, 0.3);
+        }
+
+        /* Анимации */
+        .fade-in {
+            animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(16px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .hover-lift {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px rgba(108, 92, 231, 0.08);
+        }
+
+        /* Утилиты */
         .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+        .bg-soft { background: rgba(247, 246, 242, 0.5); backdrop-filter: blur(4px); }
+        .text-soft { color: #6b655c; }
+        .border-soft { border-color: rgba(200, 190, 220, 0.2); }
+
+        /* Оригинальные классы (сохранены для совместимости) */
+        .step-card, .question-card, .test-item, .course-card, .lesson-card, 
+        .results-container, .theory, .example, .task, .tips {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.02);
+        }
+        .modern-input {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1.5px solid rgba(200, 190, 220, 0.3);
+            border-radius: 20px;
+            padding: 0.75rem 1.2rem;
+            font-size: 0.95rem;
+            color: #1e1e2a;
+            width: 100%;
+            transition: all 0.25s ease;
+            outline: none;
+            font-family: inherit;
+        }
+        .modern-input:focus {
+            border-color: #a29bfe;
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #6C5CE7, #a29bfe) !important;
+            color: white !important;
+            box-shadow: 0 4px 16px rgba(108, 92, 231, 0.2);
+        }
+        .tasks-scroll { max-height: 400px; overflow-y: auto; }
+
+        /* Адаптивность */
+        @media (max-width: 640px) {
+            .glass-card { border-radius: 24px; padding: 1rem !important; }
+            .card-solid { border-radius: 24px; padding: 1rem !important; }
+            .btn-primary, .btn-secondary, .btn-ghost {
+                padding: 0.5rem 1.2rem;
+                font-size: 0.85rem;
+            }
+            .input-modern {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+                border-radius: 16px;
+            }
+            .tab-modern { font-size: 0.8rem; padding: 0.4rem 1rem; }
+        }
+        @media (max-width: 480px) {
+            .glass-card { border-radius: 20px; padding: 0.8rem !important; }
+            .card-solid { border-radius: 20px; padding: 0.8rem !important; }
+        }
+        .question-card {
+            background: rgba(248, 247, 244, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 18px;
+            padding: 1rem;
+            border: 1px solid rgba(200,190,220,0.2);
+            margin-bottom: 0.75rem;
+        }
+        .question-card h4 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .question-card textarea,
+        .question-card input {
+            margin-bottom: 0.5rem;
+        }
+        .remove-question {
+            background: #ffe8ef;
+            color: #d45a7a;
+            border: none;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .remove-question:hover {
+            background: #ffd6e2;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-[#0a0305] to-[#040102] text-gray-200 font-sans antialiased">
-
-<div class="max-w-7xl mx-auto px-4 py-6">
-    <!-- Шапка -->
-    <div class="flex flex-wrap justify-between items-center gap-4 mb-6 p-4 rounded-2xl bg-black/30 backdrop-blur-sm border border-[#5c2e3c]">
-        <div class="flex items-center gap-3">
-            <div class="text-4xl font-black tracking-wider bg-gradient-to-r from-[#e6b8c2] to-[#bc3f4b] bg-clip-text text-transparent">学峰</div>
-            <div class="text-xs text-[#ca7a88] hidden sm:block">AI MENTOR</div>
-        </div>
-        <div class="flex flex-wrap gap-3">
-            <a href="/ielts" target="_blank" class="bg-[#1a5276] hover:bg-[#0e3b5c] text-white px-4 py-2 rounded-full text-sm font-semibold"><i class="fab fa-internet-explorer mr-1"></i> IELTS Prep</a>
-            <a href="/hsk" target="_blank" class="bg-[#c0392b] hover:bg-[#a12f22] text-white px-4 py-2 rounded-full text-sm font-semibold"><i class="fas fa-language mr-1"></i> Поступление в Китай</a>
-            <button id="showAuthBtn" onclick="showAuthModal()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] text-white px-5 py-2 rounded-full text-sm font-semibold"><i class="fas fa-key mr-1"></i> Войти</button>
-        </div>
-    </div>
-
-    <!-- Блок профиля (скрыт до логина) -->
-    <div id="profileHeader" class="hidden flex justify-between items-center bg-black/30 backdrop-blur-sm p-3 rounded-2xl mb-4 border border-[#5c2e3c]">
-        <div class="flex items-center gap-3">
-            <img id="avatarImg" class="w-10 h-10 rounded-full object-cover border border-[#c45466]" src="">
-            <span id="userNameDisplay" class="font-semibold"></span>
-            <span id="userRoleDisplay" class="text-xs bg-[#ad3f53] px-2 py-1 rounded-full"></span>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="showProfileModal()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm"><i class="fas fa-user-circle mr-1"></i> Профиль</button>
-            <button onclick="logout()" class="bg-[#831f33] hover:bg-[#6a1829] px-4 py-1 rounded-full text-sm"><i class="fas fa-sign-out-alt mr-1"></i> Выйти</button>
-        </div>
-    </div>
-
-    <!-- Панель быстрых действий по ролям -->
-    <div id="rolePanel" class="hidden mb-6 p-3 rounded-2xl bg-black/30 backdrop-blur-sm border border-[#5c2e3c]">
-        <div id="rolePanelContent" class="flex flex-wrap gap-3"></div>
-    </div>
-
-    <!-- Контейнер для динамических вкладок (заполняется из script.js) -->
-    <div id="tabsContainer" class="hidden mb-6 overflow-x-auto pb-2"></div>
-
-    <!-- Контент вкладок -->
-    <div id="tabContent" class="hidden fade-in">
-        <!-- Дашборд -->
-        <div id="dashboard-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-2xl font-bold border-l-4 border-[#d45c6f] pl-3 mb-4">Добро пожаловать в 学峰 · AI Mentor</h2>
-                <p class="mb-4">Персональный ИИ-учитель для подготовки к экзаменам, создания курсов, уроков и тестов.</p>
-                <div class="flex flex-wrap gap-3">
-                    <button onclick="switchToLearningTabAndStart()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-5 py-2 rounded-full"><i class="fas fa-play mr-1"></i> Начать / продолжить обучение</button>
-                    <button onclick="showTestCreator()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-5 py-2 rounded-full"><i class="fas fa-plus-circle mr-1"></i> Создать тест</button>
-                    <button onclick="showCoursesList()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-5 py-2 rounded-full"><i class="fas fa-book mr-1"></i> Мои курсы</button>
-                    <button onclick="showLessonsList()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-5 py-2 rounded-full"><i class="fas fa-chalkboard mr-1"></i> Мои уроки</button>
-                </div>
+<body>
+    <!-- Добавляем декоративный фон поверх основного -->
+    <div class="main-wrapper max-w-7xl mx-auto px-4 py-6">
+        <!-- Шапка -->
+        <div class="glass-card p-4 sm:p-5 flex flex-wrap justify-between items-center gap-4 mb-6">
+            <div class="flex items-center gap-3">
+                <div class="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-[#6C5CE7] via-[#a29bfe] to-[#fd79a8] bg-clip-text text-transparent">Bailong</div>
+                <div class="text-xs font-medium text-[#8b83a0] bg-white/60 px-3 py-1 rounded-full border border-[#ede8e2] hidden sm:block">AI MENTOR</div>
+            </div>
+            <div class="flex flex-wrap gap-2 sm:gap-3">
+                <a href="/ielts" target="_blank" class="btn-pill btn-pill-teal text-sm"><i class="fab fa-internet-explorer mr-1"></i> Поступление в США</a>
+                <a href="/hsk" target="_blank" class="btn-pill btn-pill-pink text-sm"><i class="fas fa-language mr-1"></i> Поступление в Китай</a>
+                <button id="showAuthBtn" onclick="showAuthModal()" class="btn-primary text-sm"><i class="fas fa-key mr-1"></i> Войти</button>
             </div>
         </div>
 
-        <!-- Обучение -->
-        <div id="learning-pane" class="tab-pane hidden">
-            <div id="step1" class="step animated-step">
-                <div class="step-card p-6">
-                    <h2 class="text-xl font-bold mb-4">🚀 Начните обучение</h2>
-                    <div class="space-y-3">
-                        <div><label class="block text-sm font-medium mb-1">Тип аккаунта:</label><select id="userRole" class="modern-input w-full"><option value="student">🎓 Студент</option><option value="teacher">👨‍🏫 Учитель</option></select></div>
-                        <div><input type="text" id="userName" placeholder="Ваше имя" class="modern-input w-full" required></div>
-                        <div><input type="email" id="userEmail" placeholder="Email" class="modern-input w-full" required></div>
-                        <div><input type="text" id="examName" placeholder="Что изучаем? (ЕНТ математика, SAT, ...)" class="modern-input w-full" required></div>
-                        <button onclick="startLearning()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full">Начать</button>
+        <!-- Блок профиля (скрыт до логина) -->
+        <div id="profileHeader" class="hidden glass-card p-3 sm:p-4 flex flex-wrap justify-between items-center gap-3 mb-5">
+            <div class="flex items-center gap-3">
+                <img id="avatarImg" class="w-10 h-10 rounded-full object-cover border-2 border-[#d5c6ff]" src="">
+                <span id="userNameDisplay" class="font-semibold text-[#1e1e2a]"></span>
+                <span id="userRoleDisplay" class="text-xs bg-[#ede8ff] text-[#5a4ad1] px-3 py-1 rounded-full font-medium"></span>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                <button onclick="showProfileModal()" class="btn-ghost text-sm"><i class="fas fa-user-circle mr-1"></i> Профиль</button>
+                <button onclick="logout()" class="btn-secondary text-sm"><i class="fas fa-sign-out-alt mr-1"></i> Выйти</button>
+            </div>
+        </div>
+
+        <!-- Панель быстрых действий по ролям -->
+        <div id="rolePanel" class="hidden mb-5 glass-card p-3 sm:p-4">
+            <div id="rolePanelContent" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- Контейнер для динамических вкладок (заполняется из script.js) -->
+        <div id="tabsContainer" class="hidden mb-5 overflow-x-auto pb-2 flex gap-1 sm:gap-2"></div>
+
+        <!-- Контент вкладок -->
+        <div id="tabContent" class="hidden fade-in">
+            <!-- Дашборд -->
+            <div id="dashboard-pane" class="tab-pane hidden">
+                <div class="card-solid p-6 sm:p-8">
+                    <h2 class="text-2xl sm:text-3xl font-bold border-l-4 border-[#6C5CE7] pl-4 mb-4 text-[#1e1e2a]">Добро пожаловать в Bailong · AI Mentor</h2>
+                    <p class="text-[#5a554a] mb-5 text-base sm:text-lg">Персональный ИИ-учитель для подготовки к экзаменам, создания курсов, уроков и тестов.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="switchToLearningTabAndStart()" class="btn-primary"><i class="fas fa-play mr-1"></i> Начать / продолжить обучение</button>
+                        <button onclick="showTestCreator()" class="btn-secondary"><i class="fas fa-plus-circle mr-1"></i> Создать тест</button>
+                        <button onclick="showCoursesList()" class="btn-secondary"><i class="fas fa-book mr-1"></i> Мои курсы</button>
+                        <button onclick="showLessonsList()" class="btn-secondary"><i class="fas fa-chalkboard mr-1"></i> Мои уроки</button>
                     </div>
                 </div>
             </div>
-            <div id="step2" class="step hidden"><div class="step-card p-6"><h2 class="text-xl font-bold">📝 Начальное тестирование</h2><div id="testQuestions"></div><button onclick="submitTest()" class="bg-[#bc3f4b] mt-3 px-5 py-2 rounded-full">Отправить ответы</button></div></div>
-            <div id="step3" class="step hidden"><div class="step-card p-6"><h2>📊 Результаты тестирования</h2><div id="testResults"></div><div class="mt-3"><label>Сколько дней у вас есть на подготовку?</label><input type="number" id="daysAvailable" class="modern-input w-full mt-1"><button onclick="setTimeAndPlan()" class="bg-[#bc3f4b] mt-2 px-5 py-2 rounded-full">Создать план</button></div></div></div>
-            <div id="step4" class="step hidden"><div class="step-card p-6"><h2>📚 Ваш план обучения</h2><div id="studyPlan"></div><button id="startLearningBtn" class="bg-[#bc3f4b] mt-3 px-5 py-2 rounded-full">Начать обучение</button></div></div>
-            <div id="step5" class="step hidden"><div class="step-card p-6"><div class="learning-header"><h2>📖 Обучение</h2><div class="progress-wrapper"><div class="progress-bar h-2 bg-gray-700 rounded-full overflow-hidden"><div id="progressFill" class="progress-fill h-2 w-0"></div></div><div id="progressStats"></div></div></div><div id="lessonContent"></div><div id="testContent" class="hidden"></div></div></div>
-        </div>
 
-        <!-- Курсы/Уроки -->
-        <div id="courses-pane" class="tab-pane hidden">
-            <div class="step-card p-6 mb-4">
-                <div class="flex flex-wrap gap-3">
-                    <button onclick="showCoursesList()" class="bg-[#bc3f4b] px-4 py-2 rounded-full"><i class="fas fa-book mr-1"></i> Мои курсы</button>
-                    <button onclick="showLessonsList()" class="bg-[#bc3f4b] px-4 py-2 rounded-full"><i class="fas fa-chalkboard mr-1"></i> Мои уроки</button>
-                    <button onclick="showCreateCourseForm()" class="bg-[#2c1a20] px-4 py-2 rounded-full"><i class="fas fa-plus-circle mr-1"></i> Создать курс</button>
-                    <button onclick="showCreateLessonForm()" class="bg-[#2c1a20] px-4 py-2 rounded-full"><i class="fas fa-plus-circle mr-1"></i> Создать урок</button>
-                    <button onclick="createSchoolCourse()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-2 rounded-full text-sm">🏫 Создать курс школы</button>
-                    <button onclick="loadSchoolCourses()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-2 rounded-full text-sm">📋 Курсы школы</button>
-                    <button onclick="exportSchoolStats()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-2 rounded-full text-sm">📊 Экспорт статистики</button>
-                </div>
-            </div>
-            <div id="userCoursesList" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
-            <div id="userLessonsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            <div id="step10" class="hidden"></div><div id="step11" class="hidden"></div><div id="step12" class="hidden"></div>
-            <div id="step13" class="hidden"></div><div id="step14" class="hidden"></div><div id="step15" class="hidden"></div>
-            <div id="schoolCoursesList" class="mt-6 space-y-4"></div>
-        </div>
-
-        <!-- Тесты -->
-        <div id="tests-pane" class="tab-pane hidden">
-            <div class="step-card p-6 mb-4">
-                <div class="flex gap-3">
-                    <button onclick="showTestCreator()" class="bg-[#bc3f4b] px-4 py-2 rounded-full"><i class="fas fa-pen-alt mr-1"></i> Создать тест</button>
-                    <button onclick="showCustomTestsList()" class="bg-[#2c1a20] px-4 py-2 rounded-full"><i class="fas fa-list mr-1"></i> Мои тесты</button>
-                </div>
-            </div>
-            <div id="step6" class="hidden"></div><div id="step7" class="hidden"></div><div id="step8" class="hidden"></div><div id="step9" class="hidden"></div>
-        </div>
-
-        <!-- Школы -->
-        <div id="schools-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <div id="teacherPanel" class="hidden"><h3 class="text-xl font-bold mb-3">👨‍🏫 Панель учителя</h3><div class="flex flex-wrap gap-3"><button onclick="showCreateSchoolForm()" class="bg-[#2c1a20] px-4 py-2 rounded-full">🏫 Создать школу</button><button onclick="showJoinSchoolForm()" class="bg-[#2c1a20] px-4 py-2 rounded-full">🔗 Присоединиться</button><button onclick="showMySchools()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📋 Мои школы</button><button onclick="showSchoolStats()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📊 Статистика школы</button><button onclick="showTeacherGraphs()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📈 Графы знаний</button><button onclick="buildTargetGraph()" class="bg-[#bc3f4b] px-4 py-2 rounded-full">🎯 Целевой граф</button></div></div>
-                <div id="studentPanel" class="hidden"><h3 class="text-xl font-bold mb-3">🎓 Панель ученика</h3><div class="flex flex-wrap gap-3"><button onclick="showMySchools()" class="bg-[#2c1a20] px-4 py-2 rounded-full">🏫 Мои школы</button><button onclick="joinSchool()" class="bg-[#2c1a20] px-4 py-2 rounded-full">🔗 Вступить в школу</button><button onclick="showStudentGraphs()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📊 Мой прогресс</button><button onclick="showStudentPlan()" class="bg-[#2c1a20] px-4 py-2 rounded-full">📅 Мой план</button><button onclick="loadMyAssignedCourses()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-1 rounded-full text-sm">📚 Мои курсы</button></div></div>
-            </div>
-            <div id="myAssignedCoursesList" class="mt-4 space-y-4"></div>
-        </div>
-
-        <!-- Видео → текст -->
-        <div id="video-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🎥 Видео → текст, саммари и чат</h2>
-                
-                <!-- Панель обработки видео -->
-                <div id="videoProcessPanel">
-                    <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео" class="modern-input w-full mb-3">
-                    <select id="targetLang" class="modern-input w-full mb-3">
-                        <option value="ru">Русский</option>
-                        <option value="en">Английский</option>
-                        <option value="kk">Казахский</option>
-                        <option value="zh">Китайский</option>
-                    </select>
-                    <button onclick="processVideo()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-5 py-2 rounded-full w-full sm:w-auto">Обработать</button>
-                </div>
-                
-                <!-- Результат обработки (оригинал, перевод, саммари, выводы) -->
-                <div id="videoResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl hidden"></div>
-                
-                <!-- Чат по видео -->
-                <div id="videoChatArea" style="display: none;" class="mt-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="font-bold text-lg">🤖 Задать вопрос по видео</h3>
-                        <button id="clearVideoChat" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-1 rounded-full text-xs"><i class="fas fa-trash mr-1"></i> Очистить чат</button>
+            <!-- Обучение -->
+            <div id="learning-pane" class="tab-pane hidden">
+                <div id="step1" class="step animated-step">
+                    <div class="card-solid p-6 sm:p-8">
+                        <h2 class="text-xl font-bold mb-4 text-[#1e1e2a]">🚀 Начните обучение</h2>
+                        <div class="space-y-4 max-w-lg">
+                            <div><label class="block text-sm font-medium text-[#5a554a] mb-1">Тип аккаунта:</label><select id="userRole" class="input-modern w-full"><option value="student">🎓 Студент</option><option value="teacher">👨‍🏫 Учитель</option></select></div>
+                            <div><input type="text" id="userName" placeholder="Ваше имя" class="input-modern w-full" required></div>
+                            <div><input type="email" id="userEmail" placeholder="Email" class="input-modern w-full" required></div>
+                            <div><input type="text" id="examName" placeholder="Что изучаем? (ЕНТ математика, SAT, ...)" class="input-modern w-full" required></div>
+                            <button onclick="startLearning()" class="btn-primary w-full sm:w-auto">Начать</button>
+                        </div>
                     </div>
-                    <div id="videoChat" class="h-64 overflow-y-auto bg-black/30 rounded-xl p-3 mb-3"></div>
+                </div>
+                <div id="step2" class="step hidden"><div class="card-solid p-6 sm:p-8"><h2 class="text-xl font-bold">📝 Начальное тестирование</h2><div id="testQuestions" class="mt-4"></div><button onclick="submitTest()" class="btn-primary mt-4">Отправить ответы</button></div></div>
+                <div id="step3" class="step hidden"><div class="card-solid p-6 sm:p-8"><h2 class="text-xl font-bold">📊 Результаты тестирования</h2><div id="testResults" class="mt-4"></div><div class="mt-4 max-w-xs"><label class="block text-sm font-medium text-[#5a554a] mb-1">Сколько дней у вас есть на подготовку?</label><input type="number" id="daysAvailable" class="input-modern w-full mt-1"><button onclick="setTimeAndPlan()" class="btn-primary mt-3">Создать план</button></div></div></div>
+                <div id="step4" class="step hidden"><div class="card-solid p-6 sm:p-8"><h2 class="text-xl font-bold">📚 Ваш план обучения</h2><div id="studyPlan" class="mt-4"></div><button id="startLearningBtn" class="btn-primary mt-4">Начать обучение</button></div></div>
+                <div id="step5" class="step hidden"><div class="card-solid p-6 sm:p-8"><div class="learning-header"><h2 class="text-xl font-bold">📖 Обучение</h2><div class="mt-3"><div class="progress-track"><div id="progressFill" class="progress-fill"></div></div><div id="progressStats" class="text-sm text-[#5a554a] mt-1"></div></div></div><div id="lessonContent" class="mt-4"></div><div id="testContent" class="hidden mt-4"></div></div></div>
+            </div>
+
+            <!-- Курсы/Уроки -->
+            <!-- COURSES -->
+            <div id="courses-pane" class="tab-pane hidden">
+
+                <!-- Панель управления -->
+                <div class="card-solid p-4 sm:p-6 mb-5">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="showCoursesList()" class="btn-pill btn-pill-purple">📚 Мои курсы</button>
+                        <button onclick="showLessonsList()" class="btn-pill btn-pill-pink">📖 Мои уроки</button>
+                        <button onclick="showCreateCourseForm()" class="btn-pill btn-pill-teal">➕ Создать курс</button>
+                        <button onclick="showCreateLessonForm()" class="btn-pill btn-pill-teal">➕ Создать урок</button>
+                        <button onclick="createSchoolCourse()" class="btn-pill btn-pill-gold">🏫 Курс школы</button>
+                        <button onclick="loadSchoolCourses()" class="btn-pill btn-pill-gold">📋 Курсы школы</button>
+                        <button onclick="exportSchoolStats()" class="btn-pill btn-pill-gold">📊 Экспорт</button>
+                    </div>
+                </div>
+
+                <!-- Список курсов -->
+                <div id="userCoursesList" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
+
+                <!-- Список уроков -->
+                <div id="userLessonsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+                <!-- Шаг 10: Список курсов (дублируется, но используется для отображения после создания) -->
+                <div id="step10" class="hidden"></div>
+
+                <!-- Шаг 11: Просмотр курса -->
+                <div id="step11" class="hidden">
+                    <div class="card-solid p-5 sm:p-7">
+                        <button onclick="showCoursesList()" class="btn-secondary text-sm mb-4">← К списку курсов</button>
+                        <h2 id="courseViewTitle" class="text-2xl font-bold mb-2"></h2>
+                        <p id="courseViewDescription" class="text-[#5a554a] mb-2"></p>
+                        <p><strong>Критерии успеха:</strong> <span id="courseViewCriteria"></span></p>
+                        <div id="courseModulesList" class="mt-4 space-y-4"></div>
+                    </div>
+                </div>
+
+                <!-- Шаг 12: Просмотр урока -->
+                <div id="step12" class="hidden">
+                    <div class="card-solid p-5 sm:p-7">
+                        <button onclick="showLessonsList()" class="btn-secondary text-sm mb-4">← К списку уроков</button>
+                        <h2 id="lessonViewTitle" class="text-2xl font-bold mb-2"></h2>
+                        <p><strong>Предмет:</strong> <span id="lessonViewSubject"></span></p>
+                        <div id="lessonViewContent" class="mt-4"></div>
+                        <div id="lessonViewHomework" class="mt-4"></div>
+                        <div id="lessonViewYoutube" class="mt-4"></div>
+                        <button onclick="generatePresentation()" class="btn-primary mt-4">📊 Создать презентацию</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 13: Создание курса -->
+                <div id="step13" class="hidden">
+                    <div class="card-solid p-5 sm:p-7">
+                        <h2 class="text-xl font-bold mb-4">📚 Создание курса</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-[#5a554a] mb-1">Название курса</label>
+                                <input type="text" id="newCourseName" class="input-modern" placeholder="Введите название">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-[#5a554a] mb-1">Описание</label>
+                                <textarea id="newCourseDesc" rows="3" class="input-modern" placeholder="Описание курса"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-[#5a554a] mb-1">Критерии успеха</label>
+                                <textarea id="newCourseCriteria" rows="2" class="input-modern" placeholder="Что нужно знать/уметь после прохождения"></textarea>
+                            </div>
+                            <button onclick="createCourse()" class="btn-primary w-full sm:w-auto">🚀 Создать курс</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Шаг 14: Список уроков (дублируется) -->
+                <div id="step14" class="hidden"></div>
+
+                <!-- Шаг 15: Создание урока -->
+                <div id="step15" class="hidden">
+                    <div class="card-solid p-5 sm:p-7">
+                        <h2 class="text-xl font-bold mb-4">📖 Создание урока</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-[#5a554a] mb-1">Название урока</label>
+                                <input type="text" id="newLessonTitle" class="input-modern" placeholder="Введите название">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-[#5a554a] mb-1">Предмет</label>
+                                <input type="text" id="newLessonSubject" class="input-modern" placeholder="Например: Математика">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-[#5a554a] mb-1">Описание</label>
+                                <textarea id="newLessonDesc" rows="3" class="input-modern" placeholder="Описание урока"></textarea>
+                            </div>
+                            <button onclick="createLesson()" class="btn-primary w-full sm:w-auto">🚀 Создать урок</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Список курсов школы -->
+                <div id="schoolCoursesList" class="mt-6 space-y-4"></div>
+            </div>
+
+            <!-- Тесты -->
+            <!-- TESTS -->
+            <div id="tests-pane" class="tab-pane hidden">
+
+                <!-- Панель управления -->
+                <div class="card-solid p-4 sm:p-6 mb-5">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="showTestCreator()" class="btn-primary">✏️ Создать тест</button>
+                        <button onclick="showCustomTestsList()" class="btn-secondary">📋 Мои тесты</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 6: Создание теста -->
+                <div id="step6" class="hidden">
+                    <div class="card-solid p-5 sm:p-7">
+                        <h2 class="text-xl font-bold mb-4">📝 Создание теста</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-[#5a554a] mb-1">Название теста</label>
+                                <input type="text" id="customTestName" class="input-modern" placeholder="Введите название">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-[#5a554a] mb-1">Описание</label>
+                                <textarea id="customTestDesc" rows="2" class="input-modern" placeholder="Необязательное описание"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-[#5a554a] mb-1">Вопросы</label>
+                                <div id="questionsList" class="space-y-3"></div>
+                                <button onclick="addQuestionField()" class="btn-secondary text-sm mt-2">➕ Добавить вопрос</button>
+                            </div>
+                            <button onclick="saveCustomTest()" class="btn-primary w-full sm:w-auto">💾 Сохранить тест</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Шаг 7: Список тестов -->
+                <div id="step7" class="hidden">
+                    <div class="card-solid p-5 sm:p-7">
+                        <h2 class="text-xl font-bold mb-4">📋 Мои тесты</h2>
+                        <div id="customTestsList" class="space-y-4"></div>
+                    </div>
+                </div>
+
+                <!-- Шаг 8: Прохождение теста -->
+                <div id="step8" class="hidden">
+                    <div class="card-solid p-5 sm:p-7">
+                        <h2 class="text-xl font-bold mb-4">🧪 Прохождение теста</h2>
+                        <h3 id="takingTestName" class="text-lg font-semibold mb-3"></h3>
+                        <div id="takingTestQuestions" class="space-y-4"></div>
+                        <button onclick="submitCustomTest()" class="btn-primary mt-4">✅ Отправить ответы</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 9: Результаты теста -->
+                <div id="step9" class="hidden">
+                    <div class="card-solid p-5 sm:p-7">
+                        <h2 class="text-xl font-bold mb-4">📊 Результаты теста</h2>
+                        <div id="customTestResults" class="space-y-4"></div>
+                        <button onclick="showCustomTestsList()" class="btn-secondary mt-4">← К списку тестов</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Школы -->
+            <div id="schools-pane" class="tab-pane hidden">
+                <div class="card-solid p-4 sm:p-6">
+                    <div id="teacherPanel" class="hidden"><h3 class="text-xl font-bold mb-3">👨‍🏫 Панель учителя</h3><div class="flex flex-wrap gap-2"><button onclick="showCreateSchoolForm()" class="btn-secondary">🏫 Создать школу</button><button onclick="showJoinSchoolForm()" class="btn-secondary">🔗 Присоединиться</button><button onclick="showMySchools()" class="btn-secondary">📋 Мои школы</button><button onclick="showSchoolStats()" class="btn-secondary">📊 Статистика школы</button><button onclick="showTeacherGraphs()" class="btn-secondary">📈 Графы знаний</button><button onclick="buildTargetGraph()" class="btn-primary">🎯 Целевой граф</button></div></div>
+                    <div id="studentPanel" class="hidden"><h3 class="text-xl font-bold mb-3">🎓 Панель ученика</h3><div class="flex flex-wrap gap-2"><button onclick="showMySchools()" class="btn-secondary">🏫 Мои школы</button><button onclick="joinSchool()" class="btn-secondary">🔗 Вступить в школу</button><button onclick="showStudentGraphs()" class="btn-secondary">📊 Мой прогресс</button><button onclick="showStudentPlan()" class="btn-secondary">📅 Мой план</button><button onclick="loadMyAssignedCourses()" class="btn-secondary text-sm">📚 Мои курсы</button></div></div>
+                </div>
+                <div id="myAssignedCoursesList" class="mt-5 space-y-4"></div>
+            </div>
+
+            <!-- Видео → текст -->
+            <div id="video-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🎥 Видео → текст, саммари и чат</h2>
+                    <div id="videoProcessPanel">
+                        <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео" class="input-modern w-full mb-3">
+                        <select id="targetLang" class="input-modern w-full mb-3">
+                            <option value="ru">Русский</option>
+                            <option value="en">Английский</option>
+                            <option value="kk">Казахский</option>
+                            <option value="zh">Китайский</option>
+                        </select>
+                        <button onclick="processVideo()" class="btn-primary w-full sm:w-auto">Обработать</button>
+                    </div>
+                    <div id="videoResult" class="mt-4 p-4 bg-[#f8f7f4] rounded-2xl hidden"></div>
+                    <div id="videoChatArea" style="display: none;" class="mt-5">
+                        <div class="flex flex-wrap justify-between items-center mb-3">
+                            <h3 class="font-bold text-lg">🤖 Задать вопрос по видео</h3>
+                            <button id="clearVideoChat" class="btn-ghost text-sm"><i class="fas fa-trash mr-1"></i> Очистить чат</button>
+                        </div>
+                        <div id="videoChat" class="h-64 overflow-y-auto bg-[#f8f7f4] rounded-2xl p-4 mb-3"></div>
+                        <div class="flex gap-2">
+                            <input type="text" id="videoQuestion" class="input-modern flex-1" placeholder="Спросите о содержании видео..." onkeypress="if(event.key==='Enter') askVideoQuestion()">
+                            <button id="sendVideoQuestion" class="btn-primary">Спросить</button>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <div class="flex flex-wrap justify-between items-center mb-2">
+                            <h3 class="font-bold text-lg">📜 История обработанных видео</h3>
+                            <button onclick="loadVideoSessions()" class="btn-ghost text-sm"><i class="fas fa-sync-alt mr-1"></i> Обновить</button>
+                        </div>
+                        <div id="videoSessionsList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Чат школы -->
+            <div id="chat-pane" class="tab-pane hidden">
+                <div class="card-solid p-8 text-center">
+                    <i class="fas fa-comments text-6xl text-[#6C5CE7] mb-4 block"></i>
+                    <h2 class="text-xl font-bold">Чат школы</h2>
+                    <p class="text-[#5a554a] mb-5">Общайтесь с участниками вашей школы в реальном времени.</p>
+                    <button onclick="openChatModal()" class="btn-primary"><i class="fas fa-comment-dots mr-1"></i> Открыть чат</button>
+                </div>
+            </div>
+
+            <!-- PDF чат (RAG) -->
+            <div id="pdfchat-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">📄 Чат с PDF-лекцией (RAG)</h2>
+                    <div class="mb-4">
+                        <input type="file" id="pdfFile" accept=".pdf" class="block w-full text-sm text-[#5a554a] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#ede8ff] file:text-[#5a4ad1] hover:file:bg-[#ddd4ff]">
+                        <button id="uploadPdfBtn" class="btn-secondary mt-3 text-sm">Загрузить и индексировать</button>
+                    </div>
+                    <div id="pdfChatStatus" class="text-sm text-[#8b83a0] mb-3"></div>
+                    <div id="pdfQuestionBlock" style="display: none;">
+                        <textarea id="pdfQuestion" rows="3" placeholder="Задайте вопрос по содержанию лекции..." class="input-modern w-full mb-3"></textarea>
+                        <button id="askPdfBtn" class="btn-primary text-sm">Спросить</button>
+                        <div id="pdfAnswer" class="mt-4 p-4 bg-[#f8f7f4] rounded-2xl whitespace-pre-wrap"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Генерация экзаменационных билетов -->
+            <div id="examtickets-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🎓 Генерация экзаменационных билетов</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="text" id="examCourseName" placeholder="Название курса (например: Математический анализ)" class="input-modern">
+                        <input type="number" id="examNumQuestions" placeholder="Количество вопросов (1-20)" value="5" min="1" max="20" class="input-modern">
+                        <select id="examTicketType" class="input-modern">
+                            <option value="tickets">🎫 Билеты (открытые вопросы)</option>
+                            <option value="test">📝 Тест (с вариантами ответов)</option>
+                        </select>
+                        <button id="generateTicketsBtn" class="btn-primary">Сгенерировать</button>
+                    </div>
+                    <div id="ticketsResult" class="mt-5 p-4 bg-[#f8f7f4] rounded-2xl"></div>
+                </div>
+            </div>
+
+            <!-- Проверка курсовых / рефератов -->
+            <div id="essaycheck-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">📝 Проверка курсовой / реферата</h2>
+                    <div class="mb-3">
+                        <input type="text" id="essayTitle" placeholder="Название работы (необязательно)" class="input-modern w-full mb-3">
+                        <textarea id="essayText" rows="10" placeholder="Вставьте текст работы..." class="input-modern w-full"></textarea>
+                        <button id="checkEssayBtn" class="btn-primary mt-3">Проверить</button>
+                    </div>
+                    <div id="essayResult" class="mt-4 p-4 bg-[#f8f7f4] rounded-2xl whitespace-pre-wrap"></div>
+                </div>
+            </div>
+
+            <!-- Планировщик задач -->
+            <div id="planner-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">📅 Планировщик задач</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <input type="text" id="taskTitle" placeholder="Название задачи" class="input-modern">
+                        <input type="text" id="taskDesc" placeholder="Описание (необязательно)" class="input-modern">
+                        <input type="datetime-local" id="taskDeadline" class="input-modern">
+                    </div>
+                    <button id="addTaskBtn" class="btn-primary mb-4">➕ Добавить задачу</button>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button id="filterAll" class="btn-pill btn-pill-purple">Все</button>
+                        <button id="filterPending" class="btn-pill btn-pill-pink">Активные</button>
+                        <button id="filterCompleted" class="btn-pill btn-pill-teal">Завершённые</button>
+                        <button id="filterUpcoming" class="btn-pill btn-pill-gold">Ближайшие (7 дней)</button>
+                    </div>
+                    <div id="tasksList" class="space-y-3 max-h-96 overflow-y-auto tasks-scroll"></div>
+                </div>
+            </div>
+
+            <!-- Научные статьи -->
+            <div id="scientific-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🔬 Помощь в написании научных статей</h2>
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-[#5a554a] mb-1">Тема / ключевые слова</label>
+                        <div class="flex flex-wrap gap-2">
+                            <input type="text" id="searchTopic" placeholder="например: machine learning for NLP" class="input-modern flex-1 min-w-[160px]">
+                            <input type="number" id="maxResults" value="10" min="1" max="30" class="input-modern w-24" placeholder="Кол-во">
+                            <button id="searchArticlesBtn" class="btn-primary">🔍 Поиск</button>
+                        </div>
+                    </div>
+                    <div id="searchResults" class="mt-4 space-y-3 max-h-96 overflow-y-auto"></div>
+                    <div class="mt-6">
+                        <button id="generateReviewBtn" class="btn-primary" disabled>📝 Сгенерировать обзор литературы</button>
+                        <div id="reviewResult" class="mt-4 p-4 bg-[#f8f7f4] rounded-2xl whitespace-pre-wrap"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Конструктор курсов (вуз) -->
+            <div id="syllabus-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">📚 Конструктор курса (силлабус / РПД)</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <input type="text" id="syllabusTitle" placeholder="Название дисциплины" class="input-modern">
+                        <input type="text" id="syllabusSpecialty" placeholder="Специальность/направление" class="input-modern">
+                        <input type="number" id="syllabusHours" placeholder="Общая трудоёмкость (часы)" value="144" class="input-modern">
+                        <input type="number" id="syllabusSemester" placeholder="Семестр" value="1" class="input-modern">
+                        <textarea id="syllabusGoal" rows="2" placeholder="Цель курса (необязательно)" class="input-modern col-span-1 sm:col-span-2"></textarea>
+                    </div>
+                    <button id="generateSyllabusBtn" class="btn-primary mb-4">🚀 Сгенерировать силлабус</button>
+                    <div id="syllabusResult" class="mt-4 p-4 bg-[#f8f7f4] rounded-2xl whitespace-pre-wrap"></div>
+                    <div class="mt-5">
+                        <h3 class="font-bold mb-2">Сохранённые курсы</h3>
+                        <div id="savedSyllabusList" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Анализ данных -->
+            <div id="dataanalysis-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">📊 Анализ данных для диссертации</h2>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-[#5a554a] mb-1">Загрузить данные (CSV или Excel)</label>
+                        <input type="file" id="dataFile" accept=".csv,.xls,.xlsx" class="input-modern w-full">
+                        <button id="uploadDataBtn" class="btn-secondary mt-2 text-sm">Загрузить</button>
+                        <div id="uploadStatus" class="text-sm text-[#8b83a0] mt-2"></div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button id="modeAI" onclick="setAnalysisMode('ai')" class="tab-btn active btn-pill btn-pill-purple">🤖 Умный анализ</button>
+                        <button id="modeCode" onclick="setAnalysisMode('code')" class="tab-btn btn-pill btn-pill-pink">💻 Python-код</button>
+                    </div>
+                    <div id="aiModeBlock">
+                        <label class="block text-sm font-medium text-[#5a554a] mb-2">Что нужно проанализировать?</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                            <button onclick="setAIPrompt('Покажи описательную статистику по всем колонкам')" class="btn-ghost text-xs text-left">📋 Описательная статистика</button>
+                            <button onclick="setAIPrompt('Построй гистограммы для всех числовых колонок')" class="btn-ghost text-xs text-left">📊 Гистограммы</button>
+                            <button onclick="setAIPrompt('Покажи корреляционную матрицу в виде тепловой карты')" class="btn-ghost text-xs text-left">🔥 Корреляция</button>
+                            <button onclick="setAIPrompt('Найди выбросы и аномалии в данных')" class="btn-ghost text-xs text-left">🔍 Поиск выбросов</button>
+                            <button onclick="setAIPrompt('Построй линейный график изменения значений по времени')" class="btn-ghost text-xs text-left">📈 График по времени</button>
+                            <button onclick="setAIPrompt('Сделай сравнение групп по основным показателям')" class="btn-ghost text-xs text-left">⚖️ Сравнение групп</button>
+                        </div>
+                        <textarea id="aiPromptText" rows="3" placeholder="Или напишите своими словами: например, «покажи связь между возрастом и зарплатой» или «сделай топ-10 самых частых значений»" class="input-modern w-full mb-3"></textarea>
+                        <button id="runAIAnalysisBtn" class="btn-primary text-sm">✨ Проанализировать</button>
+                    </div>
+                    <div id="codeModeBlock" class="hidden">
+                        <label class="block text-sm font-medium text-[#5a554a] mb-1">Python-код анализа</label>
+                        <textarea id="pythonCode" rows="12" class="input-modern w-full font-mono text-sm" placeholder="# df — ваш датафрейм\nprint(df.describe())\n\nimport matplotlib.pyplot as plt\ndf['column'].hist()\nplt.show()"></textarea>
+                        <button id="runAnalysisBtn" class="btn-secondary mt-2 text-sm">▶ Выполнить</button>
+                    </div>
+                    <div id="generatedCodeBlock" class="hidden mt-3">
+                        <div class="flex flex-wrap justify-between items-center mb-1">
+                            <span class="text-xs text-[#8b83a0]">Сгенерированный код:</span>
+                            <button onclick="editGeneratedCode()" class="text-xs text-[#6C5CE7] hover:underline">✏️ Редактировать</button>
+                        </div>
+                        <pre id="generatedCodeView" class="bg-[#f8f7f4] p-3 rounded-xl text-xs font-mono overflow-x-auto text-[#1e1e2a]"></pre>
+                    </div>
+                    <div id="analysisResult" class="mt-4 p-4 bg-[#f8f7f4] rounded-2xl">
+                        <div class="text-[#8b83a0]">Результат появится здесь</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI-рецензент -->
+            <div id="reviewer-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🔍 AI-рецензент + проверка на плагиат</h2>
+                    <div class="mb-3">
+                        <input type="text" id="reviewTitle" placeholder="Название работы (необязательно)" class="input-modern w-full mb-3">
+                        <textarea id="reviewText" rows="12" placeholder="Вставьте текст диссертации, статьи или реферата..." class="input-modern w-full"></textarea>
+                        <button id="submitReviewBtn" class="btn-primary mt-3">Получить рецензию</button>
+                    </div>
+                    <div id="aiReviewResult" class="mt-4 p-4 bg-[#f8f7f4] rounded-2xl whitespace-pre-wrap space-y-4"></div>
+                    <div class="mt-6">
+                        <h3 class="font-bold text-lg mb-2">📜 История проверок</h3>
+                        <div id="reviewHistoryList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Генератор гипотез -->
+            <div id="hypothesis-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">💡 Генератор исследовательских гипотез</h2>
+                    <p class="text-[#5a554a] mb-4">На основе вашего профиля (образование, навыки, успеваемость) ИИ предложит персонализированные гипотезы для начала научной работы.</p>
+                    <div class="flex flex-wrap gap-3 mb-5">
+                        <input type="text" id="hypothesisDomain" placeholder="Область (необязательно, например: машинное обучение, биология)" class="input-modern flex-1 min-w-[180px]">
+                        <button id="generateHypothesisBtn" class="btn-primary whitespace-nowrap"><i class="fas fa-lightbulb mr-2"></i> Сгенерировать</button>
+                    </div>
+                    <div id="hypothesesList" class="space-y-4"></div>
+                    <div class="mt-7">
+                        <h3 class="font-bold text-lg mb-3">📜 История гипотез</h3>
+                        <div id="historyHypothesesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПОИСК НАУЧНОГО РУКОВОДИТЕЛЯ -->
+            <div id="supervisor-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🎓 Поиск научного руководителя</h2>
+                    <p class="text-[#5a554a] mb-4">ИИ проанализирует ваш профиль и подберёт наиболее подходящих научных руководителей.</p>
+                    <div class="flex justify-center mb-5">
+                        <button id="findSupervisorBtn" class="btn-primary"><i class="fas fa-search mr-2"></i> Найти подходящих руководителей</button>
+                    </div>
+                    <div id="supervisorResults" class="space-y-4"></div>
+                    <div class="mt-7">
+                        <h3 class="font-bold text-lg mb-3">⭐ Избранные руководители</h3>
+                        <div id="favoriteSupervisorsList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- НОВАЯ ВКЛАДКА: СТАЖИРОВКИ И ВАКАНСИИ -->
+            <div id="internship-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">💼 Стажировки и вакансии</h2>
+                    <div class="flex flex-wrap gap-1 mb-5 border-b border-[#ede8e2] pb-2">
+                        <button id="internshipFindVacanciesTab" class="tab-modern active">🔍 Найти вакансии</button>
+                        <button id="internshipMyApplicationsTab" class="tab-modern">📋 Мои отклики</button>
+                        <button id="internshipEmployerTab" class="tab-modern hidden employer-only">🏢 Для работодателей</button>
+                    </div>
+                    <div id="internshipFindVacancies" class="internship-tab-content">
+                        <p class="text-[#5a554a] mb-4">ИИ проанализирует ваш профиль и подберёт наиболее подходящие стажировки и вакансии.</p>
+                        <div class="flex justify-center mb-5">
+                            <button id="findVacanciesBtn" class="btn-primary"><i class="fas fa-search mr-2"></i> Найти подходящие вакансии</button>
+                        </div>
+                        <div id="vacanciesResult" class="space-y-4"></div>
+                    </div>
+                    <div id="internshipMyApplications" class="internship-tab-content hidden">
+                        <h3 class="font-bold text-lg mb-3">📋 Мои отклики</h3>
+                        <div id="myApplicationsList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                    </div>
+                    <div id="internshipEmployer" class="internship-tab-content hidden">
+                        <div class="mb-5">
+                            <h3 class="font-bold text-lg mb-3">🏢 Мои компании</h3>
+                            <button id="createCompanyBtn" class="btn-secondary text-sm mb-3">➕ Создать компанию</button>
+                            <div id="myCompaniesList" class="space-y-2 max-h-48 overflow-y-auto mb-4"></div>
+                            <h3 class="font-bold text-lg mb-3">📌 Мои вакансии</h3>
+                            <button id="createVacancyBtn" class="btn-secondary text-sm mb-3">➕ Создать вакансию</button>
+                            <div id="myVacanciesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- НОВАЯ ВКЛАДКА: SOFT SKILLS ИНТЕРВЬЮ (ЧАТ) -->
+            <div id="softskills-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🎤 Интервью для оценки Soft Skills</h2>
+                    <p class="text-[#5a554a] mb-4">ИИ-рекрутер проведёт с вами естественное интервью, оценит коммуникабельность, стрессоустойчивость, уверенность речи и эмоциональный интеллект. Отвечайте голосом.</p>
+                    <div id="softSkillsStartPanel">
+                        <label class="block text-sm font-medium text-[#5a554a] mb-2">Выберите сценарий:</label>
+                        <select id="softSkillsScenario" class="input-modern w-full mb-4 max-w-xs">
+                            <option value="job_interview">Собеседование на работу</option>
+                            <option value="conflict_resolution">Конфликтная ситуация</option>
+                            <option value="team_meeting">Командное совещание</option>
+                            <option value="presentation">Презентация проекта</option>
+                        </select>
+                        <button id="startChatInterviewBtn" class="btn-primary w-full sm:w-auto">🎤 Начать интервью</button>
+                    </div>
+                    <div id="softSkillsChatArea" style="display: none;">
+                        <div id="softSkillsChat" class="h-96 overflow-y-auto bg-[#f8f7f4] rounded-2xl p-4 mb-4"></div>
+                        <div class="flex flex-wrap gap-3 items-center">
+                            <button id="recordChatBtn" class="btn-secondary disabled:opacity-50" disabled>🔴 Записать ответ</button>
+                            <button id="stopChatBtn" class="btn-secondary disabled:opacity-50 hidden">⏹ Остановить</button>
+                            <div id="chatStatus" class="text-sm text-[#8b83a0]"></div>
+                        </div>
+                    </div>
+                    <div id="softSkillsChatResults" style="display: none;" class="mt-5">
+                        <h3 class="font-bold text-lg mb-3">📊 Результаты оценки Soft Skills</h3>
+                        <div id="chatOverallScore" class="text-4xl font-bold text-[#6C5CE7] mb-4">0/100</div>
+                        <div id="chatFeedback" class="space-y-2"></div>
+                        <button onclick="location.reload()" class="btn-secondary mt-4">🔄 Пройти снова</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- НОВАЯ ВКЛАДКА: AI-ДВОЙНИК -->
+            <div id="aidouble-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🤖 AI-двойник</h2>
+                    <div id="aiDoubleChat" class="bg-[#f8f7f4] rounded-2xl p-4 h-96 overflow-y-auto mb-4"></div>
                     <div class="flex gap-2">
-                        <input type="text" id="videoQuestion" class="modern-input flex-1" placeholder="Спросите о содержании видео..." onkeypress="if(event.key==='Enter') askVideoQuestion()">
-                        <button id="sendVideoQuestion" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full">Спросить</button>
-                    </div>
-                </div>
-                
-                <!-- История обработанных видео -->
-                <div class="mt-6">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="font-bold text-lg">📜 История обработанных видео</h3>
-                        <button onclick="loadVideoSessions()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-1 rounded-full text-xs"><i class="fas fa-sync-alt mr-1"></i> Обновить</button>
-                    </div>
-                    <div id="videoSessionsList" class="space-y-2 max-h-48 overflow-y-auto"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Чат школы -->
-        <div id="chat-pane" class="tab-pane hidden">
-            <div class="step-card p-6 text-center">
-                <i class="fas fa-comments text-6xl text-[#bc3f4b] mb-3 block"></i>
-                <h2 class="text-xl font-bold">Чат школы</h2>
-                <p class="mb-4">Общайтесь с участниками вашей школы в реальном времени.</p>
-                <button onclick="openChatModal()" class="bg-[#bc3f4b] px-5 py-2 rounded-full"><i class="fas fa-comment-dots mr-1"></i> Открыть чат</button>
-            </div>
-        </div>
-
-        <!-- PDF чат (RAG) -->
-        <div id="pdfchat-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">📄 Чат с PDF-лекцией (RAG)</h2>
-                <div class="mb-4">
-                    <input type="file" id="pdfFile" accept=".pdf" class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#bc3f4b] file:text-white hover:file:bg-[#9e2e3a]">
-                    <button id="uploadPdfBtn" class="mt-3 bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">Загрузить и индексировать</button>
-                </div>
-                <div id="pdfChatStatus" class="text-sm text-gray-400 mb-3"></div>
-                <div id="pdfQuestionBlock" style="display: none;">
-                    <textarea id="pdfQuestion" rows="3" placeholder="Задайте вопрос по содержанию лекции..." class="modern-input w-full mb-2"></textarea>
-                    <button id="askPdfBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">Спросить</button>
-                    <div id="pdfAnswer" class="mt-4 p-3 bg-[#1f1219] rounded-xl whitespace-pre-wrap"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Генерация экзаменационных билетов -->
-        <div id="examtickets-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🎓 Генерация экзаменационных билетов</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="examCourseName" placeholder="Название курса (например: Математический анализ)" class="modern-input">
-                    <input type="number" id="examNumQuestions" placeholder="Количество вопросов (1-20)" value="5" min="1" max="20" class="modern-input">
-                    <select id="examTicketType" class="modern-input">
-                        <option value="tickets">🎫 Билеты (открытые вопросы)</option>
-                        <option value="test">📝 Тест (с вариантами ответов)</option>
-                    </select>
-                    <button id="generateTicketsBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full">Сгенерировать</button>
-                </div>
-                <div id="ticketsResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl"></div>
-            </div>
-        </div>
-
-        <!-- Проверка курсовых / рефератов -->
-        <div id="essaycheck-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">📝 Проверка курсовой / реферата</h2>
-                <div class="mb-3">
-                    <input type="text" id="essayTitle" placeholder="Название работы (необязательно)" class="modern-input w-full mb-2">
-                    <textarea id="essayText" rows="10" placeholder="Вставьте текст работы..." class="modern-input w-full"></textarea>
-                    <button id="checkEssayBtn" class="mt-3 bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full">Проверить</button>
-                </div>
-                <div id="essayResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl whitespace-pre-wrap"></div>
-            </div>
-        </div>
-
-        <!-- Планировщик задач -->
-        <div id="planner-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">📅 Планировщик задач</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <input type="text" id="taskTitle" placeholder="Название задачи" class="modern-input">
-                    <input type="text" id="taskDesc" placeholder="Описание (необязательно)" class="modern-input">
-                    <input type="datetime-local" id="taskDeadline" class="modern-input">
-                </div>
-                <button id="addTaskBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full mb-4">➕ Добавить задачу</button>
-                <div class="flex gap-3 mb-3">
-                    <button id="filterAll" class="bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Все</button>
-                    <button id="filterPending" class="bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Активные</button>
-                    <button id="filterCompleted" class="bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Завершённые</button>
-                    <button id="filterUpcoming" class="bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Ближайшие (7 дней)</button>
-                </div>
-                <div id="tasksList" class="space-y-3 max-h-96 overflow-y-auto tasks-scroll"></div>
-            </div>
-        </div>
-
-        <!-- Научные статьи -->
-        <div id="scientific-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🔬 Помощь в написании научных статей</h2>
-                <div class="mb-6">
-                    <label class="block text-sm font-medium mb-1">Тема / ключевые слова</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="searchTopic" placeholder="например: machine learning for NLP" class="modern-input flex-1">
-                        <input type="number" id="maxResults" value="10" min="1" max="30" class="modern-input w-24" placeholder="Кол-во">
-                        <button id="searchArticlesBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full">🔍 Поиск</button>
-                    </div>
-                </div>
-                <div id="searchResults" class="mt-4 space-y-3 max-h-96 overflow-y-auto"></div>
-                <div class="mt-6">
-                    <button id="generateReviewBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full" disabled>📝 Сгенерировать обзор литературы</button>
-                    <div id="reviewResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl whitespace-pre-wrap"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Конструктор курсов (вуз) -->
-        <div id="syllabus-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">📚 Конструктор курса (силлабус / РПД)</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <input type="text" id="syllabusTitle" placeholder="Название дисциплины" class="modern-input">
-                    <input type="text" id="syllabusSpecialty" placeholder="Специальность/направление" class="modern-input">
-                    <input type="number" id="syllabusHours" placeholder="Общая трудоёмкость (часы)" value="144" class="modern-input">
-                    <input type="number" id="syllabusSemester" placeholder="Семестр" value="1" class="modern-input">
-                    <textarea id="syllabusGoal" rows="2" placeholder="Цель курса (необязательно)" class="modern-input col-span-2"></textarea>
-                </div>
-                <button id="generateSyllabusBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full mb-4">🚀 Сгенерировать силлабус</button>
-                <div id="syllabusResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl whitespace-pre-wrap"></div>
-                <div class="mt-4">
-                    <h3 class="font-bold mb-2">Сохранённые курсы</h3>
-                    <div id="savedSyllabusList" class="space-y-2"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Анализ данных -->
-        <div id="dataanalysis-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">📊 Анализ данных для диссертации</h2>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Загрузить данные (CSV или Excel)</label>
-                    <input type="file" id="dataFile" accept=".csv,.xls,.xlsx" class="modern-input w-full">
-                    <button id="uploadDataBtn" class="mt-2 bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">Загрузить</button>
-                    <div id="uploadStatus" class="text-sm text-gray-400 mt-2"></div>
-                </div>
-                <div class="flex gap-2 mb-4">
-                    <button id="modeAI" onclick="setAnalysisMode('ai')" class="tab-btn active px-4 py-2 rounded-full text-sm bg-[#bc3f4b] text-white">🤖 Умный анализ</button>
-                    <button id="modeCode" onclick="setAnalysisMode('code')" class="tab-btn px-4 py-2 rounded-full text-sm bg-black/40 text-gray-200">💻 Python-код</button>
-                </div>
-                <div id="aiModeBlock">
-                    <label class="block text-sm font-medium mb-1">Что нужно проанализировать?</label>
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <button onclick="setAIPrompt('Покажи описательную статистику по всем колонкам')" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-2 rounded-xl text-xs text-left">📋 Описательная статистика</button>
-                        <button onclick="setAIPrompt('Построй гистограммы для всех числовых колонок')" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-2 rounded-xl text-xs text-left">📊 Гистограммы</button>
-                        <button onclick="setAIPrompt('Покажи корреляционную матрицу в виде тепловой карты')" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-2 rounded-xl text-xs text-left">🔥 Корреляция</button>
-                        <button onclick="setAIPrompt('Найди выбросы и аномалии в данных')" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-2 rounded-xl text-xs text-left">🔍 Поиск выбросов</button>
-                        <button onclick="setAIPrompt('Построй линейный график изменения значений по времени')" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-2 rounded-xl text-xs text-left">📈 График по времени</button>
-                        <button onclick="setAIPrompt('Сделай сравнение групп по основным показателям')" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-2 rounded-xl text-xs text-left">⚖️ Сравнение групп</button>
-                    </div>
-                    <textarea id="aiPromptText" rows="3" placeholder="Или напишите своими словами: например, «покажи связь между возрастом и зарплатой» или «сделай топ-10 самых частых значений»" class="modern-input w-full mb-2"></textarea>
-                    <button id="runAIAnalysisBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">✨ Проанализировать</button>
-                </div>
-                <div id="codeModeBlock" class="hidden">
-                    <label class="block text-sm font-medium mb-1">Python-код анализа</label>
-                    <textarea id="pythonCode" rows="12" class="modern-input w-full font-mono text-sm" placeholder="# df — ваш датафрейм\nprint(df.describe())\n\nimport matplotlib.pyplot as plt\ndf['column'].hist()\nplt.show()"></textarea>
-                    <button id="runAnalysisBtn" class="mt-2 bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full text-sm">▶ Выполнить</button>
-                </div>
-                <div id="generatedCodeBlock" class="hidden mt-3">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs text-gray-400">Сгенерированный код:</span>
-                        <button onclick="editGeneratedCode()" class="text-xs text-[#c45466] hover:underline">✏️ Редактировать</button>
-                    </div>
-                    <pre id="generatedCodeView" class="bg-[#1a0e12] p-3 rounded-xl text-xs font-mono overflow-x-auto text-gray-300"></pre>
-                </div>
-                <div id="analysisResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl">
-                    <div class="text-gray-400">Результат появится здесь</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- AI-рецензент -->
-        <div id="reviewer-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🔍 AI-рецензент + проверка на плагиат</h2>
-                <div class="mb-3">
-                    <input type="text" id="reviewTitle" placeholder="Название работы (необязательно)" class="modern-input w-full mb-2">
-                    <textarea id="reviewText" rows="12" placeholder="Вставьте текст диссертации, статьи или реферата..." class="modern-input w-full"></textarea>
-                    <button id="submitReviewBtn" class="mt-3 bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full">Получить рецензию</button>
-                </div>
-                <div id="aiReviewResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl whitespace-pre-wrap space-y-4"></div>
-                <div class="mt-6">
-                    <h3 class="font-bold text-lg mb-2">📜 История проверок</h3>
-                    <div id="reviewHistoryList" class="space-y-2 max-h-64 overflow-y-auto"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Генератор гипотез -->
-        <div id="hypothesis-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">💡 Генератор исследовательских гипотез</h2>
-                <p class="mb-4 text-gray-300">На основе вашего профиля (образование, навыки, успеваемость) ИИ предложит персонализированные гипотезы для начала научной работы.</p>
-                <div class="flex flex-wrap gap-4 mb-6">
-                    <input type="text" id="hypothesisDomain" placeholder="Область (необязательно, например: машинное обучение, биология)" class="modern-input flex-1">
-                    <button id="generateHypothesisBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full whitespace-nowrap"><i class="fas fa-lightbulb mr-2"></i> Сгенерировать</button>
-                </div>
-                <div id="hypothesesList" class="space-y-4"></div>
-                <div class="mt-8">
-                    <h3 class="font-bold text-lg mb-3">📜 История гипотез</h3>
-                    <div id="historyHypothesesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ПОИСК НАУЧНОГО РУКОВОДИТЕЛЯ -->
-        <div id="supervisor-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🎓 Поиск научного руководителя</h2>
-                <p class="mb-4">ИИ проанализирует ваш профиль и подберёт наиболее подходящих научных руководителей.</p>
-                <div class="flex justify-center mb-6">
-                    <button id="findSupervisorBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full"><i class="fas fa-search mr-2"></i> Найти подходящих руководителей</button>
-                </div>
-                <div id="supervisorResults" class="space-y-4"></div>
-                <div class="mt-8">
-                    <h3 class="font-bold text-lg mb-3">⭐ Избранные руководители</h3>
-                    <div id="favoriteSupervisorsList" class="space-y-2 max-h-96 overflow-y-auto"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- НОВАЯ ВКЛАДКА: СТАЖИРОВКИ И ВАКАНСИИ -->
-        <div id="internship-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">💼 Стажировки и вакансии</h2>
-                <div class="flex gap-2 mb-6 border-b border-[#5c2e3c] pb-2">
-                    <button id="internshipFindVacanciesTab" class="px-4 py-2 rounded-t-lg bg-[#bc3f4b] text-white">🔍 Найти вакансии</button>
-                    <button id="internshipMyApplicationsTab" class="px-4 py-2 rounded-t-lg bg-black/40 text-gray-300">📋 Мои отклики</button>
-                    <button id="internshipEmployerTab" class="px-4 py-2 rounded-t-lg bg-black/40 text-gray-300 hidden employer-only">🏢 Для работодателей</button>
-                </div>
-                <div id="internshipFindVacancies" class="internship-tab-content">
-                    <p class="mb-4 text-gray-300">ИИ проанализирует ваш профиль и подберёт наиболее подходящие стажировки и вакансии.</p>
-                    <div class="flex justify-center mb-6">
-                        <button id="findVacanciesBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full"><i class="fas fa-search mr-2"></i> Найти подходящие вакансии</button>
-                    </div>
-                    <div id="vacanciesResult" class="space-y-4"></div>
-                </div>
-                <div id="internshipMyApplications" class="internship-tab-content hidden">
-                    <h3 class="font-bold text-lg mb-3">📋 Мои отклики</h3>
-                    <div id="myApplicationsList" class="space-y-2 max-h-96 overflow-y-auto"></div>
-                </div>
-                <div id="internshipEmployer" class="internship-tab-content hidden">
-                    <div class="mb-6">
-                        <h3 class="font-bold text-lg mb-3">🏢 Мои компании</h3>
-                        <button id="createCompanyBtn" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-2 rounded-full text-sm mb-3">➕ Создать компанию</button>
-                        <div id="myCompaniesList" class="space-y-2 max-h-48 overflow-y-auto mb-4"></div>
-                        <h3 class="font-bold text-lg mb-3">📌 Мои вакансии</h3>
-                        <button id="createVacancyBtn" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-2 rounded-full text-sm mb-3">➕ Создать вакансию</button>
-                        <div id="myVacanciesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                        <input type="text" id="aiDoubleCommand" class="input-modern flex-1" placeholder="Напишите команду...">
+                        <button id="sendAiDoubleCommand" class="btn-primary">Отправить</button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- НОВАЯ ВКЛАДКА: SOFT SKILLS ИНТЕРВЬЮ (ЧАТ) -->
-        <div id="softskills-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🎤 Интервью для оценки Soft Skills</h2>
-                <p class="mb-4 text-gray-300">ИИ-рекрутер проведёт с вами естественное интервью, оценит коммуникабельность, стрессоустойчивость, уверенность речи и эмоциональный интеллект. Отвечайте голосом.</p>
-                <div id="softSkillsStartPanel">
-                    <label class="block text-sm font-medium mb-2">Выберите сценарий:</label>
-                    <select id="softSkillsScenario" class="modern-input w-full mb-4">
-                        <option value="job_interview">Собеседование на работу</option>
-                        <option value="conflict_resolution">Конфликтная ситуация</option>
-                        <option value="team_meeting">Командное совещание</option>
-                        <option value="presentation">Презентация проекта</option>
-                    </select>
-                    <button id="startChatInterviewBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full w-full sm:w-auto">🎤 Начать интервью</button>
+            <!-- НОВАЯ ВКЛАДКА: РЕЙТИНГ -->
+            <div id="rating-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🏆 Рейтинг</h2>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button data-role="student" class="rating-role-btn btn-pill btn-pill-purple">Студенты</button>
+                        <button data-role="master" class="rating-role-btn btn-pill btn-pill-pink">Магистры</button>
+                        <button data-role="phd" class="rating-role-btn btn-pill btn-pill-teal">Докторанты</button>
+                        <button data-role="researcher" class="rating-role-btn btn-pill btn-pill-gold">Исследователи</button>
+                        <button data-role="professor" class="rating-role-btn btn-pill btn-pill-purple">Профессора</button>
+                        <button data-role="employer" class="rating-role-btn btn-pill btn-pill-pink">Работодатели</button>
+                    </div>
+                    <div id="ratingLeaderboard" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                    <button id="updateMyRatingBtn" class="btn-secondary mt-4 text-sm">Обновить мой рейтинг</button>
                 </div>
-                <div id="softSkillsChatArea" style="display: none;">
-                    <div id="softSkillsChat" class="h-96 overflow-y-auto bg-black/30 rounded-xl p-4 mb-4"></div>
-                    <div class="flex flex-wrap gap-3 items-center">
-                        <button id="recordChatBtn" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-full disabled:opacity-50" disabled>🔴 Записать ответ</button>
-                        <button id="stopChatBtn" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-full disabled:opacity-50 hidden">⏹ Остановить</button>
-                        <div id="chatStatus" class="text-sm text-gray-400"></div>
+            </div>
+
+            <!-- AI-ментор по поступлению -->
+            <div id="admission-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🎓 AI-ментор по поступлению</h2>
+                    <p class="text-[#5a554a] mb-4">Введите страну и расскажите о себе (оценки, языки, проекты, достижения, мечты – всё, что хотите). ИИ подберёт реально подходящие вузы и даст детальный план действий.</p>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-[#5a554a] mb-1">Страна</label>
+                        <input type="text" id="admissionCountry" class="input-modern w-full mb-3" placeholder="Например: Германия, Канада, Япония...">
+                        <label class="block text-sm font-medium text-[#5a554a] mb-1">Ваши данные (о себе, оценках, проектах, языках, достижениях, желаниях)</label>
+                        <textarea id="admissionUserData" rows="6" class="input-modern w-full mb-3" placeholder="Например: Я учусь в 10 классе, средний балл 4.8, знаю английский B2, участвовал в олимпиаде по математике, хочу поступить на IT-специальность..."></textarea>
+                        <button id="startAdmissionAnalysis" class="btn-primary">🔍 Найти вузы</button>
+                    </div>
+                    <div id="admissionResult" class="mt-4 space-y-4"></div>
+                    <div class="mt-7">
+                        <h3 class="font-bold text-lg mb-2">📜 История запросов</h3>
+                        <div id="admissionHistory" class="space-y-2 max-h-64 overflow-y-auto"></div>
                     </div>
                 </div>
-                <div id="softSkillsChatResults" style="display: none;" class="mt-4">
-                    <h3 class="font-bold text-lg mb-3">📊 Результаты оценки Soft Skills</h3>
-                    <div id="chatOverallScore" class="text-3xl font-bold text-[#bc3f4b] mb-4">0/100</div>
-                    <div id="chatFeedback" class="space-y-2"></div>
-                    <button onclick="location.reload()" class="mt-4 bg-[#2c1a20] px-4 py-2 rounded-full">🔄 Пройти снова</button>
-                </div>
             </div>
-        </div>
 
-        <!-- НОВАЯ ВКЛАДКА: AI-ДВОЙНИК -->
-        <div id="aidouble-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🤖 AI-двойник</h2>
-                <div id="aiDoubleChat" class="bg-[#1f1219] rounded-xl p-4 h-96 overflow-y-auto mb-4"></div>
-                <div class="flex gap-2">
-                    <input type="text" id="aiDoubleCommand" class="modern-input flex-1" placeholder="Напишите команду...">
-                    <button id="sendAiDoubleCommand" class="bg-[#bc3f4b] px-4 py-2 rounded-full">Отправить</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- НОВАЯ ВКЛАДКА: РЕЙТИНГ -->
-        <div id="rating-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🏆 Рейтинг</h2>
-                <div class="flex flex-wrap gap-2 mb-4">
-                    <button data-role="student" class="rating-role-btn bg-[#bc3f4b] px-3 py-1 rounded-full text-sm">Студенты</button>
-                    <button data-role="master" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Магистры</button>
-                    <button data-role="phd" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Докторанты</button>
-                    <button data-role="researcher" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Исследователи</button>
-                    <button data-role="professor" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Профессора</button>
-                    <button data-role="employer" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Работодатели</button>
-                </div>
-                <div id="ratingLeaderboard" class="space-y-2 max-h-96 overflow-y-auto"></div>
-                <button id="updateMyRatingBtn" class="mt-4 bg-[#2c1a20] px-4 py-2 rounded-full text-sm">Обновить мой рейтинг</button>
-            </div>
-        </div>
-        <!-- AI-ментор по поступлению -->
-        <div id="admission-pane" class="tab-pane hidden">
-            <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🎓 AI-ментор по поступлению</h2>
-                <p class="mb-4 text-gray-300">Введите страну и расскажите о себе (оценки, языки, проекты, достижения, мечты – всё, что хотите). ИИ подберёт реально подходящие вузы и даст детальный план действий.</p>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Страна</label>
-                    <input type="text" id="admissionCountry" class="modern-input w-full mb-3" placeholder="Например: Германия, Канада, Япония...">
-                    <label class="block text-sm font-medium mb-1">Ваши данные (о себе, оценках, проектах, языках, достижениях, желаниях)</label>
-                    <textarea id="admissionUserData" rows="6" class="modern-input w-full mb-3" placeholder="Например: Я учусь в 10 классе, средний балл 4.8, знаю английский B2, участвовал в олимпиаде по математике, хочу поступить на IT-специальность..."></textarea>
-                    <button id="startAdmissionAnalysis" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full">🔍 Найти вузы</button>
-                </div>
-                <div id="admissionResult" class="mt-4 space-y-4"></div>
-                <div class="mt-8">
-                    <h3 class="font-bold text-lg mb-2">📜 История запросов</h3>
-                    <div id="admissionHistory" class="space-y-2 max-h-64 overflow-y-auto"></div>
-                </div>
-            </div>
-        </div>
-                <!-- АДМИНИСТРАТИВНАЯ ПАНЕЛЬ (только для государства) -->
-                <div id="admin-pane" class="tab-pane hidden">
-                    <div class="step-card p-6">
-                        <h2 class="text-xl font-bold mb-4">🛡️ Административная панель</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-[#1f1219] p-4 rounded-xl">
-                                <h3 class="font-bold mb-2">📊 Статистика платформы</h3>
-                                <div id="adminStats" class="text-sm space-y-1"></div>
-                                <button id="refreshAdminStats" class="mt-3 bg-[#2c1a20] px-3 py-1 rounded text-xs">Обновить</button>
-                            </div>
-                            <div class="bg-[#1f1219] p-4 rounded-xl">
-                                <h3 class="font-bold mb-2">🔧 Управление модулями</h3>
-                                <div id="modulesList" class="space-y-2 max-h-60 overflow-y-auto mb-3"></div>
-                                <div class="flex gap-2">
-                                    <input type="text" id="newModuleName" placeholder="Имя (learning)" class="modern-input text-sm flex-1">
-                                    <input type="text" id="newModuleDisplay" placeholder="Название" class="modern-input text-sm flex-1">
-                                    <button id="createModuleBtn" class="bg-green-800 px-2 py-1 rounded text-xs">➕</button>
-                                </div>
-                            </div>
+            <!-- АДМИНИСТРАТИВНАЯ ПАНЕЛЬ (только для государства) -->
+            <div id="admin-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🛡️ Административная панель</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-[#f8f7f4] p-4 rounded-2xl">
+                            <h3 class="font-bold mb-2">📊 Статистика платформы</h3>
+                            <div id="adminStats" class="text-sm space-y-1"></div>
+                            <button id="refreshAdminStats" class="btn-secondary mt-3 text-xs">Обновить</button>
                         </div>
-                        <div class="mt-4 bg-[#1f1219] p-4 rounded-xl">
-                            <h3 class="font-bold mb-2">👥 Пользователи платформы</h3>
-                            <div id="adminUsersList" class="space-y-2 max-h-60 overflow-y-auto"></div>
-                        </div>
-                    </div>
-                </div>
-        
-                <!-- API ДЛЯ РАЗРАБОТЧИКОВ -->
-                <div id="developer-pane" class="tab-pane hidden">
-                    <div class="step-card p-6">
-                        <h2 class="text-xl font-bold mb-4">🔑 API для разработчиков</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-[#1f1219] p-4 rounded-xl">
-                                <h3 class="font-bold mb-2">Создать новый ключ</h3>
-                                <input type="text" id="newKeyName" placeholder="Название ключа" class="modern-input w-full text-sm mb-2">
-                                <input type="text" id="newKeyModules" placeholder="Модули (через запятую: learning,tests)" class="modern-input w-full text-sm mb-2">
-                                <button id="createApiKeyBtn" class="bg-[#bc3f4b] px-3 py-1 rounded text-sm">Сгенерировать ключ</button>
-                            </div>
-                            <div class="bg-[#1f1219] p-4 rounded-xl">
-                                <h3 class="font-bold mb-2">Мои API-ключи</h3>
-                                <div id="developerKeysList" class="space-y-2 max-h-48 overflow-y-auto"></div>
-                                <button id="viewApiDocsBtn" class="mt-3 bg-[#2c1a20] px-3 py-1 rounded text-xs">📖 Документация API</button>
+                        <div class="bg-[#f8f7f4] p-4 rounded-2xl">
+                            <h3 class="font-bold mb-2">🔧 Управление модулями</h3>
+                            <div id="modulesList" class="space-y-2 max-h-60 overflow-y-auto mb-3"></div>
+                            <div class="flex flex-wrap gap-2">
+                                <input type="text" id="newModuleName" placeholder="Имя (learning)" class="input-modern text-sm flex-1 min-w-[100px]">
+                                <input type="text" id="newModuleDisplay" placeholder="Название" class="input-modern text-sm flex-1 min-w-[100px]">
+                                <button id="createModuleBtn" class="btn-secondary text-xs">➕</button>
                             </div>
                         </div>
                     </div>
+                    <div class="mt-4 bg-[#f8f7f4] p-4 rounded-2xl">
+                        <h3 class="font-bold mb-2">👥 Пользователи платформы</h3>
+                        <div id="adminUsersList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- API ДЛЯ РАЗРАБОТЧИКОВ -->
+            <div id="developer-pane" class="tab-pane hidden">
+                <div class="card-solid p-5 sm:p-7">
+                    <h2 class="text-xl font-bold mb-4">🔑 API для разработчиков</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-[#f8f7f4] p-4 rounded-2xl">
+                            <h3 class="font-bold mb-2">Создать новый ключ</h3>
+                            <input type="text" id="newKeyName" placeholder="Название ключа" class="input-modern w-full text-sm mb-2">
+                            <input type="text" id="newKeyModules" placeholder="Модули (через запятую: learning,tests)" class="input-modern w-full text-sm mb-2">
+                            <button id="createApiKeyBtn" class="btn-primary text-sm">Сгенерировать ключ</button>
+                        </div>
+                        <div class="bg-[#f8f7f4] p-4 rounded-2xl">
+                            <h3 class="font-bold mb-2">Мои API-ключи</h3>
+                            <div id="developerKeysList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                            <button id="viewApiDocsBtn" class="btn-secondary mt-3 text-xs">📖 Документация API</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок для неавторизованных -->
+        <div id="guestBlock" class="text-center p-8 sm:p-14 glass-card mt-6 sm:mt-10">
+            <i class="fas fa-robot text-6xl sm:text-7xl text-[#6C5CE7] mb-4"></i>
+            <h2 class="text-2xl sm:text-3xl font-bold mb-2 text-[#1e1e2a]">Добро пожаловать в Bailong · AI Mentor</h2>
+            <p class="text-[#5a554a] mb-6 max-w-md mx-auto">Персональный ИИ-учитель для подготовки к экзаменам, создания курсов, уроков и тестов.</p>
+            <button onclick="showAuthModal()" class="btn-primary w-full sm:w-auto px-6 sm:px-10 py-3 text-base sm:text-lg"><i class="fas fa-key mr-2"></i> Авторизация</button>
+        </div>
     </div>
 
-    <!-- Блок для неавторизованных -->
-    <div id="guestBlock" class="text-center p-12 bg-black/30 backdrop-blur-sm rounded-3xl border border-[#5c2e3c] mt-8">
-        <i class="fas fa-robot text-7xl text-[#bc3f4b] mb-4"></i>
-        <h2 class="text-2xl font-bold mb-2">Добро пожаловать в 学峰 · AI Mentor</h2>
-        <p class="mb-6">Персональный ИИ-учитель для подготовки к экзаменам, создания курсов, уроков и тестов.</p>
-        <button onclick="showAuthModal()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] w-full sm:w-auto px-4 sm:px-8 py-3 rounded-full text-base sm:text-lg font-semibold"><i class="fas fa-key mr-2"></i> Авторизация</button>
+    <!-- Модальные окна (профиль, чат) -->
+    <div id="profileModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50 backdrop-blur-sm" onclick="if(event.target===this) closeProfileModal()">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#ede8e2]">
+            <h3 class="text-xl font-bold mb-4 text-[#1e1e2a]">Мой профиль</h3>
+            <div class="text-center mb-4">
+                <img id="modalAvatar" class="w-24 h-24 rounded-full mx-auto cursor-pointer border-2 border-[#d5c6ff] object-cover" src="">
+                <p class="text-xs text-[#8b83a0] mt-1">Нажмите на аватар, чтобы изменить</p>
+                <input type="file" id="avatarUpload" class="hidden">
+            </div>
+            <div class="space-y-1 text-sm">
+                <p><strong>Имя:</strong> <span id="profileName"></span></p>
+                <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+                <p><strong>Роли:</strong> <span id="profileRole"></span></p>
+                <p><strong>Username:</strong> <span id="profileUsername"></span></p>
+                <p><strong>Опыт (XP):</strong> <span id="profileXP"></span></p>
+                <p><strong>Уровень:</strong> <span id="profileLevel"></span></p>
+            </div>
+            <div class="flex justify-end mt-5">
+                <button onclick="closeProfileModal()" class="btn-secondary">Закрыть</button>
+            </div>
+        </div>
     </div>
-</div>
 
-<!-- Модальные окна (профиль, чат) -->
-<div id="profileModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50" onclick="if(event.target===this) closeProfileModal()"><div class="bg-[#1a0e12] p-6 rounded-2xl max-w-md w-full border border-[#c95267]"><h3 class="text-xl font-bold mb-4">Мой профиль</h3><div class="text-center mb-4"><img id="modalAvatar" class="w-24 h-24 rounded-full mx-auto cursor-pointer border-2 border-[#c75f74]" src=""><p class="text-xs text-[#c28b98] mt-1">Нажмите на аватар, чтобы изменить</p><input type="file" id="avatarUpload" class="hidden"></div><p><strong>Имя:</strong> <span id="profileName"></span></p><p><strong>Email:</strong> <span id="profileEmail"></span></p><p><strong>Роли:</strong> <span id="profileRole"></span></p><p><strong>Username:</strong> <span id="profileUsername"></span></p><p><strong>Опыт (XP):</strong> <span id="profileXP"></span></p><p><strong>Уровень:</strong> <span id="profileLevel"></span></p><div class="flex justify-end mt-4"><button onclick="closeProfileModal()" class="bg-[#2c1a20] px-4 py-2 rounded-full">Закрыть</button></div></div></div>
+    <div id="chatModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50 backdrop-blur-sm" onclick="if(event.target===this) closeChatModal()">
+        <div class="bg-white rounded-3xl w-[92%] max-w-lg h-[80vh] flex flex-col shadow-2xl border border-[#ede8e2]">
+            <div class="flex flex-wrap items-center justify-between p-3 border-b border-[#ede8e2]">
+                <div class="flex gap-1">
+                    <button id="chatTabGeneral" class="btn-pill btn-pill-purple text-sm">Общий чат</button>
+                    <button id="chatTabPrivate" class="btn-pill btn-pill-pink text-sm">Личные</button>
+                </div>
+                <button onclick="closeChatModal()" class="text-2xl text-[#8b83a0] hover:text-[#1e1e2a]">&times;</button>
+            </div>
+            <div id="chatMessagesContainer" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+            <div id="chatRecipientSelect" class="p-2 border-b border-[#ede8e2] hidden">
+                <select id="privateRecipientId" class="input-modern text-sm">
+                    <option value="">Выберите получателя</option>
+                </select>
+            </div>
+            <div class="p-3 border-t border-[#ede8e2] flex gap-2">
+                <input type="text" id="chatInput" placeholder="Введите сообщение..." class="input-modern flex-1 text-sm">
+                <button onclick="sendChatMessage()" class="btn-primary text-sm">Отправить</button>
+            </div>
+        </div>
+    </div>
 
-<div id="chatModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50" onclick="if(event.target===this) closeChatModal()"><div class="bg-[#1a0e12] rounded-2xl w-[90%] max-w-lg h-[80vh] flex flex-col border border-[#a24558]"><div class="flex justify-between p-3 border-b border-[#883c4b]"><div><button id="chatTabGeneral" class="bg-[#b34b60] text-white px-3 py-1 rounded-md mr-2">Общий чат</button><button id="chatTabPrivate" class="bg-[#2a151d] text-white px-3 py-1 rounded-md">Личные</button></div><button onclick="closeChatModal()" class="text-gray-300 text-xl">&times;</button></div><div id="chatMessagesContainer" class="flex-1 overflow-y-auto p-3"></div><div class="p-3 border-t border-[#572a36] flex"><input type="text" id="chatInput" placeholder="Введите сообщение..." class="flex-1 bg-[#221218] border border-[#a04559] rounded-full px-4 py-2 text-white"><button onclick="sendChatMessage()" class="ml-2 bg-[#ac4158] px-4 rounded-full text-white">Отправить</button></div><div id="chatRecipientSelect" class="p-2 border-b border-[#783545] hidden"><select id="privateRecipientId" class="bg-[#2f171f] text-white p-1 rounded"><option value="">Выберите получателя</option></select></div></div></div>
-
-<script src="/static/script.js"></script>
+    <script src="/static/script.js"></script>
 
 <script>
     // ========== ГИПОТЕЗЫ ==========
