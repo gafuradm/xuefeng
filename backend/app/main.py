@@ -16,6 +16,13 @@ from .models import (
     SchoolChatMessage
 )
 
+from .admin_service import AdminService
+from .models import PlatformModule, ModuleRoleAccess, DeveloperApiKey
+import secrets
+from pydantic import BaseModel
+from typing import List, Optional
+from datetime import datetime
+
 from .soft_skills_service import SoftSkillsInterview
 from .admission_service import AdmissionMentor
 from .models import AdmissionProfile, AdmissionResult
@@ -97,6 +104,8 @@ import secrets
 from .vacancy_matching import VacancyMatcher
 from .models import Company, Vacancy, UserVacancy
 
+from .middleware_api_key import verify_api_key
+
 # ========== КОРНЕВЫЕ ПУТИ (должны быть в самом начале) ==========
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 BACKEND_ROOT = Path(__file__).parent.parent
@@ -130,6 +139,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.middleware("http")(verify_api_key)
+
+class DeveloperKeyCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    allowed_modules: List[str] = []
+    rate_limit: int = 60
+    expires_at: Optional[datetime] = None
 
 class TextReviewRequest(BaseModel):
     title: Optional[str] = None
@@ -3634,6 +3652,102 @@ async def get_admission_result(
         "created_at": profile.created_at,
         "universities": results
     }
+
+# ========== АДМИНИСТРАТИВНАЯ ПАНЕЛЬ (ГОСУДАРСТВО) ==========
+@app.get("/api/admin/stats")
+async def admin_stats(current_user: User = Depends(get_current_government_user), db: Session = Depends(get_db)):
+    return AdminService.get_platform_stats(db)
+
+@app.get("/api/admin/users")
+async def admin_users(skip: int = 0, limit: int = 100, current_user: User = Depends(get_current_government_user), db: Session = Depends(get_db)):
+    users = AdminService.get_all_users(db, limit, skip)
+    return [{"id": u.id, "name": u.name, "email": u.email, "roles": [r.name for r in u.roles], "total_xp": u.total_xp} for u in users]
+
+@app.get("/api/admin/users/{user_id}")
+async def admin_user_details(user_id: int, current_user: User = Depends(get_current_government_user), db: Session = Depends(get_db)):
+    data = AdminService.get_user_details(db, user_id)
+    if not data:
+        raise HTTPException(404, "User not found")
+    return data
+
+@app.get("/api/admin/modules")
+async def admin_modules(current_user: User = Depends(get_current_government_user), db: Session = Depends(get_db)):
+    modules = db.query(PlatformModule).order_by(PlatformModule.order).all()
+    return [{"id": m.id, "name": m.name, "display_name": m.display_name, "is_active": m.is_active, "roles": [r.role_name for r in m.role_access]} for m in modules]
+
+@app.post("/api/admin/modules/{module_name}/toggle")
+async def admin_toggle_module(module_name: str, is_active: bool = Body(...), current_user: User = Depends(get_current_government_user), db: Session = Depends(get_db)):
+    module = AdminService.toggle_module(db, module_name, is_active)
+    if not module:
+        raise HTTPException(404, "Module not found")
+    return {"module": module_name, "is_active": module.is_active}
+
+@app.post("/api/admin/modules/create")
+async def admin_create_module(name: str, display_name: str, description: str = None, icon: str = None, order: int = 0, current_user: User = Depends(get_current_government_user), db: Session = Depends(get_db)):
+    existing = db.query(PlatformModule).filter(PlatformModule.name == name).first()
+    if existing:
+        raise HTTPException(400, "Module already exists")
+    module = PlatformModule(name=name, display_name=display_name, description=description, icon=icon, order=order)
+    db.add(module)
+    db.commit()
+    return module
+
+@app.delete("/api/admin/modules/{module_name}")
+async def admin_delete_module(module_name: str, current_user: User = Depends(get_current_government_user), db: Session = Depends(get_db)):
+    module = db.query(PlatformModule).filter(PlatformModule.name == module_name).first()
+    if not module:
+        raise HTTPException(404, "Module not found")
+    db.delete(module)
+    db.commit()
+    return {"message": f"Module {module_name} deleted"}
+
+# ========== API ДЛЯ РАЗРАБОТЧИКОВ ==========
+@app.post("/api/developer/keys")
+async def create_developer_key(
+    key_data: DeveloperKeyCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not any(role.name == 'developer' for role in current_user.roles):
+        raise HTTPException(403, "Only developers can create API keys")
+    
+    key_value = secrets.token_urlsafe(32)
+    api_key = DeveloperApiKey(
+        user_id=current_user.id,
+        key=key_value,
+        name=key_data.name,
+        description=key_data.description,
+        allowed_modules=key_data.allowed_modules,
+        rate_limit=key_data.rate_limit,
+        expires_at=key_data.expires_at
+    )
+    db.add(api_key)
+    db.commit()
+    return {"key": key_value, "message": "API key created"}
+
+@app.get("/api/developer/keys")
+async def list_developer_keys(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    keys = db.query(DeveloperApiKey).filter(DeveloperApiKey.user_id == current_user.id).all()
+    return [{"id": k.id, "name": k.name, "description": k.description, "allowed_modules": k.allowed_modules, "rate_limit": k.rate_limit, "is_active": k.is_active, "created_at": k.created_at} for k in keys]
+
+@app.delete("/api/developer/keys/{key_id}")
+async def revoke_developer_key(key_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    key = db.query(DeveloperApiKey).filter(DeveloperApiKey.id == key_id, DeveloperApiKey.user_id == current_user.id).first()
+    if not key:
+        raise HTTPException(404, "Key not found")
+    db.delete(key)
+    db.commit()
+    return {"message": "Key revoked"}
+
+@app.get("/api/v1/user/profile")
+async def api_user_profile(request: Request, db: Session = Depends(get_db)):
+    user_id = getattr(request.state, 'api_key_user_id', None)
+    if not user_id:
+        raise HTTPException(401, "API key required")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    return {"id": user.id, "name": user.name, "email": user.email}
 
 # ========== IELTS МОДУЛЬ ==========
 whisper_model = None

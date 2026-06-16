@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>学峰 · AI Mentor | Персональный ИИ-учитель</title>
-    <!-- Tailwind CSS + Font Awesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- MathJax, marked — для работы уроков -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         window.MathJax = {
@@ -168,11 +166,44 @@
         <!-- Видео → текст -->
         <div id="video-pane" class="tab-pane hidden">
             <div class="step-card p-6">
-                <h2 class="text-xl font-bold mb-4">🎥 Извлечь и перевести текст из видео</h2>
-                <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео" class="modern-input w-full mb-3">
-                <select id="targetLang" class="modern-input w-full mb-3"><option value="ru">Русский</option><option value="en">Английский</option><option value="kk">Казахский</option><option value="zh">Китайский</option></select>
-                <button onclick="processVideo()" class="bg-[#bc3f4b] px-5 py-2 rounded-full">Обработать</button>
-                <div id="videoResult" class="mt-4"></div>
+                <h2 class="text-xl font-bold mb-4">🎥 Видео → текст, саммари и чат</h2>
+                
+                <!-- Панель обработки видео -->
+                <div id="videoProcessPanel">
+                    <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube видео" class="modern-input w-full mb-3">
+                    <select id="targetLang" class="modern-input w-full mb-3">
+                        <option value="ru">Русский</option>
+                        <option value="en">Английский</option>
+                        <option value="kk">Казахский</option>
+                        <option value="zh">Китайский</option>
+                    </select>
+                    <button onclick="processVideo()" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-5 py-2 rounded-full w-full sm:w-auto">Обработать</button>
+                </div>
+                
+                <!-- Результат обработки (оригинал, перевод, саммари, выводы) -->
+                <div id="videoResult" class="mt-4 p-3 bg-[#1f1219] rounded-xl hidden"></div>
+                
+                <!-- Чат по видео -->
+                <div id="videoChatArea" style="display: none;" class="mt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold text-lg">🤖 Задать вопрос по видео</h3>
+                        <button id="clearVideoChat" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-1 rounded-full text-xs"><i class="fas fa-trash mr-1"></i> Очистить чат</button>
+                    </div>
+                    <div id="videoChat" class="h-64 overflow-y-auto bg-black/30 rounded-xl p-3 mb-3"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="videoQuestion" class="modern-input flex-1" placeholder="Спросите о содержании видео..." onkeypress="if(event.key==='Enter') askVideoQuestion()">
+                        <button id="sendVideoQuestion" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-4 py-2 rounded-full">Спросить</button>
+                    </div>
+                </div>
+                
+                <!-- История обработанных видео -->
+                <div class="mt-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold text-lg">📜 История обработанных видео</h3>
+                        <button onclick="loadVideoSessions()" class="bg-[#2c1a20] hover:bg-[#3f232c] px-3 py-1 rounded-full text-xs"><i class="fas fa-sync-alt mr-1"></i> Обновить</button>
+                    </div>
+                    <div id="videoSessionsList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                </div>
             </div>
         </div>
 
@@ -392,15 +423,11 @@
         <div id="internship-pane" class="tab-pane hidden">
             <div class="step-card p-6">
                 <h2 class="text-xl font-bold mb-4">💼 Стажировки и вакансии</h2>
-                
-                <!-- Вкладки внутри панели -->
                 <div class="flex gap-2 mb-6 border-b border-[#5c2e3c] pb-2">
                     <button id="internshipFindVacanciesTab" class="px-4 py-2 rounded-t-lg bg-[#bc3f4b] text-white">🔍 Найти вакансии</button>
                     <button id="internshipMyApplicationsTab" class="px-4 py-2 rounded-t-lg bg-black/40 text-gray-300">📋 Мои отклики</button>
                     <button id="internshipEmployerTab" class="px-4 py-2 rounded-t-lg bg-black/40 text-gray-300 hidden employer-only">🏢 Для работодателей</button>
                 </div>
-
-                <!-- Поиск вакансий -->
                 <div id="internshipFindVacancies" class="internship-tab-content">
                     <p class="mb-4 text-gray-300">ИИ проанализирует ваш профиль и подберёт наиболее подходящие стажировки и вакансии.</p>
                     <div class="flex justify-center mb-6">
@@ -408,20 +435,15 @@
                     </div>
                     <div id="vacanciesResult" class="space-y-4"></div>
                 </div>
-
-                <!-- Мои отклики -->
                 <div id="internshipMyApplications" class="internship-tab-content hidden">
                     <h3 class="font-bold text-lg mb-3">📋 Мои отклики</h3>
                     <div id="myApplicationsList" class="space-y-2 max-h-96 overflow-y-auto"></div>
                 </div>
-
-                <!-- Для работодателей -->
                 <div id="internshipEmployer" class="internship-tab-content hidden">
                     <div class="mb-6">
                         <h3 class="font-bold text-lg mb-3">🏢 Мои компании</h3>
                         <button id="createCompanyBtn" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-2 rounded-full text-sm mb-3">➕ Создать компанию</button>
                         <div id="myCompaniesList" class="space-y-2 max-h-48 overflow-y-auto mb-4"></div>
-                        
                         <h3 class="font-bold text-lg mb-3">📌 Мои вакансии</h3>
                         <button id="createVacancyBtn" class="bg-[#2c1a20] hover:bg-[#3f232c] px-4 py-2 rounded-full text-sm mb-3">➕ Создать вакансию</button>
                         <div id="myVacanciesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
@@ -429,6 +451,132 @@
                 </div>
             </div>
         </div>
+
+        <!-- НОВАЯ ВКЛАДКА: SOFT SKILLS ИНТЕРВЬЮ (ЧАТ) -->
+        <div id="softskills-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">🎤 Интервью для оценки Soft Skills</h2>
+                <p class="mb-4 text-gray-300">ИИ-рекрутер проведёт с вами естественное интервью, оценит коммуникабельность, стрессоустойчивость, уверенность речи и эмоциональный интеллект. Отвечайте голосом.</p>
+                <div id="softSkillsStartPanel">
+                    <label class="block text-sm font-medium mb-2">Выберите сценарий:</label>
+                    <select id="softSkillsScenario" class="modern-input w-full mb-4">
+                        <option value="job_interview">Собеседование на работу</option>
+                        <option value="conflict_resolution">Конфликтная ситуация</option>
+                        <option value="team_meeting">Командное совещание</option>
+                        <option value="presentation">Презентация проекта</option>
+                    </select>
+                    <button id="startChatInterviewBtn" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full w-full sm:w-auto">🎤 Начать интервью</button>
+                </div>
+                <div id="softSkillsChatArea" style="display: none;">
+                    <div id="softSkillsChat" class="h-96 overflow-y-auto bg-black/30 rounded-xl p-4 mb-4"></div>
+                    <div class="flex flex-wrap gap-3 items-center">
+                        <button id="recordChatBtn" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-full disabled:opacity-50" disabled>🔴 Записать ответ</button>
+                        <button id="stopChatBtn" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-full disabled:opacity-50 hidden">⏹ Остановить</button>
+                        <div id="chatStatus" class="text-sm text-gray-400"></div>
+                    </div>
+                </div>
+                <div id="softSkillsChatResults" style="display: none;" class="mt-4">
+                    <h3 class="font-bold text-lg mb-3">📊 Результаты оценки Soft Skills</h3>
+                    <div id="chatOverallScore" class="text-3xl font-bold text-[#bc3f4b] mb-4">0/100</div>
+                    <div id="chatFeedback" class="space-y-2"></div>
+                    <button onclick="location.reload()" class="mt-4 bg-[#2c1a20] px-4 py-2 rounded-full">🔄 Пройти снова</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- НОВАЯ ВКЛАДКА: AI-ДВОЙНИК -->
+        <div id="aidouble-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">🤖 AI-двойник</h2>
+                <div id="aiDoubleChat" class="bg-[#1f1219] rounded-xl p-4 h-96 overflow-y-auto mb-4"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="aiDoubleCommand" class="modern-input flex-1" placeholder="Напишите команду...">
+                    <button id="sendAiDoubleCommand" class="bg-[#bc3f4b] px-4 py-2 rounded-full">Отправить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- НОВАЯ ВКЛАДКА: РЕЙТИНГ -->
+        <div id="rating-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">🏆 Рейтинг</h2>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button data-role="student" class="rating-role-btn bg-[#bc3f4b] px-3 py-1 rounded-full text-sm">Студенты</button>
+                    <button data-role="master" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Магистры</button>
+                    <button data-role="phd" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Докторанты</button>
+                    <button data-role="researcher" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Исследователи</button>
+                    <button data-role="professor" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Профессора</button>
+                    <button data-role="employer" class="rating-role-btn bg-[#2c1a20] px-3 py-1 rounded-full text-sm">Работодатели</button>
+                </div>
+                <div id="ratingLeaderboard" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                <button id="updateMyRatingBtn" class="mt-4 bg-[#2c1a20] px-4 py-2 rounded-full text-sm">Обновить мой рейтинг</button>
+            </div>
+        </div>
+        <!-- AI-ментор по поступлению -->
+        <div id="admission-pane" class="tab-pane hidden">
+            <div class="step-card p-6">
+                <h2 class="text-xl font-bold mb-4">🎓 AI-ментор по поступлению</h2>
+                <p class="mb-4 text-gray-300">Введите страну и расскажите о себе (оценки, языки, проекты, достижения, мечты – всё, что хотите). ИИ подберёт реально подходящие вузы и даст детальный план действий.</p>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Страна</label>
+                    <input type="text" id="admissionCountry" class="modern-input w-full mb-3" placeholder="Например: Германия, Канада, Япония...">
+                    <label class="block text-sm font-medium mb-1">Ваши данные (о себе, оценках, проектах, языках, достижениях, желаниях)</label>
+                    <textarea id="admissionUserData" rows="6" class="modern-input w-full mb-3" placeholder="Например: Я учусь в 10 классе, средний балл 4.8, знаю английский B2, участвовал в олимпиаде по математике, хочу поступить на IT-специальность..."></textarea>
+                    <button id="startAdmissionAnalysis" class="bg-[#bc3f4b] hover:bg-[#9e2e3a] px-6 py-2 rounded-full">🔍 Найти вузы</button>
+                </div>
+                <div id="admissionResult" class="mt-4 space-y-4"></div>
+                <div class="mt-8">
+                    <h3 class="font-bold text-lg mb-2">📜 История запросов</h3>
+                    <div id="admissionHistory" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+                <!-- АДМИНИСТРАТИВНАЯ ПАНЕЛЬ (только для государства) -->
+                <div id="admin-pane" class="tab-pane hidden">
+                    <div class="step-card p-6">
+                        <h2 class="text-xl font-bold mb-4">🛡️ Административная панель</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-[#1f1219] p-4 rounded-xl">
+                                <h3 class="font-bold mb-2">📊 Статистика платформы</h3>
+                                <div id="adminStats" class="text-sm space-y-1"></div>
+                                <button id="refreshAdminStats" class="mt-3 bg-[#2c1a20] px-3 py-1 rounded text-xs">Обновить</button>
+                            </div>
+                            <div class="bg-[#1f1219] p-4 rounded-xl">
+                                <h3 class="font-bold mb-2">🔧 Управление модулями</h3>
+                                <div id="modulesList" class="space-y-2 max-h-60 overflow-y-auto mb-3"></div>
+                                <div class="flex gap-2">
+                                    <input type="text" id="newModuleName" placeholder="Имя (learning)" class="modern-input text-sm flex-1">
+                                    <input type="text" id="newModuleDisplay" placeholder="Название" class="modern-input text-sm flex-1">
+                                    <button id="createModuleBtn" class="bg-green-800 px-2 py-1 rounded text-xs">➕</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 bg-[#1f1219] p-4 rounded-xl">
+                            <h3 class="font-bold mb-2">👥 Пользователи платформы</h3>
+                            <div id="adminUsersList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- API ДЛЯ РАЗРАБОТЧИКОВ -->
+                <div id="developer-pane" class="tab-pane hidden">
+                    <div class="step-card p-6">
+                        <h2 class="text-xl font-bold mb-4">🔑 API для разработчиков</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-[#1f1219] p-4 rounded-xl">
+                                <h3 class="font-bold mb-2">Создать новый ключ</h3>
+                                <input type="text" id="newKeyName" placeholder="Название ключа" class="modern-input w-full text-sm mb-2">
+                                <input type="text" id="newKeyModules" placeholder="Модули (через запятую: learning,tests)" class="modern-input w-full text-sm mb-2">
+                                <button id="createApiKeyBtn" class="bg-[#bc3f4b] px-3 py-1 rounded text-sm">Сгенерировать ключ</button>
+                            </div>
+                            <div class="bg-[#1f1219] p-4 rounded-xl">
+                                <h3 class="font-bold mb-2">Мои API-ключи</h3>
+                                <div id="developerKeysList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                                <button id="viewApiDocsBtn" class="mt-3 bg-[#2c1a20] px-3 py-1 rounded text-xs">📖 Документация API</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
     </div>
 
     <!-- Блок для неавторизованных -->
@@ -445,10 +593,8 @@
 
 <div id="chatModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50" onclick="if(event.target===this) closeChatModal()"><div class="bg-[#1a0e12] rounded-2xl w-[90%] max-w-lg h-[80vh] flex flex-col border border-[#a24558]"><div class="flex justify-between p-3 border-b border-[#883c4b]"><div><button id="chatTabGeneral" class="bg-[#b34b60] text-white px-3 py-1 rounded-md mr-2">Общий чат</button><button id="chatTabPrivate" class="bg-[#2a151d] text-white px-3 py-1 rounded-md">Личные</button></div><button onclick="closeChatModal()" class="text-gray-300 text-xl">&times;</button></div><div id="chatMessagesContainer" class="flex-1 overflow-y-auto p-3"></div><div class="p-3 border-t border-[#572a36] flex"><input type="text" id="chatInput" placeholder="Введите сообщение..." class="flex-1 bg-[#221218] border border-[#a04559] rounded-full px-4 py-2 text-white"><button onclick="sendChatMessage()" class="ml-2 bg-[#ac4158] px-4 rounded-full text-white">Отправить</button></div><div id="chatRecipientSelect" class="p-2 border-b border-[#783545] hidden"><select id="privateRecipientId" class="bg-[#2f171f] text-white p-1 rounded"><option value="">Выберите получателя</option></select></div></div></div>
 
-<!-- Основной скрипт (весь функционал вынесен сюда) -->
 <script src="/static/script.js"></script>
 
-<!-- Дополнительные функции -->
 <script>
     // ========== ГИПОТЕЗЫ ==========
     async function generateHypotheses() {
@@ -1125,6 +1271,174 @@
         }
     }
 
+    async function startSoftSkillsChat() {
+        const token = localStorage.getItem('authToken');
+        const scenario = document.getElementById('softSkillsScenario').value;
+        const startBtn = document.getElementById('startChatInterviewBtn');
+        if (!startBtn) return;
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Запуск...';
+        try {
+            const response = await fetch('/api/soft-skills/start?scenario=' + encodeURIComponent(scenario), {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            currentSoftSkillsAssessmentId = data.assessment_id;
+            const chatContainer = document.getElementById('softSkillsChat');
+            if (chatContainer) chatContainer.innerHTML = '';
+            addChatMessage('bot', data.bot_message, data.audio_url);
+            document.getElementById('softSkillsStartPanel').style.display = 'none';
+            document.getElementById('softSkillsChatArea').style.display = 'block';
+            document.getElementById('softSkillsChatResults').style.display = 'none';
+            enableChatRecording();
+        } catch(err) {
+            alert('Ошибка: ' + err.message);
+        } finally {
+            startBtn.disabled = false;
+            startBtn.innerHTML = '🎤 Начать интервью';
+        }
+    }
+
+    function addChatMessage(role, text, audioUrl = null) {
+        const container = document.getElementById('softSkillsChat');
+        if (!container) return;
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `mb-3 flex ${role === 'bot' ? 'justify-start' : 'justify-end'}`;
+        msgDiv.innerHTML = `
+            <div class="max-w-[80%] p-3 rounded-xl ${role === 'bot' ? 'bg-[#2c1a20]' : 'bg-[#bc3f4b]'}">
+                <div>${escapeHtml(text)}</div>
+                ${audioUrl ? `<div class="mt-2"><button onclick="playAudio('${audioUrl}')" class="text-xs text-gray-300">🔊 Прослушать</button></div>` : ''}
+            </div>
+        `;
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+        if (audioUrl) playAudio(audioUrl);
+    }
+
+    function playAudio(url) {
+        const audio = new Audio(url);
+        audio.play().catch(e => console.log('Audio play error:', e));
+    }
+
+    async function enableChatRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderChat = new MediaRecorder(stream);
+            audioChunksChat = [];
+            mediaRecorderChat.ondataavailable = event => {
+                audioChunksChat.push(event.data);
+            };
+            mediaRecorderChat.onstop = async () => {
+                const audioBlob = new Blob(audioChunksChat, { type: 'audio/webm' });
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'response.webm');
+                formData.append('assessment_id', currentSoftSkillsAssessmentId);
+                const statusDiv = document.getElementById('chatStatus');
+                if (statusDiv) statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ ответа...';
+                try {
+                    const response = await fetch('/api/soft-skills/respond', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.is_completed) {
+                        document.getElementById('softSkillsChatArea').style.display = 'none';
+                        document.getElementById('softSkillsChatResults').style.display = 'block';
+                        document.getElementById('chatOverallScore').innerText = data.final_feedback.overall + '/100';
+                        let html = `
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div class="bg-[#1a0e12] p-3 rounded-lg">Коммуникабельность: <span class="font-bold">${data.final_feedback.communication}/100</span></div>
+                                <div class="bg-[#1a0e12] p-3 rounded-lg">Стрессоустойчивость: <span class="font-bold">${data.final_feedback.stress_resistance}/100</span></div>
+                                <div class="bg-[#1a0e12] p-3 rounded-lg">Уверенность: <span class="font-bold">${data.final_feedback.confidence}/100</span></div>
+                                <div class="bg-[#1a0e12] p-3 rounded-lg">Эмоциональный интеллект: <span class="font-bold">${data.final_feedback.emotional_intelligence}/100</span></div>
+                            </div>
+                            <div class="bg-[#2c1a20] p-4 rounded-lg mb-3">${escapeHtml(data.final_feedback.feedback)}</div>
+                            <h4 class="font-bold">Рекомендации:</h4>
+                            <ul class="list-disc ml-5">${data.final_feedback.recommendations.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
+                        `;
+                        document.getElementById('chatFeedback').innerHTML = html;
+                    } else {
+                        addChatMessage('bot', data.bot_message, data.audio_url);
+                    }
+                    if (statusDiv) statusDiv.innerHTML = '';
+                } catch(err) {
+                    if (statusDiv) statusDiv.innerHTML = '<span class="text-red-400">Ошибка: ' + err.message + '</span>';
+                }
+            };
+            const recordBtn = document.getElementById('recordChatBtn');
+            const stopBtn = document.getElementById('stopChatBtn');
+            if (recordBtn && stopBtn) {
+                recordBtn.disabled = false;
+                stopBtn.classList.remove('hidden');
+                recordBtn.onclick = () => {
+                    mediaRecorderChat.start();
+                    recordBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    const statusDiv = document.getElementById('chatStatus');
+                    if (statusDiv) statusDiv.innerHTML = '🔴 Запись...';
+                };
+                stopBtn.onclick = () => {
+                    mediaRecorderChat.stop();
+                    recordBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    const statusDiv = document.getElementById('chatStatus');
+                    if (statusDiv) statusDiv.innerHTML = '⏳ Обработка...';
+                };
+            }
+        } catch(err) {
+            alert('Ошибка доступа к микрофону: ' + err.message);
+        }
+    }
+
+    // ========== AI-ДВОЙНИК ==========
+    document.getElementById('sendAiDoubleCommand')?.addEventListener('click', async () => {
+        const cmd = document.getElementById('aiDoubleCommand').value;
+        if (!cmd) return;
+        const chat = document.getElementById('aiDoubleChat');
+        chat.innerHTML += `<div class="mb-2 text-right"><span class="bg-[#bc3f4b] p-2 rounded-lg inline-block">${escapeHtml(cmd)}</span></div>`;
+        document.getElementById('aiDoubleCommand').value = '';
+        const resp = await fetch('/api/ai-double/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+            body: JSON.stringify({ command: cmd })
+        });
+        const data = await resp.json();
+        chat.innerHTML += `<div class="mb-2 text-left"><span class="bg-[#2c1a20] p-2 rounded-lg inline-block">🤖 ${escapeHtml(data.response)}</span></div>`;
+        chat.scrollTop = chat.scrollHeight;
+    });
+
+    // ========== РЕЙТИНГ ==========
+    async function loadRating(role) {
+        const token = localStorage.getItem('authToken');
+        const container = document.getElementById('ratingLeaderboard');
+        container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>';
+        const resp = await fetch(`/api/rating/ranking/${role}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await resp.json();
+        if (!data.ranking.length) {
+            container.innerHTML = '<div class="text-center text-gray-400">Нет данных</div>';
+            return;
+        }
+        let html = '<table class="w-full text-sm"><tr><th>#</th><th>Имя</th><th>Уровень</th><th>Опыт</th><th>Достижения</th><th>Рейтинг</th></tr>';
+        data.ranking.forEach(r => {
+            html += `<tr class="border-b border-gray-700"><td class="p-1">${r.rank}</td><td class="p-1">${escapeHtml(r.name)}</td><td class="p-1">${r.level}</td><td class="p-1">${r.total_xp}</td><td class="p-1">${r.achievements}</td><td class="p-1 text-[#bc3f4b]">${r.rating_score.toFixed(0)}</td></tr>`;
+        });
+        html += '</table>';
+        container.innerHTML = html;
+    }
+
+    document.querySelectorAll('.rating-role-btn').forEach(btn => {
+        btn.addEventListener('click', () => loadRating(btn.getAttribute('data-role')));
+    });
+
+    document.getElementById('updateMyRatingBtn')?.addEventListener('click', async () => {
+        await fetch('/api/rating/update', { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` } });
+        alert('Рейтинг обновлён');
+        const activeRoleBtn = document.querySelector('.rating-role-btn.bg-[#bc3f4b]');
+        if (activeRoleBtn) loadRating(activeRoleBtn.getAttribute('data-role'));
+    });
+
     // Привязываем обработчики после загрузки DOM
     document.addEventListener('DOMContentLoaded', function() {
         // Гипотезы
@@ -1154,7 +1468,9 @@
         const createVacancyBtn = document.getElementById('createVacancyBtn');
         if (createVacancyBtn) createVacancyBtn.addEventListener('click', createVacancy);
         
-        // Корпоративное обучение - кнопки уже в HTML
+        // Soft Skills
+        const startChatInterviewBtn = document.getElementById('startChatInterviewBtn');
+        if (startChatInterviewBtn) startChatInterviewBtn.addEventListener('click', startSoftSkillsChat);
         
         // Показываем вкладку работодателя только если у пользователя есть роль employer
         const token = localStorage.getItem('authToken');
@@ -1193,7 +1509,6 @@
         });
         observer.observe(document.getElementById('tabContent'), { attributes: true, subtree: true, attributeFilter: ['class'] });
         
-        // Добавляем escapeHtml в глобальную область для встроенных скриптов
         window.escapeHtml = function(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {

@@ -168,6 +168,7 @@ class User(Base):
     letter_style = Column(JSON, nullable=True)
 
     documents = relationship("UserDocument", back_populates="user", cascade="all, delete-orphan")
+    developer_keys = relationship("DeveloperApiKey", back_populates="user", cascade="all, delete-orphan")
     
     user_courses = relationship('UserCourse', back_populates='user', cascade='all, delete-orphan')
     user_lessons = relationship('UserLesson', back_populates='user', cascade='all, delete-orphan')
@@ -1093,3 +1094,49 @@ class AdmissionResult(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     profile = relationship("AdmissionProfile", back_populates="results")
+
+# ========== УПРАВЛЕНИЕ МОДУЛЯМИ ==========
+class PlatformModule(Base):
+    __tablename__ = "platform_modules"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)        # 'learning', 'tests', 'schools', ...
+    display_name = Column(String, nullable=False)             # 'Обучение', 'Тесты', ...
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)                 # включен ли модуль на платформе
+    icon = Column(String, nullable=True)                      # Font Awesome иконка
+    order = Column(Integer, default=0)                        # порядок отображения
+    requires_subscription = Column(Boolean, default=False)    # требует ли подписки
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Связь с ролями (можно сделать отдельную таблицу module_role_access)
+    role_access = relationship("ModuleRoleAccess", back_populates="module", cascade="all, delete-orphan")
+
+class ModuleRoleAccess(Base):
+    __tablename__ = "module_role_access"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    module_id = Column(Integer, ForeignKey("platform_modules.id", ondelete="CASCADE"), nullable=False)
+    role_name = Column(String, nullable=False)                # имя роли (из roles.name)
+    
+    module = relationship("PlatformModule", back_populates="role_access")
+
+# ========== API КЛЮЧИ ДЛЯ РАЗРАБОТЧИКОВ (расширение) ==========
+class DeveloperApiKey(Base):
+    __tablename__ = "developer_api_keys"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    key = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    allowed_modules = Column(JSON, default=list)              # ['learning', 'tests', ...]
+    rate_limit = Column(Integer, default=60)                  # запросов в минуту
+    requests_count = Column(Integer, default=0)
+    last_reset = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    
+    user = relationship("User")

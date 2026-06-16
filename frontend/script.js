@@ -1904,6 +1904,14 @@ async function updateUIAfterAuth() {
 
         // Загрузка вкладок
         await loadUserTabs();
+        if (currentUserRoles.includes('government')) {
+            loadAdminStats();
+            loadModulesList();
+            loadAdminUsers();
+        }
+        if (currentUserRoles.includes('developer')) {
+            loadDeveloperKeys();
+        }
         await addCorporateButtons();
 
         // Если у пользователя есть роль ученика, попробуем восстановить сессию
@@ -2814,6 +2822,721 @@ async function addCorporateButtons() {
         }
     }
 }
+
+// ========== SOFT SKILLS ИНТЕРВЬЮ ==========
+// ========== SOFT SKILLS ЧАТ ИНТЕРВЬЮ ==========
+let currentSoftSkillsAssessmentId = null;
+let mediaRecorderChat = null;
+let audioChunksChat = [];
+
+async function startSoftSkillsChat() {
+    const token = localStorage.getItem('authToken');
+    const scenario = document.getElementById('softSkillsScenario').value;
+    const startBtn = document.getElementById('startChatInterviewBtn');
+    if (!startBtn) return;
+    startBtn.disabled = true;
+    startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Запуск...';
+    try {
+        const response = await fetch('/api/soft-skills/start?scenario=' + encodeURIComponent(scenario), {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        currentSoftSkillsAssessmentId = data.assessment_id;
+        // Очищаем чат
+        const chatContainer = document.getElementById('softSkillsChat');
+        if (chatContainer) chatContainer.innerHTML = '';
+        addChatMessage('bot', data.bot_message, data.audio_url);
+        document.getElementById('softSkillsStartPanel').style.display = 'none';
+        document.getElementById('softSkillsChatArea').style.display = 'block';
+        document.getElementById('softSkillsChatResults').style.display = 'none';
+        enableChatRecording();
+    } catch(err) {
+        alert('Ошибка: ' + err.message);
+    } finally {
+        startBtn.disabled = false;
+        startBtn.innerHTML = '🎤 Начать интервью';
+    }
+}
+
+function addChatMessage(role, text, audioUrl = null) {
+    const container = document.getElementById('softSkillsChat');
+    if (!container) return;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `mb-3 flex ${role === 'bot' ? 'justify-start' : 'justify-end'}`;
+    msgDiv.innerHTML = `
+        <div class="max-w-[80%] p-3 rounded-xl ${role === 'bot' ? 'bg-[#2c1a20]' : 'bg-[#bc3f4b]'}">
+            <div>${escapeHtml(text)}</div>
+            ${audioUrl ? `<div class="mt-2"><button onclick="playAudio('${audioUrl}')" class="text-xs text-gray-300">🔊 Прослушать</button></div>` : ''}
+        </div>
+    `;
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+    if (audioUrl) playAudio(audioUrl);
+}
+
+function playAudio(url) {
+    const audio = new Audio(url);
+    audio.play().catch(e => console.log('Audio play error:', e));
+}
+
+async function enableChatRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorderChat = new MediaRecorder(stream);
+        audioChunksChat = [];
+        mediaRecorderChat.ondataavailable = event => {
+            audioChunksChat.push(event.data);
+        };
+        mediaRecorderChat.onstop = async () => {
+            const audioBlob = new Blob(audioChunksChat, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'response.webm');
+            formData.append('assessment_id', currentSoftSkillsAssessmentId);
+            const statusDiv = document.getElementById('chatStatus');
+            if (statusDiv) statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ ответа...';
+            try {
+                const response = await fetch('/api/soft-skills/respond', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.is_completed) {
+                    document.getElementById('softSkillsChatArea').style.display = 'none';
+                    document.getElementById('softSkillsChatResults').style.display = 'block';
+                    document.getElementById('chatOverallScore').innerText = data.final_feedback.overall + '/100';
+                    let html = `
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-[#1a0e12] p-3 rounded-lg">Коммуникабельность: <span class="font-bold">${data.final_feedback.communication}/100</span></div>
+                            <div class="bg-[#1a0e12] p-3 rounded-lg">Стрессоустойчивость: <span class="font-bold">${data.final_feedback.stress_resistance}/100</span></div>
+                            <div class="bg-[#1a0e12] p-3 rounded-lg">Уверенность: <span class="font-bold">${data.final_feedback.confidence}/100</span></div>
+                            <div class="bg-[#1a0e12] p-3 rounded-lg">Эмоциональный интеллект: <span class="font-bold">${data.final_feedback.emotional_intelligence}/100</span></div>
+                        </div>
+                        <div class="bg-[#2c1a20] p-4 rounded-lg mb-3">${escapeHtml(data.final_feedback.feedback)}</div>
+                        <h4 class="font-bold">Рекомендации:</h4>
+                        <ul class="list-disc ml-5">${data.final_feedback.recommendations.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
+                    `;
+                    document.getElementById('chatFeedback').innerHTML = html;
+                } else {
+                    addChatMessage('bot', data.bot_message, data.audio_url);
+                    // ✅ РАЗБЛОКИРОВКА КНОПОК ДЛЯ СЛЕДУЮЩЕГО ОТВЕТА
+                    const recordBtn = document.getElementById('recordChatBtn');
+                    const stopBtn = document.getElementById('stopChatBtn');
+                    if (recordBtn && stopBtn) {
+                        recordBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        audioChunksChat = [];
+                    }
+                    if (statusDiv) statusDiv.innerHTML = '';
+                }
+            } catch(err) {
+                if (statusDiv) statusDiv.innerHTML = '<span class="text-red-400">Ошибка: ' + err.message + '</span>';
+            }
+        };
+        const recordBtn = document.getElementById('recordChatBtn');
+        const stopBtn = document.getElementById('stopChatBtn');
+        if (recordBtn && stopBtn) {
+            recordBtn.disabled = false;
+            stopBtn.classList.remove('hidden');
+            recordBtn.onclick = () => {
+                mediaRecorderChat.start();
+                recordBtn.disabled = true;
+                stopBtn.disabled = false;
+                const statusDiv = document.getElementById('chatStatus');
+                if (statusDiv) statusDiv.innerHTML = '🔴 Запись...';
+            };
+            stopBtn.onclick = () => {
+                mediaRecorderChat.stop();
+                recordBtn.disabled = true;
+                stopBtn.disabled = true;
+                const statusDiv = document.getElementById('chatStatus');
+                if (statusDiv) statusDiv.innerHTML = '⏳ Обработка...';
+            };
+        }
+    } catch(err) {
+        alert('Ошибка доступа к микрофону: ' + err.message);
+    }
+}
+
+// AI-двойник
+document.getElementById('sendAiDoubleCommand')?.addEventListener('click', async () => {
+    const cmd = document.getElementById('aiDoubleCommand').value;
+    if (!cmd) return;
+    const chat = document.getElementById('aiDoubleChat');
+    chat.innerHTML += `<div class="mb-2 text-right"><span class="bg-[#bc3f4b] p-2 rounded-lg inline-block">${escapeHtml(cmd)}</span></div>`;
+    document.getElementById('aiDoubleCommand').value = '';
+    const resp = await fetch('/api/ai-double/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+        body: JSON.stringify({ command: cmd })
+    });
+    const data = await resp.json();
+    chat.innerHTML += `<div class="mb-2 text-left"><span class="bg-[#2c1a20] p-2 rounded-lg inline-block">🤖 ${escapeHtml(data.response)}</span></div>`;
+    chat.scrollTop = chat.scrollHeight;
+});
+
+// Рейтинг
+async function loadRating(role) {
+    const token = localStorage.getItem('authToken');
+    const container = document.getElementById('ratingLeaderboard');
+    container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>';
+    const resp = await fetch(`/api/rating/ranking/${role}`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await resp.json();
+    if (!data.ranking.length) {
+        container.innerHTML = '<div class="text-center text-gray-400">Нет данных</div>';
+        return;
+    }
+    let html = '<table class="w-full text-sm"><tr><th>#</th><th>Имя</th><th>Уровень</th><th>Опыт</th><th>Достижения</th><th>Рейтинг</th></tr>';
+    data.ranking.forEach(r => {
+        html += `<tr><td class="p-1">${r.rank}</td><td>${escapeHtml(r.name)}</td><td>${r.level}</td><td>${r.total_xp}</td><td>${r.achievements}</td><td class="text-[#bc3f4b]">${r.rating_score.toFixed(0)}</td></tr>`;
+    });
+    html += '</table>';
+    container.innerHTML = html;
+}
+document.querySelectorAll('.rating-role-btn').forEach(btn => {
+    btn.addEventListener('click', () => loadRating(btn.getAttribute('data-role')));
+});
+document.getElementById('updateMyRatingBtn')?.addEventListener('click', async () => {
+    await fetch('/api/rating/update', { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` } });
+    alert('Рейтинг обновлён');
+});
+
+// ========== ВИДЕО С САММАРИ И ЧАТОМ (МОДЕРНИЗИРОВАННЫЙ МОДУЛЬ) ==========
+let currentVideoSessionId = null;
+
+// Полная замена старой функции processVideo
+window.processVideo = async function() {
+    const url = document.getElementById('videoUrl').value;
+    const language = document.getElementById('targetLang').value;
+    if (!url) { alert('Введите URL видео'); return; }
+    const token = localStorage.getItem('authToken');
+    const resultDiv = document.getElementById('videoResult');
+    resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Обработка видео...';
+    resultDiv.classList.remove('hidden');
+    try {
+        const response = await fetch('/api/video/process', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ url, target_language: language })
+        });
+        const data = await response.json();
+        currentVideoSessionId = data.session_id;
+        let html = `
+            <div class="mb-3"><strong>Оригинал:</strong><br>${escapeHtml(data.original_text.substring(0, 1000))}${data.original_text.length > 1000 ? '…' : ''}</div>
+            <div class="mb-3"><strong>Перевод:</strong><br>${escapeHtml(data.translated_text.substring(0, 1000))}${data.translated_text.length > 1000 ? '…' : ''}</div>
+            <div class="mb-3"><strong>📌 Саммари:</strong><br>${escapeHtml(data.summary)}</div>
+            <div class="mb-3"><strong>🔑 Ключевые выводы:</strong><ul class="list-disc ml-5">${data.key_points.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul></div>
+        `;
+        resultDiv.innerHTML = html;
+        document.getElementById('videoChatArea').style.display = 'block';
+        document.getElementById('videoChat').innerHTML = '';
+        loadVideoSessions();
+    } catch(err) {
+        resultDiv.innerHTML = `<span class="text-red-400">Ошибка: ${err.message}</span>`;
+    }
+};
+
+// Функция для отправки вопроса по видео
+async function askVideoQuestion() {
+    const question = document.getElementById('videoQuestion').value;
+    if (!question) return;
+    if (!currentVideoSessionId) { alert('Сначала обработайте видео'); return; }
+    const token = localStorage.getItem('authToken');
+    const chatDiv = document.getElementById('videoChat');
+    chatDiv.innerHTML += `<div class="mb-2 text-right"><span class="bg-[#bc3f4b] p-2 rounded-lg inline-block">${escapeHtml(question)}</span></div>`;
+    document.getElementById('videoQuestion').value = '';
+    try {
+        const response = await fetch('/api/video/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ session_id: currentVideoSessionId, question })
+        });
+        const data = await response.json();
+        chatDiv.innerHTML += `<div class="mb-2 text-left"><span class="bg-[#2c1a20] p-2 rounded-lg inline-block">🤖 ${escapeHtml(data.answer)}</span></div>`;
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+    } catch(err) {
+        chatDiv.innerHTML += `<div class="mb-2 text-left"><span class="bg-red-800 p-2 rounded-lg inline-block">Ошибка: ${err.message}</span></div>`;
+    }
+}
+
+// Загрузка истории видео-сессий
+async function loadVideoSessions() {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch('/api/video/sessions', { headers: { 'Authorization': `Bearer ${token}` } });
+    const sessions = await response.json();
+    const container = document.getElementById('videoSessionsList');
+    if (!container) return;
+    if (!sessions.length) {
+        container.innerHTML = '<p class="text-gray-400">Нет обработанных видео</p>';
+        return;
+    }
+    container.innerHTML = sessions.map(s => `
+        <div class="bg-[#1f1219] p-2 rounded-lg text-sm flex justify-between items-center">
+            <div class="truncate flex-1">${escapeHtml(s.url)}</div>
+            <button onclick="loadVideoSession(${s.id})" class="bg-[#2c1a20] px-2 py-1 rounded text-xs">Загрузить чат</button>
+        </div>
+    `).join('');
+}
+
+// Загрузка конкретной видео-сессии (пока заглушка, можно расширить)
+// Загрузка конкретной видео-сессии с историей чата
+window.loadVideoSession = async (sessionId) => {
+    const token = localStorage.getItem('authToken');
+    const chatDiv = document.getElementById('videoChat');
+    const resultDiv = document.getElementById('videoResult');
+    
+    try {
+        const response = await fetch(`/api/video/session/${sessionId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        
+        currentVideoSessionId = data.id;
+        
+        // Отображаем информацию о видео
+        let html = `
+            <div class="mb-3"><strong>Оригинал:</strong><br>${escapeHtml(data.original_text?.substring(0, 1000) || '')}${data.original_text?.length > 1000 ? '…' : ''}</div>
+            <div class="mb-3"><strong>Перевод:</strong><br>${escapeHtml(data.translated_text?.substring(0, 1000) || '')}${data.translated_text?.length > 1000 ? '…' : ''}</div>
+            <div class="mb-3"><strong>📌 Саммари:</strong><br>${escapeHtml(data.summary || '')}</div>
+            <div class="mb-3"><strong>🔑 Ключевые выводы:</strong><ul class="list-disc ml-5">${(data.key_points || []).map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul></div>
+        `;
+        resultDiv.innerHTML = html;
+        resultDiv.classList.remove('hidden');
+        
+        // Отображаем историю чата
+        chatDiv.innerHTML = '';
+        if (data.messages && data.messages.length) {
+            for (let msg of data.messages) {
+                const isBot = msg.role === 'assistant';
+                chatDiv.innerHTML += `
+                    <div class="mb-2 flex ${isBot ? 'justify-start' : 'justify-end'}">
+                        <div class="max-w-[80%] p-2 rounded-lg ${isBot ? 'bg-[#2c1a20]' : 'bg-[#bc3f4b]'}">
+                            ${escapeHtml(msg.content)}
+                        </div>
+                    </div>
+                `;
+            }
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        } else {
+            chatDiv.innerHTML = '<div class="text-center text-gray-400">Нет сообщений</div>';
+        }
+        
+        document.getElementById('videoChatArea').style.display = 'block';
+    } catch(err) {
+        alert('Ошибка загрузки сессии: ' + err.message);
+    }
+};
+
+document.getElementById('clearVideoChat')?.addEventListener('click', () => {
+    const chatDiv = document.getElementById('videoChat');
+    if (chatDiv) chatDiv.innerHTML = '';
+});
+
+// ========== AI-МЕНТОР ПО ПОСТУПЛЕНИЮ ==========
+
+// Глобальная переменная для хранения текущего результата (опционально)
+let currentAdmissionResults = null;
+
+// Функция рендеринга университетов (переиспользуется)
+function renderUniversities(universities, container) {
+    if (!universities || !universities.length) {
+        container.innerHTML = '<div class="text-center text-gray-400">Не удалось подобрать вузы. Попробуйте изменить данные.</div>';
+        return;
+    }
+    
+    let html = '';
+    for (let uni of universities) {
+        html += `
+            <div class="bg-[#1f1219] rounded-xl p-4 mb-4 border border-[#5c2e3c]">
+                <div class="flex justify-between items-start flex-wrap gap-2">
+                    <div>
+                        <h3 class="text-xl font-bold">${escapeHtml(uni.university_name)}</h3>
+                        <div class="text-sm text-gray-300">🌍 ${escapeHtml(uni.country)} | Рейтинг: ${uni.ranking || '—'}</div>
+                        <div class="text-sm text-gray-300">📧 ${escapeHtml(uni.contact_email || 'не указан')} | 🔗 <a href="${escapeHtml(uni.website)}" target="_blank" class="text-blue-400 hover:underline">${escapeHtml(uni.website)}</a></div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-[#bc3f4b]">${uni.match_score}%</div>
+                        <div class="text-sm">совпадение</div>
+                        <div class="text-lg font-semibold mt-1">🎲 Шанс поступления: ${uni.admission_chance}%</div>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <div class="font-semibold text-green-400">✅ Сильные стороны:</div>
+                        <ul class="list-disc ml-5 text-sm">${(uni.strengths || []).map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-red-400">⚠️ Чего не хватает:</div>
+                        <ul class="list-disc ml-5 text-sm">${(uni.gaps || []).map(g => `<li>${escapeHtml(g)}</li>`).join('')}</ul>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="font-semibold">📌 Рекомендации:</div>
+                    <ul class="list-disc ml-5 text-sm">${(uni.recommendations || []).map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
+                </div>
+                <div class="mt-2">
+                    <div class="font-semibold">📋 Детальный алгоритм действий:</div>
+                    <ol class="list-decimal ml-5 text-sm">${(uni.action_plan || []).map(step => `<li>${escapeHtml(step)}</li>`).join('')}</ol>
+                </div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Основной анализ
+document.getElementById('startAdmissionAnalysis')?.addEventListener('click', async () => {
+    const country = document.getElementById('admissionCountry').value.trim();
+    const userData = document.getElementById('admissionUserData').value.trim();
+    
+    if (!country) { 
+        alert('Введите страну'); 
+        return; 
+    }
+    if (!userData) { 
+        alert('Расскажите о себе (оценки, проекты, языки, достижения, мечты)'); 
+        return; 
+    }
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        alert('Пожалуйста, войдите в систему');
+        return;
+    }
+    
+    const resultDiv = document.getElementById('admissionResult');
+    resultDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin"></i> ИИ анализирует ваш профиль и ищет подходящие вузы...</div>';
+    
+    try {
+        const response = await fetch('/api/admission/analyze', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ country, user_data: userData })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        currentAdmissionResults = data;
+        
+        if (!data.universities || !data.universities.length) {
+            resultDiv.innerHTML = '<div class="text-center text-gray-400">Не удалось подобрать вузы. Попробуйте изменить данные или выбрать другую страну.</div>';
+            return;
+        }
+        
+        renderUniversities(data.universities, resultDiv);
+        loadAdmissionHistory();
+        
+    } catch (err) {
+        console.error('Admission analysis error:', err);
+        resultDiv.innerHTML = `<div class="text-red-400 text-center p-4 bg-red-900/20 rounded-xl">❌ Ошибка: ${escapeHtml(err.message)}<br><span class="text-sm text-gray-400">Попробуйте позже или измените параметры поиска.</span></div>`;
+    }
+});
+
+// Загрузка истории запросов
+async function loadAdmissionHistory() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    
+    const container = document.getElementById('admissionHistory');
+    if (!container) return;
+    
+    try {
+        const response = await fetch('/api/admission/profiles', { 
+            headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const profiles = await response.json();
+        
+        if (!profiles.length) {
+            container.innerHTML = '<p class="text-gray-400 text-center py-2">Нет сохранённых запросов</p>';
+            return;
+        }
+        
+        container.innerHTML = profiles.map(p => `
+            <div class="bg-[#1a0e12] p-2 rounded-lg text-sm flex justify-between items-center hover:bg-[#2a1a20] transition-colors">
+                <div class="truncate flex-1">
+                    <span class="font-semibold text-[#bc3f4b]">${escapeHtml(p.country)}</span>: 
+                    ${escapeHtml(p.user_data_preview || '')}
+                </div>
+                <button onclick="loadAdmissionResult(${p.id})" class="bg-[#2c1a20] hover:bg-[#3f232c] px-2 py-1 rounded text-xs ml-2 transition-colors">
+                    📋 Результат
+                </button>
+            </div>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load admission history:', err);
+        container.innerHTML = '<p class="text-red-400 text-center py-2">Ошибка загрузки истории</p>';
+    }
+}
+
+// Загрузка сохранённого результата по ID профиля
+window.loadAdmissionResult = async (profileId) => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    
+    const resultDiv = document.getElementById('admissionResult');
+    resultDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin"></i> Загрузка результата...</div>';
+    
+    try {
+        const response = await fetch(`/api/admission/result/${profileId}`, { 
+            headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.universities || !data.universities.length) {
+            resultDiv.innerHTML = '<div class="text-center text-gray-400">Результат не найден</div>';
+            return;
+        }
+        
+        renderUniversities(data.universities, resultDiv);
+        
+        // Прокрутка к результатам
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+    } catch (err) {
+        console.error('Failed to load admission result:', err);
+        resultDiv.innerHTML = `<div class="text-red-400 text-center p-4">❌ Ошибка загрузки: ${escapeHtml(err.message)}</div>`;
+    }
+};
+
+// Загрузка истории при открытии вкладки (можно добавить в observer)
+// Вызываем при показе панели
+function initAdmissionHistoryObserver() {
+    const observer = new MutationObserver(function(mutations) {
+        const admissionPane = document.getElementById('admission-pane');
+        if (admissionPane && admissionPane.classList.contains('tab-pane') && !admissionPane.classList.contains('hidden')) {
+            loadAdmissionHistory();
+        }
+    });
+    observer.observe(document.getElementById('tabContent'), { attributes: true, subtree: true, attributeFilter: ['class'] });
+}
+
+// Запускаем наблюдатель после загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAdmissionHistoryObserver);
+} else {
+    initAdmissionHistoryObserver();
+}
+
+// ========== АДМИНИСТРАТИВНАЯ ПАНЕЛЬ (ГОСУДАРСТВО) ==========
+async function loadAdminStats() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    try {
+        const resp = await fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!resp.ok) return;
+        const stats = await resp.json();
+        const container = document.getElementById('adminStats');
+        if (!container) return;
+        container.innerHTML = `
+            <p>👥 Пользователей: ${stats.total_users}</p>
+            <p>🏫 Школ: ${stats.total_schools}</p>
+            <p>📚 Курсов: ${stats.total_courses}</p>
+            <p>📝 Тестов: ${stats.total_tests}</p>
+            <p>🏢 Компаний: ${stats.total_companies}</p>
+            <p>💼 Вакансий: ${stats.total_vacancies}</p>
+            <p>🎤 Soft Skills: ${stats.total_soft_assessments}</p>
+        `;
+    } catch(e) { console.error(e); }
+}
+
+async function loadModulesList() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    try {
+        const resp = await fetch('/api/admin/modules', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!resp.ok) return;
+        const modules = await resp.json();
+        const container = document.getElementById('modulesList');
+        if (!container) return;
+        container.innerHTML = modules.map(m => `
+            <div class="flex justify-between items-center bg-[#2c1a20] p-2 rounded">
+                <div>
+                    <span class="font-mono text-sm">${escapeHtml(m.name)}</span>
+                    <span class="text-xs text-gray-400 ml-2">${escapeHtml(m.display_name)}</span>
+                </div>
+                <div class="flex gap-2">
+                    <button class="toggle-module bg-blue-800 px-2 py-0.5 rounded text-xs" data-module="${m.name}" data-active="${m.is_active}">
+                        ${m.is_active ? '🔴 Отключить' : '🟢 Включить'}
+                    </button>
+                    <button class="delete-module bg-red-800 px-2 py-0.5 rounded text-xs" data-module="${m.name}">🗑 Удалить</button>
+                </div>
+            </div>
+        `).join('');
+        
+        document.querySelectorAll('.toggle-module').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const moduleName = btn.dataset.module;
+                const newActive = btn.dataset.active === 'true' ? false : true;
+                await fetch(`/api/admin/modules/${moduleName}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ is_active: newActive })
+                });
+                loadModulesList();
+            });
+        });
+        document.querySelectorAll('.delete-module').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const moduleName = btn.dataset.module;
+                if (confirm(`Удалить модуль "${moduleName}"?`)) {
+                    await fetch(`/api/admin/modules/${moduleName}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    loadModulesList();
+                }
+            });
+        });
+    } catch(e) { console.error(e); }
+}
+
+async function loadAdminUsers() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    try {
+        const resp = await fetch('/api/admin/users?limit=50', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!resp.ok) return;
+        const users = await resp.json();
+        const container = document.getElementById('adminUsersList');
+        if (!container) return;
+        container.innerHTML = users.map(u => `
+            <div class="bg-[#2c1a20] p-2 rounded text-sm flex justify-between items-center">
+                <div>
+                    <span class="font-bold">${escapeHtml(u.name)}</span> (${escapeHtml(u.email)})
+                    <div class="text-xs text-gray-400">Роли: ${u.roles.join(', ')} | XP: ${u.total_xp}</div>
+                </div>
+                <button class="view-user-details bg-blue-800 px-2 py-0.5 rounded text-xs" data-user="${u.id}">Подробнее</button>
+            </div>
+        `).join('');
+        document.querySelectorAll('.view-user-details').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const userId = btn.dataset.user;
+                const resp = await fetch(`/api/admin/users/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                let actionsHtml = '';
+                if (data.actions && data.actions.length) {
+                    actionsHtml = '<div class="mt-2"><strong>Последние действия:</strong><ul class="list-disc ml-5 text-xs">' +
+                        data.actions.slice(0,10).map(a => `<li>${a.timestamp} - ${a.module_name}: ${a.action_type}</li>`).join('') + '</ul></div>';
+                }
+                showModal(`
+                    <h3 class="font-bold">${escapeHtml(data.user.name)}</h3>
+                    <p>Email: ${escapeHtml(data.user.email)}</p>
+                    <p>Роли: ${data.user.roles.map(r => r.display_name).join(', ')}</p>
+                    <p>XP: ${data.user.total_xp} | Уровень: ${data.user.level}</p>
+                    ${actionsHtml}
+                `);
+            });
+        });
+    } catch(e) { console.error(e); }
+}
+
+// ========== API ДЛЯ РАЗРАБОТЧИКОВ ==========
+async function loadDeveloperKeys() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    try {
+        const resp = await fetch('/api/developer/keys', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!resp.ok) return;
+        const keys = await resp.json();
+        const container = document.getElementById('developerKeysList');
+        if (!container) return;
+        container.innerHTML = keys.map(k => `
+            <div class="bg-[#2c1a20] p-2 rounded text-sm flex justify-between items-center">
+                <div>
+                    <span class="font-bold">${escapeHtml(k.name)}</span>
+                    <div class="text-xs text-gray-400">Модули: ${k.allowed_modules.join(', ') || 'все'}</div>
+                    <div class="text-xs text-gray-500">Лимит: ${k.rate_limit}/мин | ${k.is_active ? 'Активен' : 'Отозван'}</div>
+                </div>
+                <button class="revoke-key bg-red-800 px-2 py-0.5 rounded text-xs" data-id="${k.id}">Отозвать</button>
+            </div>
+        `).join('');
+        document.querySelectorAll('.revoke-key').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const keyId = btn.dataset.id;
+                if (confirm('Отозвать ключ?')) {
+                    await fetch(`/api/developer/keys/${keyId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                    loadDeveloperKeys();
+                }
+            });
+        });
+    } catch(e) { console.error(e); }
+}
+
+// ========== ОБРАБОТЧИКИ ДЛЯ КНОПОК ==========
+document.getElementById('refreshAdminStats')?.addEventListener('click', () => {
+    loadAdminStats();
+    loadModulesList();
+    loadAdminUsers();
+});
+document.getElementById('createModuleBtn')?.addEventListener('click', async () => {
+    const name = document.getElementById('newModuleName').value.trim();
+    const display = document.getElementById('newModuleDisplay').value.trim();
+    if (!name || !display) return alert('Заполните поля');
+    const token = localStorage.getItem('authToken');
+    await fetch(`/api/admin/modules/create?name=${encodeURIComponent(name)}&display_name=${encodeURIComponent(display)}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    loadModulesList();
+    document.getElementById('newModuleName').value = '';
+    document.getElementById('newModuleDisplay').value = '';
+});
+document.getElementById('createApiKeyBtn')?.addEventListener('click', async () => {
+    const name = document.getElementById('newKeyName').value.trim();
+    const modulesStr = document.getElementById('newKeyModules').value.trim();
+    if (!name) return alert('Введите название ключа');
+    const modules = modulesStr ? modulesStr.split(',').map(s => s.trim()) : [];
+    const token = localStorage.getItem('authToken');
+    const resp = await fetch('/api/developer/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name, allowed_modules: modules })
+    });
+    const data = await resp.json();
+    alert(`Ключ создан: ${data.key}\nСохраните его в безопасном месте!`);
+    loadDeveloperKeys();
+    document.getElementById('newKeyName').value = '';
+    document.getElementById('newKeyModules').value = '';
+});
+document.getElementById('viewApiDocsBtn')?.addEventListener('click', () => {
+    showModal(`
+        <h3 class="font-bold mb-2">Документация API</h3>
+        <p><strong>Базовый URL:</strong> <code>/api/v1/</code></p>
+        <p><strong>Аутентификация:</strong> заголовок <code>X-API-Key: ваш_ключ</code></p>
+        <p><strong>Доступные эндпоинты:</strong></p>
+        <ul class="list-disc ml-5 text-sm">
+            <li><code>GET /user/profile</code> – профиль пользователя</li>
+            <li><code>GET /user/statistics</code> – статистика</li>
+            <li><code>GET /courses?user_id=...</code> – курсы</li>
+            <li><code>GET /tests?user_id=...</code> – тесты</li>
+            <li><code>GET /schools/my</code> – мои школы</li>
+        </ul>
+        <p class="mt-2 text-xs text-gray-400">Полная документация будет добавлена позже.</p>
+    `);
+});
+
+// Привязываем обработчики (если элементы существуют)
+document.getElementById('sendVideoQuestion')?.addEventListener('click', askVideoQuestion);
 
 // Добавим в глобальную область функции для модального окна
 window.manageRoles = manageRoles;

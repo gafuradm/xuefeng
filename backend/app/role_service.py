@@ -20,8 +20,8 @@ ROLE_MODULE_ACCESS = {
     'customer': ['freelancer_search', 'essay_check_order', 'planner', 'aidouble', 'rating_view'],
     'startup_founder': ['hypothesis_generator', 'business_models', 'investor_search', 'rating_view', 'planner', 'aidouble'],
     'investor': ['startup_rating', 'investment_analytics', 'planner', 'aidouble', 'rating_view'],
-    'government': ['admin_all'],
-    'developer': ['api_access', 'aidouble', 'rating_view']
+    'government': ['admin_all', 'admin', 'developer_api'],   # добавляем admin и developer_api
+    'developer': ['api_access', 'aidouble', 'rating_view', 'developer_api']   # добавляем developer_api
 }
 
 # Соответствие модуля -> идентификатор вкладки и название на UI
@@ -64,6 +64,9 @@ MODULE_TO_TAB = {
     'soft_skills_assessor': ('softskills', 'Soft Skills', 'fa-comments'),
     'essay_check_order': ('essaycheck', 'Проверка работ', 'fa-file-alt'),
     'essay_check_resume': ('essaycheck', 'Проверка работ', 'fa-file-alt'),
+    # НОВЫЕ:
+    'admin': ('admin', 'Администрирование', 'fa-shield-haltered'),
+    'developer_api': ('developer', 'API', 'fa-key'),
 }
 
 def get_user_module_access(user: User) -> List[str]:
