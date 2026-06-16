@@ -155,6 +155,7 @@ async function startLearning() {
         if (!sessionRes.ok) throw new Error(`HTTP ${sessionRes.status}: ${await sessionRes.text()}`);
         const session = await sessionRes.json();
         currentSessionId = session.id;
+        localStorage.setItem('currentSessionId', currentSessionId);
         console.log("Сессия создана:", session);
 
         console.log("3. Получаем тест...");
@@ -1650,6 +1651,7 @@ function logout() {
     document.getElementById('step1').style.display = 'block';
     document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
     document.getElementById('step1').style.display = 'block';
+    localStorage.removeItem('currentSessionId');
     alert('Вы вышли из системы');
     location.reload(); // перезагружаем для сброса UI
 }
@@ -1847,6 +1849,10 @@ async function updateUIAfterAuth() {
     const tabsContainer = document.getElementById('tabsContainer');
     const tabContent = document.getElementById('tabContent');
     const rolePanel = document.getElementById('rolePanel');
+    const savedSessionId = localStorage.getItem('currentSessionId');
+    if (savedSessionId) {
+        currentSessionId = parseInt(savedSessionId);
+    }
 
     if (!token) {
         if (profileHeader) profileHeader.classList.add('hidden');
@@ -1867,7 +1873,10 @@ async function updateUIAfterAuth() {
         const profileResp = await fetch('/api/auth/profile', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!profileResp.ok) throw new Error();
+        if (!profileResp.ok) {
+            if (profileResp.status === 401) throw new Error('401');
+            throw new Error(`HTTP ${profileResp.status}`);
+        }
         const profile = await profileResp.json();
         currentUserId = profile.id;
         currentUserRoles = profile.roles || [];
@@ -1920,6 +1929,19 @@ async function updateUIAfterAuth() {
         }
     } catch (e) {
         console.error('Ошибка обновления UI:', e);
+        if (e.message && e.message.includes('401')) {
+            // Если токен невалиден, удаляем его
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentSessionId');
+            // Показываем гостевой блок, скрываем авторизованные элементы
+            document.getElementById('guestBlock').classList.remove('hidden');
+            document.getElementById('profileHeader').classList.add('hidden');
+            document.getElementById('tabsContainer').classList.add('hidden');
+            document.getElementById('tabContent').classList.add('hidden');
+            document.getElementById('rolePanel').classList.add('hidden');
+            // Можно также показать сообщение о необходимости повторного входа
+            alert('Сессия истекла, пожалуйста, войдите снова.');
+        }
     }
 }
 
@@ -1942,6 +1964,7 @@ async function resumeOrCreateStudentSession() {
             
         if (activeSession) {
             currentSessionId = activeSession.id;
+            localStorage.setItem('currentSessionId', currentSessionId);
             const sessionRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
             });
@@ -1982,6 +2005,7 @@ async function startNewSession(examName) {
         if (!sessionRes.ok) throw new Error(`HTTP ${sessionRes.status}: ${await sessionRes.text()}`);
         const session = await sessionRes.json();
         currentSessionId = session.id;
+        localStorage.setItem('currentSessionId', currentSessionId);
         
         const testRes = await fetch(`${API_URL}/api/sessions/${currentSessionId}`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }

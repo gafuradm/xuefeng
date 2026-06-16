@@ -1518,6 +1518,15 @@
                 return m;
             });
         };
+        if (localStorage.getItem('authToken')) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    updateUIAfterAuth();
+                });
+            } else {
+                updateUIAfterAuth();
+            }
+        }
     });
 </script>
 </body>
