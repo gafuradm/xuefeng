@@ -39,3 +39,4 @@ qrcode
 fitz
 pyMuPDF
 apscheduler
+gunicorn
