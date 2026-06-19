@@ -4,7 +4,7 @@ sqlalchemy
 psycopg2-binary
 python-dotenv
 httpx
-jose
+python-jose
 passlib
 python-multipart
 websockets
@@ -39,4 +39,3 @@ qrcode
 fitz
 pyMuPDF
 apscheduler
-gunicorn

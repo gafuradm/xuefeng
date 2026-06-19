@@ -4,7 +4,7 @@ sqlalchemy
 psycopg2-binary
 python-dotenv
 httpx
-jose
+python-jose
 passlib
 python-multipart
 websockets
@@ -17,7 +17,6 @@ python-engineio
 python-socketio
 pydantic
 pydantic-settings
-gunicorn
 pypdf
 pypdfium2
 scikit-learn
@@ -38,7 +37,7 @@ sqlalchemy
 psycopg2-binary
 python-dotenv
 httpx
-jose
+python-jose
 passlib
 python-multipart
 websockets
