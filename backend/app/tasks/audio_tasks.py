@@ -5,10 +5,10 @@ import numpy as np
 from scipy.io import wavfile
 from pydub import AudioSegment
 import whisper
-from app.celery import celery_app
-from app.deepseek_client import deepseek_client
-from app.database import SessionLocal
-from app.models import IELTSAttempt
+from ..celery import celery_app
+from ..deepseek_client import deepseek_client
+from ..database import SessionLocal
+from ..models import IELTSAttempt
 
 whisper_model = None
 

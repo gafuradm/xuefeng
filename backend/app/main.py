@@ -89,9 +89,9 @@ from pathlib import Path
 import whisper
 import tempfile
 import json
-from app.tasks.audio_tasks import transcribe_and_analyze
+from .tasks.audio_tasks import transcribe_and_analyze
 from celery.result import AsyncResult
-from app.celery import celery_app
+from .celery import celery_app
 
 import httpx
 import feedparser
